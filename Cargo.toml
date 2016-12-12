@@ -1,0 +1,14 @@
+[package]
+name = "mp4"
+version = "0.1.0"
+authors = ["Luo <gnulinux@126.com>"]
+
+[lib]
+name = "mp4"
+path = "src/lib.rs"
+
+[[bin]]
+name = "mp4"
+path = "src/main.rs"
+
+[dependencies]
