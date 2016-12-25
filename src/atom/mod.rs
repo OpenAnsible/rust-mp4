@@ -36,75 +36,99 @@ use std::str::FromStr;
 use std::string::ToString;
 use std::convert::AsRef;
 
-use std::io::{Write, Read, ErrorKind};
+use std::io::{Write, Read, ErrorKind, SeekFrom, Seek};
 use ::byteorder::{BigEndian, ReadBytesExt};
 
-pub mod ftyp;
-pub mod moov;
-pub mod mdat;
-
-
 /**
-    
-    length: 4 char
+let mut f = try!(File::open("foo.txt"));
+
+// move the cursor 42 bytes from the start of the file
+try!(f.seek(SeekFrom::Start(42)));
+
 **/
+
+
+
 #[derive(Debug, Clone)]
-pub enum AtomType {
-    ftyp, // 
-    moov,
-    mdat,
-    unknow(String)
+pub struct Atom {
+    size     : u32,
+    kind     : String,
+    largesize: Option<u64>,
+    header_size: u64,
+    data_size  : u64,
+    data       : Option<Vec<u8>>,
+    children   : Option<Vec<Atom>>
 }
 
-impl FromStr for AtomType {
-    type Err = &'static str;
-    fn from_str(s: &str) -> Result<Self, Self::Err>{
-        match s {
-            "ftyp" => Ok(AtomType::ftyp),
-            "moov" => Ok(AtomType::moov),
-            "mdat" => Ok(AtomType::mdat),
-            _      => Ok(AtomType::unknow(s.to_owned()))
+impl Atom {
+    pub fn parse(&mut self, f: &mut File, offset: &mut ::Offset){
+        match self.kind.as_ref() {
+            "ftyp" => {
+                let mut data: Vec<u8> = vec![];
+                for _ in 0..self.data_size {
+                    data.push(f.read_u8().unwrap());
+                }
+                self.data = Some(data);
+                offset.update(self.data_size);
+            },
+            "moov" => {
+                let mut atoms: Vec<Atom> = vec![];
+                let mut idx = 0;
+                while idx < self.data_size {
+                    let atom = parse(f, offset).unwrap();
+                    idx += atom.size as u64;
+                    atoms.push(atom);
+                }
+                self.children = Some(atoms);
+            },
+            "mdat" => {
+                let mut data: Vec<u8> = vec![];
+                // for _ in 0..self.data_size {
+                //     f.read_u8().unwrap();
+                // }
+                f.seek(SeekFrom::Start(offset.offset() + self.data_size));
+
+                self.data = Some(data);
+                offset.update(self.data_size);
+            },
+            "free" => {
+                let mut data: Vec<u8> = vec![];
+                for _ in 0..self.data_size {
+                    // data.push();
+                    f.read_u8().unwrap();
+                }
+                self.data = Some(data);
+                offset.update(self.data_size);
+            },
+            "uuid" => {
+                let mut data: Vec<u8> = vec![];
+                for _ in 0..self.data_size {
+                    // data.push(f.read_u8().unwrap());
+                    f.read_u8().unwrap();
+                }
+                self.data = Some(data);
+                offset.update(self.data_size);
+            },
+            _ => {
+                let mut data: Vec<u8> = vec![];
+                for _ in 0..self.data_size {
+                    data.push(f.read_u8().unwrap());
+                }
+                self.data = Some(data);
+                offset.update(self.data_size);
+            }
         }
     }
 }
 
-
-impl AtomType {
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, &'static str>{
-        assert_eq!(bytes.len(), 4);
-        let s = match str::from_utf8(&bytes[..4]){
-            Ok(s)  => s,
-            Err(_) => {
-                println!("UTF8 Error: {:?}", bytes);
-                " ... "
-            }
-        };
-        AtomType::from_str(s)
-    }
-}
-
-
-#[derive(Debug, Clone)]
-pub struct AtomBox {
-    size     : u32,
-    type_    : AtomType,
-    largesize: Option<u64>,
-    data     : Vec<u8>,
-    // children : Vec<AtomBox>
-}
-
-impl AtomBox {
-
-}
-
-
-
-pub fn parse(f: &mut File, offset: &mut ::Offset) -> Result<AtomBox, &'static str>{
+pub fn parse(f: &mut File, offset: &mut ::Offset) -> Result<Atom, &'static str>{
     let atom_size: u32 = f.read_u32::<BigEndian>().unwrap();
-    let atom_type = AtomType::from_bytes(&[
-            f.read_u8().unwrap(), f.read_u8().unwrap(),
-            f.read_u8().unwrap(), f.read_u8().unwrap(),
-    ]).unwrap();
+
+    let _bytes = [
+        f.read_u8().unwrap(), f.read_u8().unwrap(),
+        f.read_u8().unwrap(), f.read_u8().unwrap(),
+    ];
+    let atom_kind = unsafe {str::from_utf8_unchecked(&_bytes[..4])}.to_owned();
 
     let mut atom_largesize: Option<u64> = None;
     let mut header_size = 8u64;
@@ -116,24 +140,22 @@ pub fn parse(f: &mut File, offset: &mut ::Offset) -> Result<AtomBox, &'static st
         let atom_largesize = Some(f.read_u64::<BigEndian>().unwrap());
         header_size += 8;
         data_size    = atom_largesize.unwrap() - header_size;
-        offset.update(atom_largesize.unwrap());
     } else {
         data_size    = atom_size as u64 - header_size;
-        offset.update(atom_size as u64);
     }
+    offset.update(header_size);
 
-    let mut data: Vec<u8> = vec![];
-    for _ in (0..data_size) {
-        f.read_u8().unwrap();
-        // data.push(f.read_u8().unwrap());
-    }
-
-    let return_data = AtomBox {
+    let mut return_data = Atom {
         size  : atom_size,
-        type_ : atom_type,
-        largesize: atom_largesize,
-        data  : vec![]
+        kind  : atom_kind,
+        largesize  : atom_largesize,
+        header_size: header_size,
+        data_size  : data_size,
+        data       : None,
+        children   : None
     };
+    println!("[INFO] parse children . {:?}", return_data.kind);
+    return_data.parse(f, offset);
     Ok(return_data)
 }
 

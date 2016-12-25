@@ -10,6 +10,7 @@ use std::ops::Add;
 pub mod atom;
 
 pub struct Offset(u64);
+
 impl Add for Offset {
     type Output = Offset;
     fn add(self, rhs: Offset) -> Offset {
@@ -31,9 +32,9 @@ pub fn parse_file(filename: &str){
                 .create(false).open(filename).unwrap();
     let file_size = file.metadata().unwrap().len();
     println!("File: {:?}", file);
-
+    
     let mut offset: Offset = Offset(0);
-    let mut atoms: Vec<atom::AtomBox> = Vec::new();
+    let mut atoms: Vec<atom::Atom> = Vec::new();
     loop {
         let atombox = match atom::parse(&mut file, &mut offset){
             Ok(atombox) => {
