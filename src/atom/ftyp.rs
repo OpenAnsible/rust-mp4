@@ -1,6 +1,6 @@
 
 // Complete List of all known MP4 / QuickTime 'ftyp' designations:
-//  http://www.ftyps.com
+//  http://www.fileType.com
 
 /**
 avc1    MP4 Base w/ AVC ext [ISO 14496-12:2005]         ISO     YES video/mp4   [11]
@@ -33,13 +33,15 @@ two trailing blanks are implied.
 For example, "qt" is really "qt  " - note the two trailing spaces
 **/
 
+use std::str;
 use std::str::FromStr;
 use std::string::ToString;
+use std::fs::File;
 
-pub const FTYP_LENGTH: usize = 4;
+use super::{Mp4File, Kind, Header, Atom};
 
 #[derive(Debug, Clone)]
-pub enum Ftyp{
+pub enum FileType{
     // ISO
     avc1,
     iso2,
@@ -64,67 +66,126 @@ pub enum Ftyp{
     mmp4
 }
 
-impl FromStr for Ftyp {
+impl FromStr for FileType {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err>{
         match s {
-            "avc1" => Ok(Ftyp::avc1),
-            "iso2" => Ok(Ftyp::iso2),
-            "isom" => Ok(Ftyp::isom),
-            "mp21" => Ok(Ftyp::mp21),
-            "mp41" => Ok(Ftyp::mp41),
-            "mp42" => Ok(Ftyp::mp42),
-            "qt"  | "qt  " => Ok(Ftyp::qt),
-            "M4B" | "M4B " => Ok(Ftyp::M4B),
-            "M4P" | "M4P " => Ok(Ftyp::M4P),
-            "M4A" | "M4A " => Ok(Ftyp::M4A),
-            "M4V" | "M4V " => Ok(Ftyp::M4V),
-            "M4VH" => Ok(Ftyp::M4VH),
-            "M4VP" => Ok(Ftyp::M4VP),
-            "F4V" | "F4V " => Ok(Ftyp::F4V),
-            "F4P" | "F4P " => Ok(Ftyp::F4P),
-            "F4A" | "F4A " => Ok(Ftyp::F4A),
-            "F4B" | "F4B " => Ok(Ftyp::F4B),
-            "mmp4" => Ok(Ftyp::mmp4),
-            _ => Err("unknow ftyp")
+            "avc1" => Ok(FileType::avc1),
+            "iso2" => Ok(FileType::iso2),
+            "isom" => Ok(FileType::isom),
+            "mp21" => Ok(FileType::mp21),
+            "mp41" => Ok(FileType::mp41),
+            "mp42" => Ok(FileType::mp42),
+            "qt"  | "qt\u{0}\u{0}" => Ok(FileType::qt),
+            "M4B" | "M4B\u{0}" => Ok(FileType::M4B),
+            "M4P" | "M4P\u{0}" => Ok(FileType::M4P),
+            "M4A" | "M4A\u{0}" => Ok(FileType::M4A),
+            "M4V" | "M4V\u{0}" => Ok(FileType::M4V),
+            "M4VH" => Ok(FileType::M4VH),
+            "M4VP" => Ok(FileType::M4VP),
+            "F4V" | "F4V\u{0}" => Ok(FileType::F4V),
+            "F4P" | "F4P\u{0}" => Ok(FileType::F4P),
+            "F4A" | "F4A\u{0}" => Ok(FileType::F4A),
+            "F4B" | "F4B\u{0}" => Ok(FileType::F4B),
+            "mmp4" => Ok(FileType::mmp4),
+            _ => Err("unknow fileType")
         }
     }
 }
 
-impl ToString for Ftyp {
+impl ToString for FileType {
     fn to_string(&self) -> String {
         match *self {
-            Ftyp::avc1 => "avc1".to_owned(),
-            Ftyp::iso2 => "iso2".to_owned(),
-            Ftyp::isom => "isom".to_owned(),
-            Ftyp::mp21 => "mp21".to_owned(),
-            Ftyp::mp41 => "mp41".to_owned(),
-            Ftyp::mp42 => "mp42".to_owned(),
-            Ftyp::qt   => "qt".to_owned(),
-            Ftyp::M4B  => "M4B".to_owned(),
-            Ftyp::M4P  => "M4P".to_owned(),
-            Ftyp::M4A  => "M4A".to_owned(),
-            Ftyp::M4V  => "M4V".to_owned(),
-            Ftyp::M4VH => "M4VH".to_owned(),
-            Ftyp::M4VP => "M4VP".to_owned(),
-            Ftyp::F4V  => "F4V".to_owned(),
-            Ftyp::F4P  => "F4P".to_owned(),
-            Ftyp::F4A  => "F4A".to_owned(),
-            Ftyp::F4B  => "F4B".to_owned(),
-            Ftyp::mmp4 => "mmp4".to_owned()
+            FileType::avc1 => "avc1".to_owned(),
+            FileType::iso2 => "iso2".to_owned(),
+            FileType::isom => "isom".to_owned(),
+            FileType::mp21 => "mp21".to_owned(),
+            FileType::mp41 => "mp41".to_owned(),
+            FileType::mp42 => "mp42".to_owned(),
+            FileType::qt   => "qt\u{0}\u{0}".to_owned(),
+            FileType::M4B  => "M4B\u{0}".to_owned(),
+            FileType::M4P  => "M4P\u{0}".to_owned(),
+            FileType::M4A  => "M4A\u{0}".to_owned(),
+            FileType::M4V  => "M4V\u{0}".to_owned(),
+            FileType::M4VH => "M4VH".to_owned(),
+            FileType::M4VP => "M4VP".to_owned(),
+            FileType::F4V  => "F4V\u{0}".to_owned(),
+            FileType::F4P  => "F4P\u{0}".to_owned(),
+            FileType::F4A  => "F4A\u{0}".to_owned(),
+            FileType::F4B  => "F4B\u{0}".to_owned(),
+            FileType::mmp4 => "mmp4".to_owned()
         }
     }
+}
+
+impl FileType {
+    pub fn from_bytes(bytes: &[u8; 4]) -> Result<Self, &'static str> {
+        let kind_str = match str::from_utf8(bytes) {
+            Ok(s)  => s,
+            Err(_) => {
+                println!("ftyp ({:?}) parse error.", bytes);
+                return Err("ftyp parse error.");
+            }
+        };
+        FileType::from_str(kind_str)
+    }
+    pub fn into_bytes(&self) -> Vec<u8> {
+        self.to_string().into_bytes()
+    }
+}
+
+/**
+    Ftyp Box
+
+    4.3.2 Syntax
+
+    aligned(8) class FileTypeBox
+    extends Box(‘ftyp’) {
+        unsigned int(32) major_brand;
+        unsigned int(32) minor_version;
+        unsigned int(32) compatible_brands[]; // to end of the box
+    }
+
+    4.3.3 Semantics
+
+    This box identifies the specifications to which this file complies.
+    Each brand is a printable four-character code, registered with ISO, that identifies a precise specification.
+    major_brand – is a brand identifier
+    minor_version – is an informative integer for the minor version of the major brand compatible_brands – is a list, to the end of the box, of brands
+**/
+
+#[derive(Debug, Clone)]
+pub struct Ftyp {
+    header: Header,
+    major_brand  : FileType,
+    minor_version: u32,
+    compatible_brands: Vec<FileType>
 }
 
 impl Ftyp {
-    pub fn from_bytes() -> Result<Self, &'static str> {
-        Err(".")
+    fn parse_filetype(f: &mut Mp4File) -> Result<FileType, &'static str>{
+        let ft_bytes: [u8; 4] = [
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+            f.read_u8().unwrap(), f.read_u8().unwrap()
+        ];
+        FileType::from_bytes(&ft_bytes)
     }
-    pub fn into_bytes(&self) -> Vec<u8> {
-        let mut bytes = self.to_string().into_bytes();
-        for _ in (0 .. (FTYP_LENGTH - bytes.len())) {
-            bytes.push(0u8);
+    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str>{
+        let major_brand = Ftyp::parse_filetype(f).unwrap(); // NOTE: 文档上描述是 i32 类型
+        let minor_version = f.read_u32().unwrap();          // NOTE: 文档上描述是 i32 类型
+        let mut compatible_brands: Vec<FileType> = Vec::new();
+        let mut idx = (header.data_size - 8) / 4;
+        while idx > 0 {
+            // // NOTE: 文档上描述是 i32 类型
+            compatible_brands.push(Ftyp::parse_filetype(f).unwrap());
+            idx -= 1;
         }
-        bytes
+        f.offset_inc(header.data_size);
+        Ok(Ftyp{
+            header: header,
+            major_brand: major_brand,
+            minor_version: minor_version,
+            compatible_brands: compatible_brands
+        })
     }
 }
