@@ -135,6 +135,26 @@ for atom in atoms:
     else:
         print "error"
 print "\n".join(sss)
+
+
+Container atom types:
+
+    dinf
+    edts
+    ipro
+    mdia
+    meta
+    mfra
+    minf
+    moof
+    moov
+    mvex
+    sinf
+    skip
+    stbl
+    traf
+    trak
+
 **/
 
 #[derive(Debug, Clone)]
@@ -210,11 +230,13 @@ pub enum Kind{
     trun,
     tsel,
     udta,
+    uuid,
     vmhd,
     xml,
     strk,
     stri,
-    strd
+    strd,
+    Unrecognized(String)
 }
 
 impl FromStr for Kind {
@@ -292,15 +314,13 @@ impl FromStr for Kind {
             "trun" => Ok(Kind::trun),
             "tsel" => Ok(Kind::tsel),
             "udta" => Ok(Kind::udta),
+            "uuid" => Ok(Kind::uuid),
             "vmhd" => Ok(Kind::vmhd),
             "xml" | "xml\u{0}" => Ok(Kind::xml),
             "strk" => Ok(Kind::strk),
             "stri" => Ok(Kind::stri),
             "strd" => Ok(Kind::strd),
-            _ => {
-                println!("Unknow Kind: {:?}", s);
-                Err("unknow Kind")
-            }
+            _      => Ok(Kind::Unrecognized(s.to_owned()))
         }
     }
 }
@@ -379,11 +399,13 @@ impl ToString for Kind {
             Kind::trun => "trun".to_owned(),
             Kind::tsel => "tsel".to_owned(),
             Kind::udta => "udta".to_owned(),
+            Kind::uuid => "uuid".to_owned(),
             Kind::vmhd => "vmhd".to_owned(),
             Kind::xml  => "xml\u{0}".to_owned(),
             Kind::strk => "strk".to_owned(),
             Kind::stri => "stri".to_owned(),
-            Kind::strd => "strd".to_owned()
+            Kind::strd => "strd".to_owned(),
+            Kind::Unrecognized(ref s) => s.to_owned()
         }
     }
 }

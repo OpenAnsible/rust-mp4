@@ -135,23 +135,65 @@ impl FileType {
 }
 
 /**
-    Ftyp Box
 
-    4.3.2 Syntax
+Box Type: `ftyp’
+Container: File
+Mandatory: Yes
+Quantity: Exactly one (but see below)
 
-    aligned(8) class FileTypeBox
-    extends Box(‘ftyp’) {
-        unsigned int(32) major_brand;
-        unsigned int(32) minor_version;
-        unsigned int(32) compatible_brands[]; // to end of the box
-    }
+Files written to this version of this specification must contain a file-type box. 
+For compatibility with an earlier version of this specification, 
+files may be conformant to this specification and not contain a file-type box. 
+Files with no file-type box should be read as 
+if they contained an FTYP box with Major_brand='mp41', minor_version=0, 
+and the single compatible brand 'mp41'.
 
-    4.3.3 Semantics
+A media-file structured to this part of this specification may be compatible with 
+more than one detailed specification, and it is therefore not always possible to 
+speak of a single ‘type’ or ‘brand’ for the file. This means that the utility of 
+the file name extension and Multipurpose Internet Mail Extension (MIME) type are somewhat reduced.
 
-    This box identifies the specifications to which this file complies.
-    Each brand is a printable four-character code, registered with ISO, that identifies a precise specification.
-    major_brand – is a brand identifier
-    minor_version – is an informative integer for the minor version of the major brand compatible_brands – is a list, to the end of the box, of brands
+This box must be placed as early as possible in the file (e.g. after any obligatory signature, 
+but before any significant variable-size boxes such as a Movie Box, Media Data Box, or Free Space). 
+It identifies which specification is the ‘best use’ of the file, and a minor version of that specification; 
+and also a set of other specifications to which the file complies. Readers implementing this format 
+should attempt to read files that are marked as compatible with any of the specifications that 
+the reader implements. Any incompatible change in a specification should therefore register
+a new ‘brand’ identifier to identify files conformant to the new specification.
+
+The minor version is informative only. It does not appear for compatible-brands, 
+and must not be used to determine the conformance of a file to a standard. It may allow 
+more precise identification of the major specification, for inspection, debugging, or improved decoding.
+
+Files would normally be externally identified (e.g. with a file extension or mime type) 
+that identifies the ‘best use’ (major brand), or the brand that the author believes will 
+provide the greatest compatibility.
+
+This section of this specification does not define any brands. However,
+ see subclause 6.3 below for brands for files conformant to the whole specification and 
+ not just this section. All file format brands defined in this specification are included 
+ in Annex E with a summary of which features they require.
+
+
+4.3.2 Syntax
+
+aligned(8) class FileTypeBox
+extends Box(‘ftyp’) {
+    unsigned int(32) major_brand;
+    unsigned int(32) minor_version;
+    unsigned int(32) compatible_brands[]; // to end of the box
+}
+
+4.3.3 Semantics
+
+This box identifies the specifications to which this file complies.
+Each brand is a printable four-character code, registered with ISO, 
+that identifies a precise specification.
+
+`major_brand` – is a brand identifier
+`minor_version` – is an informative integer for the minor version of the major brand
+`compatible_brands` – is a list, to the end of the box, of brands
+
 **/
 
 #[derive(Debug, Clone)]
@@ -171,12 +213,11 @@ impl Ftyp {
         FileType::from_bytes(&ft_bytes)
     }
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str>{
-        let major_brand = Ftyp::parse_filetype(f).unwrap(); // NOTE: 文档上描述是 i32 类型
-        let minor_version = f.read_u32().unwrap();          // NOTE: 文档上描述是 i32 类型
+        let major_brand = Ftyp::parse_filetype(f).unwrap();
+        let minor_version = f.read_u32().unwrap();
         let mut compatible_brands: Vec<FileType> = Vec::new();
         let mut idx = (header.data_size - 8) / 4;
         while idx > 0 {
-            // // NOTE: 文档上描述是 i32 类型
             compatible_brands.push(Ftyp::parse_filetype(f).unwrap());
             idx -= 1;
         }

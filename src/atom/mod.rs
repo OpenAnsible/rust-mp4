@@ -156,40 +156,209 @@ use std::io::{Write, Read, ErrorKind, SeekFrom, Seek};
 use ::byteorder::{BigEndian, ReadBytesExt};
 pub use super::Mp4File;
 
-/**
-let mut f = try!(File::open("foo.txt"));
-
-// move the cursor 42 bytes from the start of the file
-try!(f.seek(SeekFrom::Start(42)));
-
-**/
 mod kind;
 
 mod ftyp;
 mod mdat;
+mod pdin;
+mod freespace;
+mod uuid;
 mod meco;
 mod meta;
 mod mfra;
 mod moof;
 mod moov;
-mod pdin;
-mod skip;
-mod free;
+mod unrecognized;
 
 pub use self::kind::Kind;
 
 use self::ftyp::Ftyp;
-use self::free::Free;
-use self::skip::Skip;
+use self::freespace::{Free, Skip};
 use self::mdat::Mdat;
+use self::pdin::Pdin;
+use self::uuid::Uuid;
+use self::moov::{Moov, Mvhd, Trak};
+use self::unrecognized::Unrecognized;
+
+/**
+    aligned(8) class Box (unsigned int(32) boxtype,
+                          optional unsigned int(8)[16] extended_type) {
+        unsigned int(32) size;
+        unsigned int(32) type = boxtype;
+        if (size==1) {
+            unsigned int(64) largesize;
+        } else if (size==0) {
+            // box extends to end of file
+        }
+        if (boxtype==‘uuid’) {
+            unsigned int(8)[16] usertype = extended_type;
+        }
+    }
+
+    The semantics of these two fields are:
+
+        `size` is an integer that specifies the number of bytes in this box, 
+            including all its fields and contained boxes; if size is 1 then the actual size is 
+            in the field largesize; if size is 0, then this box is the last one in the file, 
+            and its contents extend to the end of the file (normally only used for a Media Data Box)
+        `type` identifies the box type; standard boxes use a compact type, 
+            which is normally four printable characters, to permit ease of identification, 
+            and is shown so in the boxes below. User extensions use an extended type; in this case, 
+            the type field is set to ‘uuid’.
+
+    Boxes with an unrecognized type shall be ignored and skipped. 
+
+    Many objects also contain a version number and flags field:
+    
+    aligned(8) class FullBox(unsigned int(32) boxtype,
+                             unsigned int(8) v,
+                             bit(24) f) extends Box(boxtype) {
+        unsigned int(8) version = v;
+        bit(24) flags = f;
+    }
+    
+    The semantics of these two fields are:
+        `version` is an integer that specifies the version of this format of the box.
+        `flags` is a map of flags
+    
+    Boxes with an unrecognized version shall be ignored and skipped.
+
+    简单来说，Box Header 有两个版本的格式:
+    
+    pub struct Box {
+        type: BoxType,
+        size: u32,
+        // if size == 0 {
+        //   box extends to end of file
+        // } else if size == 1 {
+        //   largesize = u64
+        // }
+        largesize: Option<u64>,
+        usertype: Option<Vec<u8>> // length 16. if type === 'uuid', usertype is active.
+    }
+
+    pub struct FullBox {
+        type: BoxType,
+        size: u32,
+        // if size == 0 {
+        //   box extends to end of file
+        // } else if size == 1 {
+        //   largesize = u64
+        // }
+        largesize: Option<u64>,
+        // if type === 'uuid', then usertype is active
+        usertype: Option<[u8; 16]>, // length 16.
+        
+        version: u8,
+        flags  : [u8; 3],   // 24 Bits
+    }
+**/
 
 #[derive(Debug, Clone)]
 pub struct Header {
-    size       : u64,  // atom header size, not include data size.
+    size       : u32,
     kind       : Kind, // atom type
+    
+    // Optional
+    largesize  : Option<u64>,
+    usertype   : Option<[u8; 16]>,
+    version    : Option<u8>,
+    flags      : Option<[u8; 3]>, // 24 Bits
+    // 自定义抽象
     atom_size  : u64,  // atom size , include header and data.
+    header_size: u64,  // atom header size, not include data size.
     data_size  : u64,  // atom data size , not include header size.
-    offset     : u64   // file offset.
+    offset     : u64,  // file offset.
+}
+
+impl Header {
+    pub fn parse(f: &mut Mp4File) -> Result<Header, &'static str>{
+        let curr_offset = f.offset();
+        let size: u32 = f.read_u32().unwrap();
+
+        let kind_bytes: [u8; 4] = [
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+        ];
+        let kind = Kind::from_bytes(&kind_bytes).unwrap();
+
+        let header_size = 8u64;
+        let atom_size = size as u64;
+        let data_size = atom_size - header_size;
+
+        f.offset_inc(header_size);
+
+        let mut header = Header{
+            size: size,
+            kind: kind,
+
+            largesize  : None,
+            usertype   : None,
+            version    : None,
+            flags      : None,
+
+            atom_size  : atom_size,  // atom size , include header and data.
+            header_size: header_size,  // atom header size, not include data size.
+            data_size  : data_size,  // atom data size , not include header size.
+            offset     : curr_offset,  // file offset.
+        };
+        if size == 1u32 {
+            header.parse_largesize(f);
+        } else if size < 1u32 {
+            return Err("can not parse this mp4 file.");
+        }
+        Ok(header)
+    }
+    pub fn parse_largesize(&mut self, f: &mut Mp4File){
+        assert_eq!(self.size, 1u32);
+
+        let largesize = f.read_u64().unwrap();
+        self.atom_size = largesize;
+        self.header_size = self.header_size + 8;
+        self.data_size = largesize - self.header_size;
+
+        self.largesize = Some(largesize);
+        f.offset_inc(8);
+    }
+    pub fn parse_usertype(&mut self, f: &mut Mp4File){
+        let usertype: [u8; 16] = [
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+            f.read_u8().unwrap(), f.read_u8().unwrap()
+        ];
+        self.usertype = Some(usertype);
+
+        self.header_size = self.header_size + 16;
+        assert!((self.atom_size - self.header_size) >= 0);
+        self.data_size = self.atom_size - self.header_size;
+        f.offset_inc(16);
+    }
+    pub fn parse_version(&mut self, f: &mut Mp4File){
+        let version = f.read_u8().unwrap();
+        self.version = Some(version);
+
+        self.header_size = self.header_size + 1;
+        assert!((self.atom_size - self.header_size) >= 0);
+        self.data_size = self.atom_size - self.header_size;
+        f.offset_inc(1);
+    }
+    pub fn parse_flags(&mut self, f: &mut Mp4File){
+        let flags: [u8; 3] = [
+            f.read_u8().unwrap(), f.read_u8().unwrap(), 
+            f.read_u8().unwrap()
+        ];
+        self.flags = Some(flags);
+
+        self.header_size = self.header_size + 3;
+        assert!((self.atom_size - self.header_size) >= 0);
+        self.data_size = self.atom_size - self.header_size;
+        f.offset_inc(3);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -197,47 +366,26 @@ pub enum Atom {
     ftyp(Ftyp),
     free(Free),
     skip(Skip),
-    mdat(Mdat)
+    mdat(Mdat),
+    pdin(Pdin),
+    uuid(Uuid),
+    moov(Moov),
+    mvhd(Mvhd),
+    trak(Trak),
+    unrecognized(Unrecognized)
 }
 
 impl Atom {
-    fn parse_header(f: &mut Mp4File) -> Result<Header, &'static str>{
-        let curr_offset = f.offset();
-        let atom_size_u32: u32 = f.read_u32().unwrap();
-
+    fn parse_kind(f: &mut Mp4File) -> Result<Kind, &'static str> {
         let kind_bytes: [u8; 4] = [
             f.read_u8().unwrap(), f.read_u8().unwrap(),
             f.read_u8().unwrap(), f.read_u8().unwrap(),
         ];
-        let atom_kind = Kind::from_bytes(&kind_bytes).unwrap();
-
-        let mut atom_size   = 0u64;   // atom box Size
-        let mut header_size = 8u64;   // atom header size
-        let mut data_size   = 0u64;   // atom data size
-
-        if atom_size_u32 < 1 {
-            return Err("can not parse this mp4 file.");
-        } else if atom_size_u32 == 1 {
-            atom_size = f.read_u64().unwrap();
-            header_size += 8;
-        } else {
-            atom_size = atom_size_u32 as u64;
-        }
-
-        data_size = atom_size - header_size;
-
-        f.offset_inc(header_size);
-
-        Ok(Header{
-            size       : header_size,
-            kind       : atom_kind,
-            atom_size  : atom_size,
-            data_size  : data_size,
-            offset     : curr_offset
-        })
+        Kind::from_bytes(&kind_bytes)
     }
+    
     pub fn parse(f: &mut Mp4File) -> Result<Self, &'static str> {
-        let header = Atom::parse_header(f).unwrap();
+        let mut header = Header::parse(f).unwrap();
         // println!("DO: \n{:?}", header);
         let data = match header.kind {
             // Kind::bxml => ,
@@ -245,34 +393,24 @@ impl Atom {
             // Kind::cprt => ,
             // Kind::ctts => ,
             // Kind::dinf => ,
-            // Kind::dinf => ,
-            // Kind::dref => ,
             // Kind::dref => ,
             // Kind::edts => ,
             // Kind::elst => ,
             // Kind::fecr => ,
             // Kind::fiin => ,
             // Kind::fpar => ,
-            Kind::free => {
-                Ok(Atom::free(Free::parse(f, header).unwrap()))
-            },
+            Kind::free => Ok(Atom::free(Free::parse(f, header).unwrap())),
             // Kind::frma => ,
-            Kind::ftyp => {
-                Ok(Atom::ftyp(Ftyp::parse(f, header).unwrap()))
-            },
-            // Kind::hdlr => ,
+            Kind::ftyp => Ok(Atom::ftyp(Ftyp::parse(f, header).unwrap())),
             // Kind::hdlr => ,
             // Kind::hmhd => ,
             // Kind::iinf => ,
             // Kind::iloc => ,
             // Kind::imif => ,
             // Kind::ipmc => ,
-            // Kind::ipmc => ,
             // Kind::ipro => ,
             // Kind::itn  => ,
-            Kind::mdat => {
-                Ok(Atom::mdat(Mdat::parse(f, header).unwrap()))
-            },
+            Kind::mdat => Ok(Atom::mdat(Mdat::parse(f, header).unwrap())),
             // Kind::mdhd => ,
             // Kind::mdia => ,
             // Kind::meco => ,
@@ -284,19 +422,17 @@ impl Atom {
             // Kind::mfro => ,
             // Kind::minf => ,
             // Kind::moof => ,
-            // Kind::moov => ,
+            Kind::moov => Ok(Atom::moov(Moov::parse(f, header).unwrap())),
             // Kind::mvex => ,
-            // Kind::mvhd => ,
+            Kind::mvhd => Ok(Atom::mvhd(Mvhd::parse(f, header).unwrap())),
             // Kind::nmhd => ,
             // Kind::padb => ,
             // Kind::paen => ,
-            // Kind::pdin => ,
+            Kind::pdin => Ok(Atom::pdin(Pdin::parse(f, header).unwrap())),
             // Kind::pitm => ,
-            // Kind::sbgp => ,
             // Kind::sbgp => ,
             // Kind::schi => ,
             // Kind::schm => ,
-            // Kind::sdtp => ,
             // Kind::sdtp => ,
             // Kind::sgpd => ,
             // Kind::sinf => ,
@@ -313,7 +449,6 @@ impl Atom {
             // Kind::stts => ,
             // Kind::stz2 => ,
             // Kind::subs => ,
-            // Kind::subs => ,
             // Kind::tfhd => ,
             // Kind::tfra => ,
             // Kind::tkhd => ,
@@ -324,16 +459,15 @@ impl Atom {
             // Kind::trun => ,
             // Kind::tsel => ,
             // Kind::udta => ,
+            Kind::uuid => Ok(Atom::uuid(Uuid::parse(f, header).unwrap())),
             // Kind::vmhd => ,
             // Kind::xml  => ,
             // Kind::strk => ,
             // Kind::stri => ,
             // Kind::strd => 
-            _ => {
-                println!("[ERROR] UNKNOW ATOM TYPE({}).", header.kind.to_string() );
-                println!("[DEBUG] Header: {:?}", header);
-                return Err("this atom type not support yet.")   
-            }
+
+            Kind::Unrecognized(_) => Ok(Atom::unrecognized(Unrecognized::parse(f, header).unwrap())),
+            _ => Ok(Atom::unrecognized(Unrecognized::parse(f, header).unwrap()))
         };
         data
     }

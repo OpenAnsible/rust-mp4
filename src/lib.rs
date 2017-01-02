@@ -18,6 +18,19 @@ pub struct Mp4File {
     atoms    : Vec<atom::Atom>
 }
 
+#[derive(Debug, Clone)]
+pub struct Matrix {
+    a: f64,
+    b: f64,
+    u: f64,
+    c: f64,
+    d: f64,
+    v: f64,
+    x: f64,
+    y: f64,
+    w: f64
+}
+
 impl Mp4File {
     pub fn new(filename: &str) -> Result<Self, &'static str> {
         let mut file = fs::OpenOptions::new().read(true).write(false)
@@ -101,7 +114,40 @@ impl Mp4File {
     pub fn read_f64(&mut self)-> Result<f64, Error> {
         self.file.read_f64::<BigEndian>()
     }
-
+    pub fn read_fixed_point(&mut self, integerLength: usize, fractionalLength: usize) -> Result<f64, Error>{
+        if integerLength + fractionalLength == 16 {
+            let n = self.read_u16().unwrap();
+            let integer: u16 = n >> fractionalLength as u16;
+            let fractional_mask: u16 = 2u16.pow(fractionalLength as u32) - 1;
+            let fractional: u16 = (n&fractional_mask) / (1 << (fractionalLength as u16));
+            let result = (integer + fractional) as f64;
+            Ok(result)
+        } else {
+            let n = self.read_u32().unwrap();
+            let integer: u32 = n >> fractionalLength as u32;
+            let fractional_mask: u32 = 2u32.pow(fractionalLength as u32) - 1;
+            let fractional: u32 = (n&fractional_mask) / (1 << (fractionalLength as u32));
+            let result = (integer + fractional) as f64;
+            Ok(result)
+        }
+    }
+    pub fn read_matrix(&mut self) -> Result<Matrix, Error>{
+        // length: u32 * 9 (  4*9 = 36 Bytes )
+        let a = self.read_fixed_point( 16, 16 ).unwrap();
+        let b = self.read_fixed_point( 16, 16 ).unwrap();
+        let u = self.read_fixed_point(  2, 30 ).unwrap();
+        let c = self.read_fixed_point( 16, 16 ).unwrap();
+        let d = self.read_fixed_point( 16, 16 ).unwrap();
+        let v = self.read_fixed_point(  2, 30 ).unwrap();
+        let x = self.read_fixed_point( 16, 16 ).unwrap();
+        let y = self.read_fixed_point( 16, 16 ).unwrap();
+        let w = self.read_fixed_point(  2, 30 ).unwrap();
+        Ok(Matrix {
+            a: a, b: b, u: u,
+            c: c, d: d, v: v,
+            x: x, y: y, w: w
+        })
+    }
 }
 
 pub fn parse_file(filename: &str) -> Result<Mp4File, &'static str>{
