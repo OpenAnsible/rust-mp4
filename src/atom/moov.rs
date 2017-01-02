@@ -44,6 +44,8 @@ moov
         trex
     ipmc
 **/
+
+use std::mem;
 use ::Matrix;
 use super::{Mp4File, Kind, Header, Atom};
 
@@ -64,36 +66,16 @@ to the beginning or end of the file, though this is not required.
 #[derive(Debug, Clone)]
 pub struct Moov {
     header: Header,
-    mvhd: Option<Mvhd>,
-    trak: Option<Trak>
+    children : Vec<Atom>
+
 }
 
 impl Moov {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
-        
-        let mut mvhd = None;
-        let mut trak = None;
-        // let mut mvex = None;
-        // let mut ipmc = None;
-
-        loop {
-            let child_atom = Atom::parse(f).unwrap();
-            // println!("child_atom: {:?}", child_atom);
-            // break;
-            match child_atom {
-                Atom::mvhd(ref _mvhd) => {
-                    mvhd = Some(_mvhd.clone());
-                },
-                _ => {
-                    println!("[Moov] child parse error {:?}", child_atom);
-                    break;
-                }
-            };
-        }
+        let children: Vec<Atom> = Atom::parse_children(f);
         Ok(Moov{
             header: header,
-            mvhd: mvhd,
-            trak: trak
+            children: children
         })
     }
 }
@@ -275,7 +257,18 @@ aligned(8) class TrackBox extends Box(‘trak’) {
 
 #[derive(Debug, Clone)]
 pub struct Trak {
+    header: Header,
+    children: Vec<Atom>
+}
 
+impl Trak {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        let children: Vec<Atom> = Atom::parse_children(f);
+        Ok(Trak{
+            header: header,
+            children: children
+        })
+    }
 }
 
 /**
@@ -390,20 +383,35 @@ extends FullBox(‘tkhd’, version, flags){
 
 #[derive(Debug, Clone)]
 pub struct Tkhd {
-    creation_time: u64,
-    modification_time: u64,
-    track_id: u32,
-    duration: u64, 
+    header: Header
+    // creation_time: u64,
+    // modification_time: u64,
+    // track_id: u32,
+    // duration: u64, 
 
-    layer: i16,
-    alternate_group: i16,
-    // fixed 8.8 value
-    volume: f64, // {if track_is_audio 0x0100 else 0};
+    // layer: i16,
+    // alternate_group: i16,
+    // // fixed 8.8 value
+    // volume: f64, // {if track_is_audio 0x0100 else 0};
 
-    matrix: Matrix,
-    // fixed-point 16.16 values
-    width: f64,
-    height: f64
+    // matrix: Matrix,
+    // // fixed-point 16.16 values
+    // width: f64,
+    // height: f64
+}
+
+impl Tkhd {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+
+        let curr_offset = f.offset();
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Tkhd{
+            header: header
+        })
+    }
 }
 
 /**
@@ -489,15 +497,248 @@ Quantity : Exactly One
 
 #[derive(Debug, Clone)]
 pub struct Mdia {
-    header: Header
+    header: Header,
+    children: Vec<Atom>
 }
 
 impl Mdia {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str>{
+        let children: Vec<Atom> = Atom::parse_children(f);
+        Ok(Mdia{
+            header: header,
+            children: children
+        })
+    }
+}
+
+/**
+Box Type : `mdhd`
+Container: Media Box(`mdia`)
+Mandatory: Yes
+Quantity : Exactly one
+
+8.4.2.2 Syntax
+aligned(8) class MediaHeaderBox extends FullBox(‘mdhd’, version, 0) {
+    if (version==1) {
+        unsigned int(64)  creation_time;
+        unsigned int(64)  modification_time;
+        unsigned int(32)  timescale;
+        unsigned int(64)  duration;
+    } else { // version==0
+        unsigned int(32)  creation_time;
+        unsigned int(32)  modification_time;
+        unsigned int(32)  timescale;
+        unsigned int(32)  duration;
+    }
+    bit(1) pad = 0;
+    unsigned int(5)[3] language; // ISO-639-2/T language code
+    unsigned int(16) pre_defined = 0;
+}
+
+**/
+
+#[derive(Debug, Clone)]
+pub struct Mdhd {
+    header: Header,
+    creation_time: u64,
+    modification_time: u64,
+    timescale: u32,
+    duration: u64,
+
+    language: String
+}
+
+impl Mdhd {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+
+        let curr_offset = f.offset();
+
+        let mut length = 0u64;
+
+        let mut creation_time = 0u64;
+        let mut modification_time = 0u64;
+        let mut timescale = 0u32;
+        let mut duration = 0u64;
+        assert!(header.version.is_some());
+
+        if header.version.unwrap() == 1u8 {
+            creation_time = f.read_u64().unwrap();
+            modification_time = f.read_u64().unwrap();
+            timescale = f.read_u32().unwrap();
+            duration = f.read_u64().unwrap();
+            length += 28;
+        } else {
+            // header version == 0
+            creation_time = f.read_u32().unwrap() as u64;
+            modification_time = f.read_u32().unwrap() as u64;
+            timescale = f.read_u32().unwrap();
+            duration = f.read_u32().unwrap() as u64;
+            length += 16;
+        }
+
+        // 16 Bytes
+        // pad: 1 Bit
+        // language: 15 Bit;
+        let language = f.read_iso639_code().unwrap(); // 2 Bytes, u16
+        length += 2;
+
+        // unsigned int(16) pre_defined = 0;
+        length += 2;
+        f.seek(curr_offset+length);
+        f.offset_inc(length);
+
+        Ok(Mdhd{
+            header: header,
+            creation_time: creation_time,
+            modification_time: modification_time,
+            timescale: timescale,
+            duration: duration,
+            language: language
+        })
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct Hdlr {
+    header: Header
+}
+
+impl Hdlr {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+
         let curr_offset = f.offset();
         f.seek(curr_offset+header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Mdia{
+        Ok(Hdlr{
+            header: header
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Minf {
+    header: Header,
+    children: Vec<Atom> // Box Types: ‘vmhd’, ‘smhd’, ’hmhd’, ‘nmhd’
+}
+
+impl Minf {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str>{
+        let children: Vec<Atom> = Atom::parse_children(f);
+        Ok(Minf{
+            header: header,
+            children: children
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Vmhd {
+    header: Header,
+    graphicsmode: u16,
+    opcolor: [u16; 3]
+}
+
+impl Vmhd {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+
+        let curr_offset = f.offset();
+
+        let graphicsmode = f.read_u16().unwrap();
+        // red, greenm blue
+        let opcolor: [u16; 3] = [
+            f.read_u16().unwrap(), f.read_u16().unwrap(),
+            f.read_u16().unwrap()
+        ];
+
+        f.offset_inc(8);
+
+        Ok(Vmhd{
+            header: header,
+            graphicsmode: graphicsmode,
+            opcolor: opcolor
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Smhd {
+    header: Header,
+    balance: f64  // fixed-point 8.8 number
+}
+
+impl Smhd {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+
+        let curr_offset = f.offset();
+
+        let balance = f.read_fixed_point(8, 8).unwrap(); // 2 Bytes
+        // reserved
+        f.read_u16().unwrap();
+
+        f.offset_inc(4);
+
+        Ok(Smhd{
+            header: header,
+            balance: balance
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Hmhd {
+    header: Header,
+    max_pdu_size: u16,
+    avg_pdu_size: u16,
+    max_bitrate : u32,
+    avg_bitrate : u32
+}
+
+impl Hmhd {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+
+        let curr_offset = f.offset();
+
+        let max_pdu_size = f.read_u16().unwrap();
+        let avg_pdu_size = f.read_u16().unwrap();
+        let max_bitrate = f.read_u32().unwrap();
+        let avg_bitrate = f.read_u32().unwrap();
+        // reserved
+        f.read_u32().unwrap();
+
+        f.offset_inc(16);
+
+        Ok(Hmhd{
+            header: header,
+            max_pdu_size: max_pdu_size,
+            avg_pdu_size: avg_pdu_size,
+            max_bitrate: max_bitrate,
+            avg_bitrate: avg_bitrate
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Nmhd {
+    header: Header
+}
+
+impl Nmhd {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+
+        Ok(Nmhd{
             header: header
         })
     }

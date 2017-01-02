@@ -62,20 +62,8 @@ impl Mp4File {
         &self.atoms
     }
     pub fn parse(&mut self) {
-        loop {
-            match atom::Atom::parse(self) {
-                Ok(atom) => {
-                    self.atoms.push(atom);
-                    if self.offset == self.file_size {
-                        break;
-                    }
-                },
-                Err(e) => {
-                    println!("[ERROR] ATOM parse error ({:?})", e);
-                    break;
-                }
-            }
-        }
+        let atoms = atom::Atom::parse_children(self);
+        self.atoms = atoms;
     }
     // File Seek
     pub fn seek(&mut self, offset: u64) -> Result<u64, Error> {
@@ -147,6 +135,21 @@ impl Mp4File {
             c: c, d: d, v: v,
             x: x, y: y, w: w
         })
+    }
+    pub fn read_iso639_code(&mut self) -> Result<String, Error> {
+        let mut s = String::new();
+        let n = self.read_u16().unwrap();
+        let mut c1 = ( n & 0x7C00 ) >> 10;  // Mask is 0111 1100 0000 0000
+        let mut c2 = ( n & 0x03E0 ) >> 5;   // Mask is 0000 0011 1110 0000
+        let mut c3 = ( n & 0x001F );        // Mask is 0000 0000 0001 1111
+        c1 += 0x60;
+        c2 += 0x60;
+        c3 += 0x60;
+
+        s.push((c1 as u8) as char);
+        s.push((c2 as u8) as char);
+        s.push((c3 as u8) as char);
+        Ok(s)
     }
 }
 

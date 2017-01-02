@@ -177,7 +177,11 @@ use self::freespace::{Free, Skip};
 use self::mdat::Mdat;
 use self::pdin::Pdin;
 use self::uuid::Uuid;
-use self::moov::{Moov, Mvhd, Trak};
+
+use self::moov::{
+    Moov, Mvhd, Trak, Tkhd, Tref, Mdia, Mdhd, Hdlr,
+    Minf, Vmhd, Smhd, Hmhd, Nmhd,
+};
 use self::unrecognized::Unrecognized;
 
 /**
@@ -372,6 +376,16 @@ pub enum Atom {
     moov(Moov),
     mvhd(Mvhd),
     trak(Trak),
+    tkhd(Tkhd),
+    tref(Tref),
+    mdia(Mdia),
+    mdhd(Mdhd),
+    hdlr(Hdlr),
+    minf(Minf),
+    vmhd(Vmhd),
+    smhd(Smhd),
+    hmhd(Hmhd),
+    nmhd(Nmhd),
     unrecognized(Unrecognized)
 }
 
@@ -402,8 +416,8 @@ impl Atom {
             Kind::free => Ok(Atom::free(Free::parse(f, header).unwrap())),
             // Kind::frma => ,
             Kind::ftyp => Ok(Atom::ftyp(Ftyp::parse(f, header).unwrap())),
-            // Kind::hdlr => ,
-            // Kind::hmhd => ,
+            Kind::hdlr => Ok(Atom::hdlr(Hdlr::parse(f, header).unwrap())),
+            Kind::hmhd => Ok(Atom::hmhd(Hmhd::parse(f, header).unwrap())),
             // Kind::iinf => ,
             // Kind::iloc => ,
             // Kind::imif => ,
@@ -411,8 +425,8 @@ impl Atom {
             // Kind::ipro => ,
             // Kind::itn  => ,
             Kind::mdat => Ok(Atom::mdat(Mdat::parse(f, header).unwrap())),
-            // Kind::mdhd => ,
-            // Kind::mdia => ,
+            Kind::mdhd => Ok(Atom::mdhd(Mdhd::parse(f, header).unwrap())),
+            Kind::mdia => Ok(Atom::mdia(Mdia::parse(f, header).unwrap())),
             // Kind::meco => ,
             // Kind::mehd => ,
             // Kind::mere => ,
@@ -420,12 +434,12 @@ impl Atom {
             // Kind::mfhd => ,
             // Kind::mfra => ,
             // Kind::mfro => ,
-            // Kind::minf => ,
+            Kind::minf => Ok(Atom::minf(Minf::parse(f, header).unwrap())),
             // Kind::moof => ,
             Kind::moov => Ok(Atom::moov(Moov::parse(f, header).unwrap())),
             // Kind::mvex => ,
             Kind::mvhd => Ok(Atom::mvhd(Mvhd::parse(f, header).unwrap())),
-            // Kind::nmhd => ,
+            Kind::nmhd => Ok(Atom::nmhd(Nmhd::parse(f, header).unwrap())),
             // Kind::padb => ,
             // Kind::paen => ,
             Kind::pdin => Ok(Atom::pdin(Pdin::parse(f, header).unwrap())),
@@ -437,7 +451,7 @@ impl Atom {
             // Kind::sgpd => ,
             // Kind::sinf => ,
             // Kind::skip => ,
-            // Kind::smhd => ,
+            Kind::smhd => Ok(Atom::smhd(Smhd::parse(f, header).unwrap())),
             // Kind::stbl => ,
             // Kind::stco => ,
             // Kind::stdp => ,
@@ -451,16 +465,16 @@ impl Atom {
             // Kind::subs => ,
             // Kind::tfhd => ,
             // Kind::tfra => ,
-            // Kind::tkhd => ,
+            Kind::tkhd => Ok(Atom::tkhd(Tkhd::parse(f, header).unwrap())),
             // Kind::traf => ,
-            // Kind::trak => ,
-            // Kind::tref => ,
+            Kind::trak => Ok(Atom::trak(Trak::parse(f, header).unwrap())),
+            Kind::tref => Ok(Atom::tref(Tref::parse(f, header).unwrap())),
             // Kind::trex => ,
             // Kind::trun => ,
             // Kind::tsel => ,
             // Kind::udta => ,
             Kind::uuid => Ok(Atom::uuid(Uuid::parse(f, header).unwrap())),
-            // Kind::vmhd => ,
+            Kind::vmhd => Ok(Atom::vmhd(Vmhd::parse(f, header).unwrap())),
             // Kind::xml  => ,
             // Kind::strk => ,
             // Kind::stri => ,
@@ -470,6 +484,24 @@ impl Atom {
             _ => Ok(Atom::unrecognized(Unrecognized::parse(f, header).unwrap()))
         };
         data
+    }
+    pub fn parse_children(f: &mut Mp4File) -> Vec<Atom> {
+        let mut atoms: Vec<Atom> = Vec::new();
+        loop {
+            if f.offset() == f.file_size() {
+                break;
+            }
+            match Atom::parse(f) {
+                Ok(atom) => {
+                    atoms.push(atom);
+                },
+                Err(e) => {
+                    println!("[ERROR] ATOM parse error ({:?})", e);
+                    break;
+                }
+            }
+        }
+        atoms
     }
 }
 
