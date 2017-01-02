@@ -743,3 +743,163 @@ impl Nmhd {
         })
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct Stbl {
+    header: Header,
+    children: Vec<Atom>
+}
+
+impl Stbl {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str>{
+        let children: Vec<Atom> = Atom::parse_children(f);
+        Ok(Stbl{
+            header: header,
+            children: children
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Stsd {
+    header: Header
+}
+
+impl Stsd {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        let curr_offset = f.offset();
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Stsd{
+            header: header
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Stdp {
+    header: Header
+}
+
+impl Stdp {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        let curr_offset = f.offset();
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Stdp{
+            header: header
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Stts {
+    header: Header
+}
+
+impl Stts {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        let curr_offset = f.offset();
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Stts{
+            header: header
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Ctts {
+    header: Header
+}
+
+impl Ctts {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        let curr_offset = f.offset();
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Ctts{
+            header: header
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Cslg {
+    header: Header
+}
+
+impl Cslg {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        let curr_offset = f.offset();
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Cslg{
+            header: header
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Stss {
+    header: Header
+}
+
+impl Stss {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        let curr_offset = f.offset();
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Stss{
+            header: header
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Stsh {
+    header: Header
+}
+
+impl Stsh {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        let curr_offset = f.offset();
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Stsh{
+            header: header
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Sdtp {
+    header: Header
+}
+
+impl Sdtp {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        let curr_offset = f.offset();
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Sdtp{
+            header: header
+        })
+    }
+}

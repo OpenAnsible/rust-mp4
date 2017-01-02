@@ -29,15 +29,15 @@ aligned(8) class ProgressiveDownloadInfoBox extends FullBox(‘pdin’, version 
 #[derive(Debug, Clone)]
 pub struct Pdin {
     header: Header,
-    rate: i32,
-    initial_delay: i32
+    rate: u32,
+    initial_delay: u32
 }
 
 impl Pdin {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str>{
         let curr_offset = f.offset();
-        let rate = f.read_i32().unwrap();
-        let initial_delay = f.read_i32().unwrap();
+        let rate = f.read_u32().unwrap();
+        let initial_delay = f.read_u32().unwrap();
         // f.seek(curr_offset+header.data_size);
         f.offset_inc(header.data_size);
         Ok(Pdin{

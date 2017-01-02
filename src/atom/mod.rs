@@ -180,7 +180,8 @@ use self::uuid::Uuid;
 
 use self::moov::{
     Moov, Mvhd, Trak, Tkhd, Tref, Mdia, Mdhd, Hdlr,
-    Minf, Vmhd, Smhd, Hmhd, Nmhd,
+    Minf, Vmhd, Smhd, Hmhd, Nmhd, Stbl, Stsd, Stdp,
+    Stts, Ctts, Cslg, Stss, Stsh, Sdtp, 
 };
 use self::unrecognized::Unrecognized;
 
@@ -386,6 +387,16 @@ pub enum Atom {
     smhd(Smhd),
     hmhd(Hmhd),
     nmhd(Nmhd),
+    stbl(Stbl),
+    stsd(Stsd),
+    stdp(Stdp),
+    stts(Stts),
+    ctts(Ctts),
+    cslg(Cslg),
+    stss(Stss),
+    stsh(Stsh),
+    sdtp(Sdtp),
+
     unrecognized(Unrecognized)
 }
 
@@ -404,8 +415,9 @@ impl Atom {
         let data = match header.kind {
             // Kind::bxml => ,
             // Kind::co64 => ,
+            Kind::cslg => Ok(Atom::cslg(Cslg::parse(f, header).unwrap())),
             // Kind::cprt => ,
-            // Kind::ctts => ,
+            Kind::ctts => Ok(Atom::ctts(Ctts::parse(f, header).unwrap())),
             // Kind::dinf => ,
             // Kind::dref => ,
             // Kind::edts => ,
@@ -447,20 +459,20 @@ impl Atom {
             // Kind::sbgp => ,
             // Kind::schi => ,
             // Kind::schm => ,
-            // Kind::sdtp => ,
+            Kind::sdtp => Ok(Atom::sdtp(Sdtp::parse(f, header).unwrap())),
             // Kind::sgpd => ,
             // Kind::sinf => ,
             // Kind::skip => ,
             Kind::smhd => Ok(Atom::smhd(Smhd::parse(f, header).unwrap())),
-            // Kind::stbl => ,
+            Kind::stbl => Ok(Atom::stbl(Stbl::parse(f, header).unwrap())),
             // Kind::stco => ,
-            // Kind::stdp => ,
+            Kind::stdp => Ok(Atom::stdp(Stdp::parse(f, header).unwrap())),
             // Kind::stsc => ,
-            // Kind::stsd => ,
-            // Kind::stsh => ,
-            // Kind::stss => ,
+            Kind::stsd => Ok(Atom::stsd(Stsd::parse(f, header).unwrap())),
+            Kind::stsh => Ok(Atom::stsh(Stsh::parse(f, header).unwrap())),
+            Kind::stss => Ok(Atom::stss(Stss::parse(f, header).unwrap())),
             // Kind::stsz => ,
-            // Kind::stts => ,
+            Kind::stts => Ok(Atom::stts(Stts::parse(f, header).unwrap())),
             // Kind::stz2 => ,
             // Kind::subs => ,
             // Kind::tfhd => ,

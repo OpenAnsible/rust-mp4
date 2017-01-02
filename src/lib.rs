@@ -103,6 +103,7 @@ impl Mp4File {
         self.file.read_f64::<BigEndian>()
     }
     pub fn read_fixed_point(&mut self, integerLength: usize, fractionalLength: usize) -> Result<f64, Error>{
+        // https://en.wikipedia.org/wiki/Fixed_point_(mathematics)
         if integerLength + fractionalLength == 16 {
             let n = self.read_u16().unwrap();
             let integer: u16 = n >> fractionalLength as u16;
@@ -137,6 +138,9 @@ impl Mp4File {
         })
     }
     pub fn read_iso639_code(&mut self) -> Result<String, Error> {
+        // Note:
+        //      pad   :  1 Bit
+        //      string: 15 Bit
         let mut s = String::new();
         let n = self.read_u16().unwrap();
         let mut c1 = ( n & 0x7C00 ) >> 10;  // Mask is 0111 1100 0000 0000
