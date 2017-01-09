@@ -903,3 +903,84 @@ impl Sdtp {
         })
     }
 }
+
+
+#[derive(Debug, Clone)]
+pub struct Mvex {
+    header: Header,
+    children: Vec<Atom>
+}
+
+impl Mvex {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str>{
+        let children: Vec<Atom> = Atom::parse_children(f);
+        Ok(Mvex{
+            header: header,
+            children: children
+        })
+    }
+}
+
+/**
+Box Type : ‘mehd’
+Container: Movie Extends Box(‘mvex’)
+Mandatory: No
+Quantity : Zero or one
+
+The Movie Extends Header is optional, and provides the overall duration, 
+including fragments, of a fragmented movie. If this box is not present, 
+the overall duration must be computed by examining each fragment.
+
+aligned(8) class MovieExtendsHeaderBox extends FullBox(‘mehd’, version, 0) {
+    if (version==1) {
+        unsigned int(64)  fragment_duration;
+   } else { // version==0
+        unsigned int(32)  fragment_duration;
+   }
+}
+**/
+
+#[derive(Debug, Clone)]
+pub struct Mehd {
+    header: Header,
+    fragment_duration: u64
+}
+
+impl Mehd {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        // let curr_offset = f.offset();
+        let mut fragment_duration: u64 = 0;
+        if header.version == 1 {
+            fragment_duration = f.read_u64().unwrap();
+        } else {
+            fragment_duration = f.read_u32().unwrap() as u64;
+        }
+        // f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Mehd{
+            header: header,
+            fragment_duration: fragment_duration
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Trex {
+    header: Header
+}
+
+impl Trex {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        let curr_offset = f.offset();
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Trex{
+            header: header
+        })
+    }
+}
+
