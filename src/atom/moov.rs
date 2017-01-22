@@ -843,27 +843,26 @@ impl Stz2 {
         let mut entry_size: Vec<u32> = Vec::new();
 
         let mut next_val: Option<u32> = None;
-
-        if sample_size == 0u32 {
-            for _ in 0..sample_count {
-                if field_size == 4u8 {
-                    if next_val.is_some() {
-                        entry_size.push(next_val.unwrap());
-                        next_val = None;
-                    } else {
-                        let bits = format!("{:08b}", f.read_u8().unwrap());
-                        entry_size.push(u32::from_str_radix(&bits[0..4], 2).unwrap());
-                        next_val = Some(u32::from_str_radix(&bits[4..8], 2).unwrap());
-                    }
-                } else if field_size == 8u8 {
-                    entry_size.push(f.read_u8().unwrap() as u32);
-                } else if field_size == 16u8 {
-                    entry_size.push(f.read_u16().unwrap() as u32);
+        
+        for _ in 0..sample_count {
+            if field_size == 4u8 {
+                if next_val.is_some() {
+                    entry_size.push(next_val.unwrap());
+                    next_val = None;
                 } else {
-                    panic!("STZ2 parse error.");
+                    let bits = format!("{:08b}", f.read_u8().unwrap());
+                    entry_size.push(u32::from_str_radix(&bits[0..4], 2).unwrap());
+                    next_val = Some(u32::from_str_radix(&bits[4..8], 2).unwrap());
                 }
+            } else if field_size == 8u8 {
+                entry_size.push(f.read_u8().unwrap() as u32);
+            } else if field_size == 16u8 {
+                entry_size.push(f.read_u16().unwrap() as u32);
+            } else {
+                panic!("STZ2 parse error.");
             }
         }
+
 
         f.offset_inc(header.data_size);
         Ok(Stz2{

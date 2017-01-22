@@ -181,7 +181,8 @@ use self::uuid::Uuid;
 use self::moov::{
     Moov, Mvhd, Trak, Tkhd, Tref, Mdia, Mdhd, Hdlr,
     Minf, Vmhd, Smhd, Hmhd, Nmhd, Stbl, Stsd, Stdp,
-    Stts, Ctts, Cslg, Stss, Stsh, Sdtp, 
+    Stts, Ctts, Cslg, Stss, Stsh, Sdtp, Stsc, Stsz,
+    Stz2, Stco, Co64,
 };
 use self::unrecognized::Unrecognized;
 
@@ -388,6 +389,11 @@ pub enum Atom {
     hmhd(Hmhd),
     nmhd(Nmhd),
     stbl(Stbl),
+    stsc(Stsc),
+    stsz(Stsz),
+    stz2(Stz2),
+    stco(Stco),
+    co64(Co64),
     stsd(Stsd),
     stdp(Stdp),
     stts(Stts),
@@ -414,7 +420,7 @@ impl Atom {
         // println!("DO: \n{:?}", header);
         let data = match header.kind {
             // Kind::bxml => ,
-            // Kind::co64 => ,
+            Kind::co64 => Ok(Atom::co64(Co64::parse(f, header).unwrap())),
             Kind::cslg => Ok(Atom::cslg(Cslg::parse(f, header).unwrap())),
             // Kind::cprt => ,
             Kind::ctts => Ok(Atom::ctts(Ctts::parse(f, header).unwrap())),
@@ -465,15 +471,15 @@ impl Atom {
             // Kind::skip => ,
             Kind::smhd => Ok(Atom::smhd(Smhd::parse(f, header).unwrap())),
             Kind::stbl => Ok(Atom::stbl(Stbl::parse(f, header).unwrap())),
-            // Kind::stco => ,
+            Kind::stco => Ok(Atom::stco(Stco::parse(f, header).unwrap())),
             Kind::stdp => Ok(Atom::stdp(Stdp::parse(f, header).unwrap())),
-            // Kind::stsc => ,
+            Kind::stsc => Ok(Atom::stsc(Stsc::parse(f, header).unwrap())),
             Kind::stsd => Ok(Atom::stsd(Stsd::parse(f, header).unwrap())),
             Kind::stsh => Ok(Atom::stsh(Stsh::parse(f, header).unwrap())),
             Kind::stss => Ok(Atom::stss(Stss::parse(f, header).unwrap())),
-            // Kind::stsz => ,
+            Kind::stsz => Ok(Atom::stsz(Stsz::parse(f, header).unwrap())),
             Kind::stts => Ok(Atom::stts(Stts::parse(f, header).unwrap())),
-            // Kind::stz2 => ,
+            Kind::stz2 => Ok(Atom::stz2(Stz2::parse(f, header).unwrap())),
             // Kind::subs => ,
             // Kind::tfhd => ,
             // Kind::tfra => ,
