@@ -311,7 +311,7 @@ impl Trun {
             first_sample_flags = Some(f.read_u32().unwrap());
         }
         // parse samples
-        for 0..sample_count {
+        for _ in 0..sample_count {
             let sample_duration = if flags == sample_duration_present {
                 Some(f.read_u32().unwrap())
             } else {
@@ -328,7 +328,7 @@ impl Trun {
                 None
             };
             let sample_composition_time_offset = if flags == sample_composition_time_offsets_present {
-                if header.version == 0 { 
+                if header.version.unwrap() == 0u8 { 
                     Some(f.read_u32().unwrap() as i32)
                 } else {
                     Some(f.read_i32().unwrap())

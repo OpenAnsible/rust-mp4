@@ -761,6 +761,122 @@ impl Stbl {
 }
 
 #[derive(Debug, Clone)]
+pub struct Stsz {
+    header: Header,
+    sample_size: u32,
+    sample_count: u32,
+    entry_size: Option<Vec<u32>>
+}
+
+impl Stsz {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+
+        // let curr_offset = f.offset();
+        // f.seek(curr_offset+header.data_size);
+        let sample_size : u32 = f.read_u32().unwrap();
+        let sample_count: u32 = f.read_u32().unwrap();
+        let mut entry_size = None;
+
+        if sample_size == 0u32 {
+            let mut _entry_size: Vec<u32> = Vec::new();
+            for _ in 0..sample_count {
+                _entry_size.push(f.read_u32().unwrap());
+            }
+            entry_size = Some(_entry_size);
+        }
+        
+        f.offset_inc(header.data_size);
+
+        Ok(Stsz{
+            header: header,
+            sample_size: sample_size,
+            sample_count: sample_count,
+            entry_size: entry_size
+        })
+    }
+}
+
+/**
+aligned(8) class CompactSampleSizeBox extends FullBox(‘stz2’, version = 0, 0) {
+    unsigned int(24) reserved = 0;
+    unisgned int(8) field_size;
+    unsigned int(32) sample_count;
+    for (i=1; i <= sample_count; i++) {
+        unsigned int(field_size)   entry_size;
+    }
+}
+
+8.7.3.3.2 Semantics
+
+`version` is an integer that specifies the version of this box
+`field_size` is an integer specifying the size in bits of the entries in the following table;
+    it shall take the value 4, 8 or 16.
+    If the value 4 is used, then each byte contains two values: entry[i]<<4 + entry[i+1]; 
+    if the sizes do not fill an integral number of bytes, the last byte is padded with zeros.
+`sample_count` is an integer that gives the number of entries in the following table 
+`entry_size` is an integer specifying the size of a sample, indexed by its number.
+
+**/
+
+#[derive(Debug, Clone)]
+pub struct Stz2 {
+    header: Header,
+    field_size: u8, 
+    sample_count: u32,
+    entry_size: Vec<u32>
+}
+
+impl Stz2 {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        // let curr_offset = f.offset();
+        // f.seek(curr_offset+header.data_size);
+        let _ = f.read_u32().unwrap();
+        let field_size = f.read_u8().unwrap();
+        let sample_count = f.read_u32().unwrap();
+        // value 4, 8 or 16.
+        assert!(field_size == 4u8 || field_size == 8u8 || field_size == 16u8);
+
+        let mut entry_size: Vec<u32> = Vec::new();
+
+        let mut next_val: Option<u32> = None;
+
+        if sample_size == 0u32 {
+            for _ in 0..sample_count {
+                if field_size == 4u8 {
+                    if next_val.is_some() {
+                        entry_size.push(next_val.unwrap());
+                        next_val = None;
+                    } else {
+                        let bits = format!("{:08b}", f.read_u8().unwrap());
+                        entry_size.push(u32::from_str_radix(&bits[0..4], 2).unwrap());
+                        next_val = Some(u32::from_str_radix(&bits[4..8], 2).unwrap());
+                    }
+                } else if field_size == 8u8 {
+                    entry_size.push(f.read_u8().unwrap() as u32);
+                } else if field_size == 16u8 {
+                    entry_size.push(f.read_u16().unwrap() as u32);
+                } else {
+                    panic!("STZ2 parse error.");
+                }
+            }
+        }
+
+        f.offset_inc(header.data_size);
+        Ok(Stz2{
+            header: header,
+            field_size  : field_size,
+            sample_count: sample_count,
+            entry_size  : entry_size
+        })
+    }
+}
+
+
+#[derive(Debug, Clone)]
 pub struct Stsd {
     header: Header
 }
@@ -952,7 +1068,7 @@ impl Mehd {
         header.parse_flags(f);
         // let curr_offset = f.offset();
         let mut fragment_duration: u64 = 0;
-        if header.version == 1 {
+        if header.version.unwrap() == 1u8 {
             fragment_duration = f.read_u64().unwrap();
         } else {
             fragment_duration = f.read_u32().unwrap() as u64;
