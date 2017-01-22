@@ -875,6 +875,177 @@ impl Stz2 {
     }
 }
 
+/**
+
+8.7.4.2 Syntax
+
+aligned(8) class SampleToChunkBox extends FullBox(‘stsc’, version = 0, 0) {
+   unsigned int(32)  entry_count;
+   for (i=1; i <= entry_count; i++) {
+        unsigned int(32) first_chunk;
+        unsigned int(32) samples_per_chunk; unsigned int(32) sample_description_index;
+    }
+}
+
+8.7.4.3 Semantics
+`version` is an integer that specifies the version of this box
+`entry_count` is an integer that gives the number of entries in the following table
+`first_chunk` is an integer that gives the index of the first chunk in this run of chunks
+    that share the same samples-per-chunk and sample-description-index; 
+    the index of the first chunk in a track has the value 1 (the `first_chunk` field in the 
+    first record of this box has the value 1, identifying that the first sample maps to the first chunk).
+`samples_per_chunk` is an integer that gives the number of samples in each of these chunks 
+    sample_description_index is an integer that gives the index of the sample entry 
+    that describes the samples in this chunk. The index ranges from 1 to the number 
+    of sample entries in the Sample Description Box
+
+
+**/
+
+#[derive(Debug, Clone)]
+pub struct Entry {
+    first_chunk: u32,
+    samples_per_chunk: u32,
+    sample_description_index: u32
+}
+
+#[derive(Debug, Clone)]
+pub struct Stsc {
+    header: Header,
+    entry_count: u32, 
+    entries: Vec<Entry>
+}
+
+impl Stsc {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        // let curr_offset = f.offset();
+        // f.seek(curr_offset+header.data_size);
+
+        let entry_count = f.read_u32().unwrap();
+        let mut entries: Vec<Entry> = Vec::new();
+        for _ in 0..entry_count {
+            let entry = Entry {
+                first_chunk: f.read_u32().unwrap(),
+                samples_per_chunk: f.read_u32().unwrap(),
+                sample_description_index: f.read_u32().unwrap(),
+            };
+            entries.push(entry);
+        }
+
+        f.offset_inc(header.data_size);
+        Ok(Stsc{
+            header     : header,
+            entry_count: entry_count,
+            entries    : entries
+        })
+    }
+}
+
+/**
+8.7.5 Chunk Offset Box
+8.7.5.1 Definition
+
+
+Box Type : ‘stco’, ‘co64’
+Container: Sample Table Box (‘stbl’)
+Mandatory: Yes
+Quantity : Exactly one variant must be present
+
+The chunk offset table gives the index of each chunk into the containing file. 
+There are two variants, permitting the use of 32-bit or 64-bit offsets. 
+The latter is useful when managing very large presentations. At most one of these 
+variants will occur in any single instance of a sample table.
+
+Offsets are file offsets, not the offset into any box within the file (e.g. Media Data Box). 
+This permits referring to media data in files without any box structure. It does also mean 
+that care must be taken when constructing a self-contained ISO file with its metadata (Movie Box) 
+at the front, as the size of the Movie Box will affect the chunk offsets to the media data.
+
+8.7.5.2 Syntax
+aligned(8) class ChunkOffsetBox
+   extends FullBox(‘stco’, version = 0, 0) {
+   unsigned int(32)  entry_count;
+   for (i=1; i <= entry_count; i++) {
+      unsigned int(32)  chunk_offset;
+   }
+}
+aligned(8) class ChunkLargeOffsetBox
+   extends FullBox(‘co64’, version = 0, 0) {
+   unsigned int(32)  entry_count;
+   for (i=1; i <= entry_count; i++) {
+      unsigned int(64)  chunk_offset;
+   }
+}
+
+8.7.5.3 Semantics
+`version` is an integer that specifies the version of this box
+`entry_count` is an integer that gives the number of entries in the following table
+`chunk_offset` is a 32 or 64 bit integer that gives the offset of the start 
+    of a chunk into its containing media file.
+
+**/
+
+#[derive(Debug, Clone)]
+pub struct Stco {
+    header: Header,
+    entry_count: u32, 
+    chunks: Vec<u32>
+}
+
+impl Stco {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        // let curr_offset = f.offset();
+        // f.seek(curr_offset+header.data_size);
+
+        let entry_count = f.read_u32().unwrap();
+        let mut chunks: Vec<u32> = Vec::new();
+
+        for _ in 0..entry_count {
+            chunks.push(f.read_u32().unwrap());
+        }
+
+        f.offset_inc(header.data_size);
+        Ok(Stco{
+            header     : header,
+            entry_count: entry_count,
+            chunks     : chunks
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Co64 {
+    header: Header,
+    entry_count: u32, 
+    chunks: Vec<u64>
+}
+
+impl Co64 {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        // let curr_offset = f.offset();
+        // f.seek(curr_offset+header.data_size);
+        
+        let entry_count = f.read_u32().unwrap();
+        let mut chunks: Vec<u64> = Vec::new();
+
+        for _ in 0..entry_count {
+            chunks.push(f.read_u64().unwrap());
+        }
+
+        f.offset_inc(header.data_size);
+        Ok(Co64{
+            header     : header,
+            entry_count: entry_count,
+            chunks     : chunks
+        })
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Stsd {
