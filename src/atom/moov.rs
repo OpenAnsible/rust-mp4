@@ -45,6 +45,7 @@ moov
     ipmc
 **/
 
+use std::string::String;
 use std::mem;
 use ::Matrix;
 use super::{Mp4File, Kind, Header, Atom};
@@ -600,10 +601,39 @@ impl Mdhd {
     }
 }
 
+/**
+8.4.3.2 Syntax
+
+aligned(8) class HandlerBox extends FullBox(‘hdlr’, version = 0, 0) {
+    unsigned int(32) pre_defined = 0;
+    unsigned int(32) handler_type;
+    const unsigned int(32)[3] reserved = 0;
+    string   name;
+}
+
+8.4.3.3 Semantics
+
+`version` is an integer that specifies the version of this box
+`handler_type` when present in a media box, is an integer containing one of the following values, 
+    or a value from a derived specification:
+        ‘vide’ Video track
+        ‘soun’ Audio track
+        ‘hint’ Hint track
+        ‘meta’ Timed Metadata track
+        ‘auxv’ Auxiliary Video track
+
+`handler_type` when present in a meta box, contains an appropriate value to 
+    indicate the format of the meta box contents. The value ‘null’ can be 
+    used in the primary meta box to indicate that it is merely being used to hold resources.
+`name` is a null-terminated string in UTF-8 characters which gives a human-readable name 
+    for the track type (for debugging and inspection purposes).
+**/
 
 #[derive(Debug, Clone)]
 pub struct Hdlr {
-    header: Header
+    header: Header,
+    handler_type: String,
+    name: String
 }
 
 impl Hdlr {
@@ -611,11 +641,34 @@ impl Hdlr {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let curr_offset = f.offset();
-        f.seek(curr_offset+header.data_size);
+        // let curr_offset = f.offset();
+        // f.seek(curr_offset+header.data_size);
+
+        let pre_defined = f.read_u32().unwrap();
+
+        // u32 = [u8, u8, u8, u8]
+        let handler_type_bytes: [u8; 4] = [
+            f.read_u8().unwrap(), f.read_u8().unwrap(),
+            f.read_u8().unwrap(), f.read_u8().unwrap()
+        ];
+        let handler_type = String::from_utf8(handler_type_bytes.to_vec()).unwrap();
+        // reserved
+        f.read_u32().unwrap();
+        f.read_u32().unwrap();
+        f.read_u32().unwrap();
+
+        let name_length = header.data_size - 20;
+        let mut name_bytes = Vec::new();
+        for _ in 0..name_length {
+            name_bytes.push(f.read_u8().unwrap());
+        }
+        let name = String::from_utf8(name_bytes).unwrap();
+
         f.offset_inc(header.data_size);
         Ok(Hdlr{
-            header: header
+            header: header,
+            handler_type: handler_type,
+            name: name
         })
     }
 }
@@ -843,7 +896,7 @@ impl Stz2 {
         let mut entry_size: Vec<u32> = Vec::new();
 
         let mut next_val: Option<u32> = None;
-        
+
         for _ in 0..sample_count {
             if field_size == 4u8 {
                 if next_val.is_some() {
