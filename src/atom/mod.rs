@@ -192,6 +192,9 @@ use self::moof::{
 use self::mfra::{
     Mfra, Tfra, Mfro
 };
+use self::meta::{
+    Meta, Xml, Bxml
+};
 use self::ignore::Ignore;
 use self::unrecognized::Unrecognized;
 
@@ -446,7 +449,11 @@ pub enum Atom {
     mfra(Mfra),
     tfra(Tfra),
     mfro(Mfro),
-    
+    // Meta
+    meta(Meta),
+    xml(Xml),
+    bxml(Bxml),
+
     ignore(Ignore),
     unrecognized(Unrecognized)
 }
@@ -464,7 +471,7 @@ impl Atom {
         let mut header = Header::parse(f).unwrap();
         // println!("DO: \n{:?}", header);
         let data = match header.kind {
-            // Kind::bxml => ,
+            Kind::bxml => Ok(Atom::bxml(Bxml::parse(f, header).unwrap())),
             Kind::co64 => Ok(Atom::co64(Co64::parse(f, header).unwrap())),
             Kind::cslg => Ok(Atom::cslg(Cslg::parse(f, header).unwrap())),
             // Kind::cprt => ,
@@ -493,7 +500,7 @@ impl Atom {
             // Kind::meco => ,
             Kind::mehd => Ok(Atom::mehd(Mehd::parse(f, header).unwrap())),
             // Kind::mere => ,
-            // Kind::meta => ,
+            Kind::meta => Ok(Atom::meta(Meta::parse(f, header).unwrap())),
             Kind::mfhd => Ok(Atom::mfhd(Mfhd::parse(f, header).unwrap())),
             Kind::mfra => Ok(Atom::mfra(Mfra::parse(f, header).unwrap())),
             Kind::mfro => Ok(Atom::mfro(Mfro::parse(f, header).unwrap())),
@@ -538,7 +545,7 @@ impl Atom {
             // Kind::udta => ,
             Kind::uuid => Ok(Atom::uuid(Uuid::parse(f, header).unwrap())),
             Kind::vmhd => Ok(Atom::vmhd(Vmhd::parse(f, header).unwrap())),
-            // Kind::xml  => ,
+            Kind::xml  => Ok(Atom::xml(Xml::parse(f, header).unwrap())),
             // Kind::strk => ,
             // Kind::stri => ,
             // Kind::strd => 
