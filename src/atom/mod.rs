@@ -168,6 +168,7 @@ mod meta;
 mod mfra;
 mod moof;
 mod moov;
+mod ignore;
 mod unrecognized;
 
 pub use self::kind::Kind;
@@ -182,9 +183,33 @@ use self::moov::{
     Moov, Mvhd, Trak, Tkhd, Tref, Mdia, Mdhd, Hdlr,
     Minf, Vmhd, Smhd, Hmhd, Nmhd, Stbl, Stsd, Stdp,
     Stts, Ctts, Cslg, Stss, Stsh, Sdtp, Stsc, Stsz,
-    Stz2, Stco, Co64,
+    Stz2, Stco, Co64, Padb, 
+    Mvex, Mehd, Trex
 };
+use self::moof::{
+    Moof, Mfhd, Traf, Tfhd, Trun, 
+};
+use self::mfra::{
+    Mfra, Tfra, Mfro
+};
+use self::ignore::Ignore;
 use self::unrecognized::Unrecognized;
+
+#[derive(Debug, Clone)]
+pub struct Entry {
+    first_chunk             : u32,
+    samples_per_chunk       : u32,
+    sample_description_index: u32
+}
+
+#[derive(Debug, Clone)]
+pub struct Sample {
+    duration: Option<u32>,
+    size    : Option<u32>,
+    flags   : Option<u32>,
+    composition_time_offset: Option<i32>,
+    description_index      : Option<u32>
+}
 
 /**
     aligned(8) class Box (unsigned int(32) boxtype,
@@ -303,9 +328,9 @@ impl Header {
             version    : None,
             flags      : None,
 
-            atom_size  : atom_size,  // atom size , include header and data.
+            atom_size  : atom_size,    // atom size , include header and data.
             header_size: header_size,  // atom header size, not include data size.
-            data_size  : data_size,  // atom data size , not include header size.
+            data_size  : data_size,    // atom data size , not include header size.
             offset     : curr_offset,  // file offset.
         };
         if size == 1u32 {
@@ -375,6 +400,7 @@ pub enum Atom {
     mdat(Mdat),
     pdin(Pdin),
     uuid(Uuid),
+    // MOOV
     moov(Moov),
     mvhd(Mvhd),
     trak(Trak),
@@ -388,6 +414,12 @@ pub enum Atom {
     smhd(Smhd),
     hmhd(Hmhd),
     nmhd(Nmhd),
+
+    mvex(Mvex),
+    mehd(Mehd),
+    trex(Trex),
+    
+    // STBL
     stbl(Stbl),
     stsc(Stsc),
     stsz(Stsz),
@@ -402,7 +434,20 @@ pub enum Atom {
     stss(Stss),
     stsh(Stsh),
     sdtp(Sdtp),
+    padb(Padb),
 
+    // MOOF
+    moof(Moof),
+    mfhd(Mfhd),
+    traf(Traf),
+    tfhd(Tfhd),
+    trun(Trun),
+    // MFRA
+    mfra(Mfra),
+    tfra(Tfra),
+    mfro(Mfro),
+    
+    ignore(Ignore),
     unrecognized(Unrecognized)
 }
 
@@ -446,19 +491,19 @@ impl Atom {
             Kind::mdhd => Ok(Atom::mdhd(Mdhd::parse(f, header).unwrap())),
             Kind::mdia => Ok(Atom::mdia(Mdia::parse(f, header).unwrap())),
             // Kind::meco => ,
-            // Kind::mehd => ,
+            Kind::mehd => Ok(Atom::mehd(Mehd::parse(f, header).unwrap())),
             // Kind::mere => ,
             // Kind::meta => ,
-            // Kind::mfhd => ,
-            // Kind::mfra => ,
-            // Kind::mfro => ,
+            Kind::mfhd => Ok(Atom::mfhd(Mfhd::parse(f, header).unwrap())),
+            Kind::mfra => Ok(Atom::mfra(Mfra::parse(f, header).unwrap())),
+            Kind::mfro => Ok(Atom::mfro(Mfro::parse(f, header).unwrap())),
             Kind::minf => Ok(Atom::minf(Minf::parse(f, header).unwrap())),
-            // Kind::moof => ,
+            Kind::moof => Ok(Atom::moof(Moof::parse(f, header).unwrap())),
             Kind::moov => Ok(Atom::moov(Moov::parse(f, header).unwrap())),
-            // Kind::mvex => ,
+            Kind::mvex => Ok(Atom::mvex(Mvex::parse(f, header).unwrap())),
             Kind::mvhd => Ok(Atom::mvhd(Mvhd::parse(f, header).unwrap())),
             Kind::nmhd => Ok(Atom::nmhd(Nmhd::parse(f, header).unwrap())),
-            // Kind::padb => ,
+            Kind::padb => Ok(Atom::padb(Padb::parse(f, header).unwrap())),
             // Kind::paen => ,
             Kind::pdin => Ok(Atom::pdin(Pdin::parse(f, header).unwrap())),
             // Kind::pitm => ,
@@ -468,7 +513,7 @@ impl Atom {
             Kind::sdtp => Ok(Atom::sdtp(Sdtp::parse(f, header).unwrap())),
             // Kind::sgpd => ,
             // Kind::sinf => ,
-            // Kind::skip => ,
+            Kind::skip => Ok(Atom::skip(Skip::parse(f, header).unwrap())),
             Kind::smhd => Ok(Atom::smhd(Smhd::parse(f, header).unwrap())),
             Kind::stbl => Ok(Atom::stbl(Stbl::parse(f, header).unwrap())),
             Kind::stco => Ok(Atom::stco(Stco::parse(f, header).unwrap())),
@@ -481,14 +526,14 @@ impl Atom {
             Kind::stts => Ok(Atom::stts(Stts::parse(f, header).unwrap())),
             Kind::stz2 => Ok(Atom::stz2(Stz2::parse(f, header).unwrap())),
             // Kind::subs => ,
-            // Kind::tfhd => ,
-            // Kind::tfra => ,
+            Kind::tfhd => Ok(Atom::tfhd(Tfhd::parse(f, header).unwrap())),
+            Kind::tfra => Ok(Atom::tfra(Tfra::parse(f, header).unwrap())),
             Kind::tkhd => Ok(Atom::tkhd(Tkhd::parse(f, header).unwrap())),
-            // Kind::traf => ,
+            Kind::traf => Ok(Atom::traf(Traf::parse(f, header).unwrap())),
             Kind::trak => Ok(Atom::trak(Trak::parse(f, header).unwrap())),
             Kind::tref => Ok(Atom::tref(Tref::parse(f, header).unwrap())),
-            // Kind::trex => ,
-            // Kind::trun => ,
+            Kind::trex => Ok(Atom::trex(Trex::parse(f, header).unwrap())),
+            Kind::trun => Ok(Atom::trun(Trun::parse(f, header).unwrap())),
             // Kind::tsel => ,
             // Kind::udta => ,
             Kind::uuid => Ok(Atom::uuid(Uuid::parse(f, header).unwrap())),
@@ -499,7 +544,7 @@ impl Atom {
             // Kind::strd => 
 
             Kind::Unrecognized(_) => Ok(Atom::unrecognized(Unrecognized::parse(f, header).unwrap())),
-            _ => Ok(Atom::unrecognized(Unrecognized::parse(f, header).unwrap()))
+            _ => Ok(Atom::ignore(Ignore::parse(f, header).unwrap()))
         };
         data
     }

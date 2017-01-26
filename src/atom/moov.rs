@@ -48,7 +48,7 @@ moov
 use std::string::String;
 use std::mem;
 use ::Matrix;
-use super::{Mp4File, Kind, Header, Atom};
+use super::{Mp4File, Kind, Header, Atom, Entry};
 
 /**
 
@@ -643,9 +643,8 @@ impl Hdlr {
 
         // let curr_offset = f.offset();
         // f.seek(curr_offset+header.data_size);
-
+        
         let pre_defined = f.read_u32().unwrap();
-
         // u32 = [u8, u8, u8, u8]
         let handler_type_bytes: [u8; 4] = [
             f.read_u8().unwrap(), f.read_u8().unwrap(),
@@ -955,13 +954,6 @@ aligned(8) class SampleToChunkBox extends FullBox(‘stsc’, version = 0, 0) {
 **/
 
 #[derive(Debug, Clone)]
-pub struct Entry {
-    first_chunk: u32,
-    samples_per_chunk: u32,
-    sample_description_index: u32
-}
-
-#[derive(Debug, Clone)]
 pub struct Stsc {
     header: Header,
     entry_count: u32, 
@@ -1095,6 +1087,70 @@ impl Co64 {
             header     : header,
             entry_count: entry_count,
             chunks     : chunks
+        })
+    }
+}
+
+/**
+Box Type : `padb`
+Container: Sample Table (‘stbl’)
+Mandatory: No
+Quantity : Zero or one
+
+
+8.7.6.3 Semantics
+
+In some streams the media samples do not occupy all bits of the bytes given by the sample size, 
+and are padded at the end to a byte boundary. In some cases, it is necessary to record 
+externally the number of padding bits used. This table supplies that information.
+
+8.7.6.2 Syntax
+
+aligned(8) class PaddingBitsBox extends FullBox(‘padb’, version = 0, 0) {
+    unsigned int(32) sample_count;
+    int i;
+    for (i=0; i < ((sample_count + 1)/2); i++) {
+        bit(1)   reserved = 0;
+        bit(3)   pad1;
+        bit(1)   reserved = 0;
+        bit(3)   pad2;
+    }
+}
+
+`sample_count` – counts the number of samples in the track;
+    it should match the count in other tables
+`pad1` – a value from 0 to 7, indicating the number of 
+    bits at the end of sample (i*2)+1.
+`pad2` – a value from 0 to 7, indicating the number of
+    bits at the end of sample (i*2)+2
+
+**/
+
+#[derive(Debug, Clone)]
+pub struct Padb {
+    header: Header,
+    sample_count: u32
+}
+
+impl Padb {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
+        header.parse_version(f);
+        header.parse_flags(f);
+        let curr_offset = f.offset();
+        
+        let sample_count = f.read_u32().unwrap();
+        // f.offset_inc(4);
+        // for i in 0..((sample_count+1)/2) {
+        //     let bits = format!("{:08b}", f.read_u8().unwrap());
+        //     let pad1 = u32::from_str_radix(&bits[1..4], 2).unwrap();
+        //     let pad2 = u32::from_str_radix(&bits[5..8], 2).unwrap();
+        // }
+
+        f.seek(curr_offset+header.data_size);
+        f.offset_inc(header.data_size);
+        Ok(Padb{
+            header      : header,
+            sample_count: sample_count
         })
     }
 }

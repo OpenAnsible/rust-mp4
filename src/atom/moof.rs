@@ -11,7 +11,7 @@ moof
 
 **/
 
-use super::{Mp4File, Kind, Header, Atom};
+use super::{Mp4File, Kind, Header, Atom, Sample};
 
 #[derive(Debug, Clone)]
 pub struct Moof {
@@ -73,15 +73,6 @@ impl Traf {
             children: children
         })
     }
-}
-
-#[derive(Debug, Clone)]
-pub struct Sample {
-    duration: Option<u32>,
-    size    : Option<u32>,
-    flags   : Option<u32>,
-    composition_time_offset: Option<i32>,
-    description_index      : Option<u32>
 }
 
 /**
