@@ -195,6 +195,9 @@ use self::mfra::{
 use self::meta::{
     Meta, Xml, Bxml
 };
+use self::meco::{
+    Meco, Mere
+};
 use self::ignore::Ignore;
 use self::unrecognized::Unrecognized;
 
@@ -453,7 +456,10 @@ pub enum Atom {
     meta(Meta),
     xml(Xml),
     bxml(Bxml),
-
+    // Meco
+    meco(Meco),
+    mere(Mere),
+    
     ignore(Ignore),
     unrecognized(Unrecognized)
 }
@@ -497,9 +503,9 @@ impl Atom {
             Kind::mdat => Ok(Atom::mdat(Mdat::parse(f, header).unwrap())),
             Kind::mdhd => Ok(Atom::mdhd(Mdhd::parse(f, header).unwrap())),
             Kind::mdia => Ok(Atom::mdia(Mdia::parse(f, header).unwrap())),
-            // Kind::meco => ,
+            Kind::meco => Ok(Atom::meco(Meco::parse(f, header).unwrap())),
             Kind::mehd => Ok(Atom::mehd(Mehd::parse(f, header).unwrap())),
-            // Kind::mere => ,
+            Kind::mere => Ok(Atom::mere(Mere::parse(f, header).unwrap())),
             Kind::meta => Ok(Atom::meta(Meta::parse(f, header).unwrap())),
             Kind::mfhd => Ok(Atom::mfhd(Mfhd::parse(f, header).unwrap())),
             Kind::mfra => Ok(Atom::mfra(Mfra::parse(f, header).unwrap())),
