@@ -321,7 +321,8 @@ impl Header {
 
         let header_size = 8u64;
         let atom_size = size as u64;
-        let data_size = atom_size - header_size;
+        // let data_size = atom_size - header_size;
+        let data_size = 0u64;
 
         f.offset_inc(header_size);
 
@@ -343,6 +344,8 @@ impl Header {
             header.parse_largesize(f);
         } else if size < 1u32 {
             return Err("can not parse this mp4 file.");
+        } else {
+            header.data_size = atom_size - header_size;
         }
         Ok(header)
     }
