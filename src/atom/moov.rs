@@ -43,6 +43,69 @@ moov
         mehd
         trex
     ipmc
+
+参考:
+    http://blog.csdn.net/yu_yuan_1314/article/details/9078287
+    http://www.cnblogs.com/tocy/p/media_container_3_mp4.html
+
+在MOV和MP4文件格式中包括几个重要的Table，对应的atoms分别为:
+    
+    stts, ctts, stss, stsc, stsz, stco/co64
+
+0. 节目时间计算(MVHD/MDHD)
+    t = duration / timescale (MVHD/MDHD)
+
+1. Sample时间表(stts)
+    Time-To-Sample Atoms，存储了媒体sample的时常信息，提供了时间和相关sample之间的映射关系。
+    该atom包含了一个表，关于time和sample号之间的索引关系。
+    表的每个entry给出了具有相同时间间隔的连续的sample的个数和这些sample的时间间隔值。
+    将这些时间间隔相加在一起，就可以得到一个完整的time与sample之间的映射。
+    将所有的时间间隔相加在一起，就可以得到该track的时间总长。
+    
+    每个sample的显示时间可以通过如下的公式得到：
+        D(n+1) = D(n) + STTS(n)
+    其中，STTS(n)是sample n的时间间隔，包含在表格中；D(n)是sample n的显示时间。
+
+2. 时间合成偏移表(ctts)
+    Composition Offset Atom。每一个视频sample都有一个解码顺序和一个显示顺序。
+    对于一个sample来说，解码顺序和显示顺序可能不一致，比如H.264格式，因此，
+    Composition Offset Atom就是在这种情况下被使用的。
+        （1）如果解码顺序和显示顺序是一致的，Composition Offset Atom就不会出现。
+             Time-To-Sample Atoms既提供了解码顺序也提供了显示顺序，
+             并能够计算出每个sample的开始时间和结束时间。
+        （2）如果解码顺序和显示顺序不一致，那么Time-To-Sample Atoms既提供解码顺序，
+            Composition Offset Atom则通过差值的形式来提供显示时间。
+
+    Composition Offset Atom提供了一个从解码时间到显示时间的sample一对一的映射，具有如下的映射关系：
+        CT(n) = DT(n) + CTTS(n)
+    其中，CTTS(n)是sample n在table中的entry（这里假设一个entry只对应一个sample）可以是正值也可是负值；
+    DT(n)是sample n的解码时间，通过Time-To-Sample Atoms计算获得；CT(n)便是sample n的显示时间。
+
+3. 同步Sample表(stss)
+    Sync Sample Atom，标识了媒体流中的关键帧，提供了随机访问点标记。
+    Sync Sample Atom包含了一个table，table的每个entry标识了一个sample，该sample是媒体流的关键帧。
+    Table中的sample号是严格按照增长的顺序排列的，如果该table不存在，那么每一个sample都可以作为随机访问点。
+    换句话说，如果Sync Sample Atom不存在，那么所有的sample都是关键帧。
+
+4. Chunk中的Sample信息表(stsc)
+    Sample-To-Chunk Atom。为了优化数据访问，通常把sample封装到chunk中，
+    一个chunk可能会包含一个或者几个sample。每个chunk会有不同的size，
+    每个chunk中的sample也会有不同的size。
+    在Sample-To-Chunk Atom中包含了个table，这个table提供了从sample到chunk的一个映射，
+    每个table entry可能包含一个或者多个chunk。
+    Table entry包含的内容包括第一个chunk号、每个chunk包含的sample的个数以及sample的描述ID。
+
+5. Sample大小表(stsz)
+    Sample Size Atom，指定了每个sample的size。Sample Size Atom给出了sample的总数和一张表，
+    这个表包含了每个sample的size。如果指定了默认的sampe size，那么这个table就不存在了。
+    即每个sample使用这个默认的sample size。
+
+6. Chunk的偏移量表(stco/co64)
+    Chunk Offset Atom，指定了每个chunk在文件中的位置。
+    Chunk Offset Atom包含了一个table，表中的每个entry给出了每个chunk在文件中的位置。
+    有两种形式来表示每个entry的值，即chunk的偏移量，32位和64位。
+    如果Chunk Offset Atom的类型为stco，则使用的是32位的，
+    如果是co64，那么使用的就是64位的。
 **/
 
 use std::string::String;
@@ -1191,38 +1254,241 @@ impl Stdp {
     }
 }
 
+/**
+
+8.6.1.2
+8.6.1.2.1 Decoding Time to Sample Box Definition
+Box Type : `stts`
+Container: Sample Table Box (‘stbl’)
+Mandatory: Yes
+Quantity : Exactly one
+
+This box contains a compact version of a table that allows indexing from decoding time to sample number. 
+Other tables give sample sizes and pointers, from the sample number. Each entry in the table gives 
+the number of consecutive samples with the same time delta, and the delta of those samples. 
+By adding the deltas a complete time-to-sample map may be built.
+
+The Decoding Time to Sample Box contains decode time delta's: 
+    DT(n+1) = DT(n) + STTS(n) where STTS(n) is the (uncompressed) table entry for sample n.
+
+The sample entries are ordered by decoding time stamps; therefore the deltas are all non-negative.
+
+The DT axis has a zero origin; DT(i) = SUM(for j=0 to i-1 of delta(j)), 
+and the sum of all deltas gives the length of the media in 
+the track (not mapped to the overall timescale, and not considering any edit list).
+
+The Edit List Box provides the initial CT value if it is non-empty (non-zero).
+
+8.6.1.2.2 Syntax
+
+aligned(8) class TimeToSampleBox extends FullBox(’stts’, version = 0, 0) {
+    unsigned int(32)  entry_count;
+    int i;
+    for (i=0; i < entry_count; i++) {
+        unsigned int(32)  sample_count;
+        unsigned int(32)  sample_delta;
+    }
+}
+
+For example with Table 2, the entry would be:
+
++++++++++++++++++++++++++++++++
+| Sample count | Sample-delta |
++++++++++++++++++++++++++++++++
+|     14       |      10      |
++++++++++++++++++++++++++++++++
+
+
+8.6.1.2.3 Semantics
+
+`version` - is an integer that specifies the version of this box.
+`entry_count` - is an integer that gives the number of entries in the following table.
+`sample_count` - is an integer that counts the number of consecutive samples that have the given
+duration.
+`sample_delta` - is an integer that gives the delta of these samples in the time-scale of the media.
+
+
+**/
+
+#[derive(Debug, Clone)]
+pub struct STTS_Entry {
+    sample_count: u32,
+    sample_delta: u32
+}
+
 #[derive(Debug, Clone)]
 pub struct Stts {
-    header: Header
+    header: Header,
+    entry_count: u32,
+    entries: Vec<STTS_Entry>
 }
 
 impl Stts {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
         header.parse_version(f);
         header.parse_flags(f);
-        let curr_offset = f.offset();
-        f.seek(curr_offset+header.data_size);
+        // let curr_offset = f.offset();
+        // f.seek(curr_offset+header.data_size);
+        let entry_count = f.read_u32().unwrap();
+        let mut entries = Vec::new();
+        
+        for _ in 0..entry_count {
+            let sample_count: u32 = f.read_u32().unwrap();
+            let sample_delta: u32 = f.read_u32().unwrap();
+            entries.push(STTS_Entry{
+                sample_count: sample_count,
+                sample_delta: sample_delta
+            });
+        }
+
         f.offset_inc(header.data_size);
         Ok(Stts{
-            header: header
+            header: header,
+            entry_count: entry_count,
+            entries: entries
         })
     }
 }
 
+/**
+8.6.1.3
+8.6.1.3.1 Composition Time to Sample Box Definition
+Box Type : `ctts`
+Container: Sample Table Box (‘stbl’)
+Mandatory: No
+Quantity : Zero or one
+
+
+This box provides the offset between decoding time and composition time. 
+
+In version 0 of this box the decoding time must be less than the composition time, 
+and the offsets are expressed as unsigned numbers such that CT(n) = DT(n) + CTTS(n) 
+where CTTS(n) is the (uncompressed) table entry for sample n. 
+
+In version 1 of this box, the composition timeline and the decoding timeline are 
+still derived from each other, but the offsets are signed. 
+It is recommended that for the computed composition timestamps, 
+there is exactly one with the value 0 (zero).
+
+For either version of the box, each sample must have a unique composition timestamp value, 
+that is, the timestamp for two samples shall never be the same.
+
+It may be true that there is no frame to compose at time 0; the handling of 
+this is unspecified (systems might display the first frame for longer, or a suitable fill colour).
+
+When version 1 of this box is used, the CompositionToDecodeBox may also be present in 
+the sample table to relate the composition and decoding timelines. 
+When backwards-compatibility or compatibility with an unknown set 
+of readers is desired, version 0 of this box should be used when possible. 
+In either version of this box, but particularly under version 0, 
+if it is desired that the media start at track time 0, and the first media 
+sample does not have a composition time of 0, an edit list may be used to ‘shift’ the media to time 0.
+
+The composition time to sample table is optional and must only be present 
+if DT and CT differ for any samples.
+
+Hint tracks do not use this box.
+
+For example in Table 2
+
++++++++++++++++++++++++++++++++
+| Sample count | Sample_offset|
++++++++++++++++++++++++++++++++
+|      1       |      10      |
+-------------------------------
+|      1       |      30      |
+-------------------------------
+|      2       |       0      |
+-------------------------------
+|      1       |      30      |
+-------------------------------
+|      2       |       0      |
+-------------------------------
+|      1       |      10      |
+-------------------------------
+|      1       |      30      |
+-------------------------------
+|      2       |       0      |
+-------------------------------
+|      1       |      30      |
+-------------------------------
+|      2       |       0      |
++++++++++++++++++++++++++++++++
+
+8.6.1.3.2 Syntax
+
+aligned(8) class CompositionOffsetBox extends FullBox(‘ctts’, version = 0, 0) {
+    unsigned int(32) entry_count;
+    int i;
+    if (version==0) {
+        for (i=0; i < entry_count; i++) {
+            unsigned int(32)  sample_count;
+            unsigned int(32)  sample_offset;
+        }
+    } else if (version == 1) {
+        for (i=0; i < entry_count; i++) {
+            unsigned int(32)  sample_count;
+            signed   int(32)  sample_offset;
+        }
+    }
+}
+
+8.6.1.3.3 Semantics
+
+`version` - is an integer that specifies the version of this box.
+`entry_count` is an integer that gives the number of entries in the following table.
+`sample_count` is an integer that counts the number of consecutive samples that have the given offset. 
+    sample_offset is an integer that gives the offset between CT and DT, 
+    such that CT(n) = DT(n) + CTTS(n).
+
+**/
+
+#[derive(Debug, Clone)]
+pub struct CTTS_Entry_Offset {
+    sample_count: u32,
+    sample_offset: i32
+}
+
 #[derive(Debug, Clone)]
 pub struct Ctts {
-    header: Header
+    header: Header,
+    entry_count: u32,
+    entries: Vec<CTTS_Entry_Offset>
 }
 
 impl Ctts {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str>{
         header.parse_version(f);
         header.parse_flags(f);
-        let curr_offset = f.offset();
-        f.seek(curr_offset+header.data_size);
+        // let curr_offset = f.offset();
+        // f.seek(curr_offset+header.data_size);
+
+        let version: u8 = header.version.unwrap();
+
+        let entry_count = f.read_u32().unwrap();
+        let mut entries = Vec::new();
+
+        for _ in 0..entry_count {
+            let sample_count: u32 = f.read_u32().unwrap();
+            let mut sample_offset: i32 = 0;
+
+            if version == 0u8 {
+                sample_offset = f.read_u32().unwrap() as i32;
+            } else {
+                sample_offset = f.read_i32().unwrap();
+            }
+
+            entries.push(CTTS_Entry_Offset{
+                sample_count: sample_count,
+                sample_offset: sample_offset
+            });
+        }
+
         f.offset_inc(header.data_size);
         Ok(Ctts{
-            header: header
+            header: header,
+            entry_count: entry_count,
+            entries: entries
         })
     }
 }
