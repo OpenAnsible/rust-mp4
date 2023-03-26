@@ -10,6 +10,6 @@ impl Unrecognized {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Unrecognized { header: header })
+        Ok(Self { header })
     }
 }

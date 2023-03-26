@@ -409,7 +409,7 @@ impl ToString for Kind {
             Self::Strk => "strk".to_owned(),
             Self::Stri => "stri".to_owned(),
             Self::Strd => "strd".to_owned(),
-            Self::Unrecognized(ref s) => s.to_owned(),
+            Self::Unrecognized(ref s) => s.clone(),
         }
     }
 }
@@ -419,13 +419,13 @@ impl Kind {
         let kind_str = match str::from_utf8(bytes) {
             Ok(s) => s,
             Err(_) => {
-                println!("Atom Kind ({:?}) parse error.", bytes);
+                println!("Atom Kind ({bytes:?}) parse error.");
                 return Err("Atom Kind parse error.");
             }
         };
         Self::from_str(kind_str)
     }
-    pub fn into_bytes(&self) -> Vec<u8> {
+    #[must_use] pub fn into_bytes(&self) -> Vec<u8> {
         self.to_string().into_bytes()
     }
 }

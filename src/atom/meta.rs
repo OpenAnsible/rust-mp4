@@ -82,7 +82,7 @@ impl Meta {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Meta { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -106,11 +106,11 @@ a byte-order-mark (BOM), which indicates that the data is in UTF-16 format.
 
 8.11.2.2 Syntax
 
-aligned(8) class XMLBox extends FullBox(‘xml ’, version = 0, 0) {
+aligned(8) class `XMLBox` extends FullBox(‘xml ’, version = 0, 0) {
     string xml;
 }
 
-aligned(8) class BinaryXMLBox extends FullBox(‘bxml’, version = 0, 0) {
+aligned(8) class `BinaryXMLBox` extends FullBox(‘bxml’, version = 0, 0) {
     unsigned int(8) data[]; // to end of box
 }
 
@@ -136,9 +136,9 @@ impl Xml {
         let xml: String = String::from_utf8(xml_bytes).unwrap();
 
         f.offset_inc(header.data_size);
-        Ok(Xml {
-            header: header,
-            xml: xml,
+        Ok(Self {
+            header,
+            xml,
         })
     }
 }
@@ -163,9 +163,9 @@ impl Bxml {
         // let xml: String = String::from_utf8(xml_bytes).unwrap();
 
         f.offset_inc(header.data_size);
-        Ok(Bxml {
-            header: header,
-            data: data,
+        Ok(Self {
+            header,
+            data,
         })
     }
 }

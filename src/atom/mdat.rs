@@ -18,7 +18,7 @@ impl Mdat {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Mdat { header: header })
+        Ok(Self { header })
     }
     // pub fn read(&self, buf: &mut [u8]) -> Result<usize>{
 

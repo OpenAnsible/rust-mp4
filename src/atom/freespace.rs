@@ -10,7 +10,7 @@ skip
             stri
             strd
 
-BoxTypes : ‘free’,‘skip’
+`BoxTypes` : ‘free’,‘skip’
 Container: File or other box
 Mandatory: No
 Quantity : Zero or more
@@ -22,7 +22,7 @@ unless this object is after all the media data).
 
 8.1.2.2 Syntax
 
-aligned(8) class FreeSpaceBox extends Box(free_type) {
+aligned(8) class `FreeSpaceBox` extends `Box(free_type`) {
     unsigned int(8) data[];
 }
 
@@ -42,7 +42,7 @@ impl Skip {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Skip { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -56,6 +56,6 @@ impl Free {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Free { header: header })
+        Ok(Self { header })
     }
 }

@@ -163,15 +163,15 @@ Quantity : Exactly one
 This box defines overall information which is media-independent,
 and relevant to the entire presentation considered as a whole.
 
-aligned(8) class MovieHeaderBox extends FullBox(‘mvhd’, version, 0) {
+aligned(8) class `MovieHeaderBox` extends FullBox(‘mvhd’, version, 0) {
     if (version==1) {
-        unsigned int(64)  creation_time;
-        unsigned int(64)  modification_time;
+        unsigned int(64)  `creation_time`;
+        unsigned int(64)  `modification_time`;
         unsigned int(32)  timescale;
         unsigned int(64)  duration;
     } else { // version==0
-        unsigned int(32)  creation_time;
-        unsigned int(32)  modification_time;
+        unsigned int(32)  `creation_time`;
+        unsigned int(32)  `modification_time`;
         unsigned int(32)  timescale;
         unsigned int(32)  duration;
     }
@@ -181,8 +181,8 @@ aligned(8) class MovieHeaderBox extends FullBox(‘mvhd’, version, 0) {
     const unsigned int(32)[2] reserved = 0;
     // Unity matrix
     template int(32)[9] matrix = { 0x00010000,0,0,0,0x00010000,0,0,0,0x40000000 };
-    bit(32)[6]  pre_defined = 0;
-    unsigned int(32)  next_track_ID;
+    bit(32)[6]  `pre_defined` = 0;
+    unsigned int(32)  `next_track_ID`;
 }
 
 8.2.2.3 Semantics
@@ -209,7 +209,7 @@ aligned(8) class MovieHeaderBox extends FullBox(‘mvhd’, version, 0) {
     hex values (0,0,0x40000000).
 `next_track_ID` is a non-zero integer that indicates a value to use for the track ID of
     the next track to be added to this presentation. Zero is not a valid track ID value.
-    The value of next_track_ID shall be larger than the largest track-ID in use.
+    The value of `next_track_ID` shall be larger than the largest track-ID in use.
     If this value is equal to all 1s (32-bit maxint), and a new media track is to be added,
     then a search must be made in the file for an unused track identifier.
 **/
@@ -251,10 +251,10 @@ impl Mvhd {
             length += 28;
         } else {
             // header version == 0
-            creation_time = f.read_u32().unwrap() as u64;
-            modification_time = f.read_u32().unwrap() as u64;
+            creation_time = u64::from(f.read_u32().unwrap());
+            modification_time = u64::from(f.read_u32().unwrap());
             timescale = f.read_u32().unwrap();
-            duration = f.read_u32().unwrap() as u64;
+            duration = u64::from(f.read_u32().unwrap());
             length += 16;
         }
         // fixed point 16.16 number
@@ -282,17 +282,17 @@ impl Mvhd {
 
         f.offset_inc(length);
 
-        Ok(Mvhd {
-            header: header,
-            creation_time: creation_time,
-            modification_time: modification_time,
-            timescale: timescale,
-            duration: duration,
+        Ok(Self {
+            header,
+            creation_time,
+            modification_time,
+            timescale,
+            duration,
 
-            rate: rate,
-            volume: volume,
-            matrix: matrix,
-            next_track_id: next_track_id,
+            rate,
+            volume,
+            matrix,
+            next_track_id,
         })
     }
 }
@@ -320,7 +320,7 @@ after deleting all hint tracks, the entire un-hinted presentation shall remain.
 
 8.3.1.2 Syntax
 
-aligned(8) class TrackBox extends Box(‘trak’) {
+aligned(8) class `TrackBox` extends Box(‘trak’) {
 
 }
 
@@ -356,8 +356,8 @@ at the beginning of the overall presentation. An empty edit is used
 to offset the start time of a track.
 
 The default value of the track header flags for media tracks
-is 7 (track_enabled, track_in_movie, track_in_preview).
-If in a presentation all tracks have neither track_in_movie nor track_in_preview set,
+is 7 (`track_enabled`, `track_in_movie`, `track_in_preview`).
+If in a presentation all tracks have neither `track_in_movie` nor `track_in_preview` set,
 then all tracks shall be treated as if both flags were set on all tracks.
 Server hint tracks should have the `track_in_movie` and `track_in_preview` set to 0,
 so that they are ignored for local playback and preview.
@@ -370,25 +370,25 @@ also operate in this uniformly-scaled space.
 
 8.3.2.2 Syntax
 
-aligned(8) class TrackHeaderBox
+aligned(8) class `TrackHeaderBox`
 extends FullBox(‘tkhd’, version, flags){
     if (version==1) {
-        unsigned int(64)  creation_time;
-        unsigned int(64)  modification_time;
-        unsigned int(32)  track_ID;
+        unsigned int(64)  `creation_time`;
+        unsigned int(64)  `modification_time`;
+        unsigned int(32)  `track_ID`;
         const unsigned int(32)  reserved = 0;
         unsigned int(64)  duration;
     } else { // version==0
-        unsigned int(32)  creation_time;
-        unsigned int(32)  modification_time;
-        unsigned int(32)  track_ID;
+        unsigned int(32)  `creation_time`;
+        unsigned int(32)  `modification_time`;
+        unsigned int(32)  `track_ID`;
         const unsigned int(32)  reserved = 0;
         unsigned int(32)  duration;
     }
     const unsigned int(32)[2] reserved = 0;
     template int(16) layer = 0;
-    template int(16) alternate_group = 0;
-    template int(16) volume = {if track_is_audio 0x0100 else 0};
+    template int(16) `alternate_group` = 0;
+    template int(16) volume = {if `track_is_audio` 0x0100 else 0};
     const unsigned int(16) reserved = 0;
     // unity matrix
     template int(32)[9] matrix = { 0x00010000,0,0,0,0x00010000,0,0,0,0x40000000 };
@@ -401,12 +401,12 @@ extends FullBox(‘tkhd’, version, flags){
 
 `version` is an integer that specifies the version of this box (0 or 1 in this specification)
 `flags` is a 24-bit integer with flags; the following values are defined:
-            Track_enabled: Indicates that the track is enabled.
+            `Track_enabled`: Indicates that the track is enabled.
                 Flag value is 0x000001.
                 A disabled track (the low bit is zero) is treated as if it were not present.
-            Track_in_movie: Indicates that the track is used in the presentation.
+            `Track_in_movie`: Indicates that the track is used in the presentation.
                 Flag value is 0x000002.
-            Track_in_preview: Indicates that the track is used when previewing
+            `Track_in_preview`: Indicates that the track is used when previewing
                 the presentation. Flag value is 0x000004.
 
 `creation_time` is an integer that declares the creation time of
@@ -475,7 +475,7 @@ impl Tkhd {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Tkhd { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -487,11 +487,11 @@ Quantity : Zero or one
 
 8.3.3.2 Syntax
 
-aligned(8) class TrackReferenceBox extends Box(‘tref’) {
+aligned(8) class `TrackReferenceBox` extends Box(‘tref’) {
 
 }
-aligned(8) class TrackReferenceTypeBox (unsigned int(32) reference_type) extends Box(reference_type) {
-   unsigned int(32) track_IDs[];
+aligned(8) class `TrackReferenceTypeBox` (unsigned int(32) `reference_type`) extends `Box(reference_type`) {
+   unsigned int(32) `track_IDs`[];
 }
 
 8.3.3.3 Semantics
@@ -499,7 +499,7 @@ aligned(8) class TrackReferenceTypeBox (unsigned int(32) reference_type) extends
 The Track Reference Box contains track reference type boxes.
 
 `track_ID` is an integer that provides a reference from the containing track
-    to another track in the presentation. track_IDs are never re-used and cannot be equal to zero.
+    to another track in the presentation. `track_IDs` are never re-used and cannot be equal to zero.
 The `reference_type` shall be set to one of the following values, or a value registered
     or from a derived specification or registration:
         *   `hint` the referenced track(s) contain the original media for this hint track
@@ -521,7 +521,7 @@ impl Tref {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Tref { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -543,7 +543,7 @@ impl Trgr {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Trgr { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -564,9 +564,9 @@ pub struct Mdia {
 impl Mdia {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Mdia {
-            header: header,
-            children: children,
+        Ok(Self {
+            header,
+            children,
         })
     }
 }
@@ -578,21 +578,21 @@ Mandatory: Yes
 Quantity : Exactly one
 
 8.4.2.2 Syntax
-aligned(8) class MediaHeaderBox extends FullBox(‘mdhd’, version, 0) {
+aligned(8) class `MediaHeaderBox` extends FullBox(‘mdhd’, version, 0) {
     if (version==1) {
-        unsigned int(64)  creation_time;
-        unsigned int(64)  modification_time;
+        unsigned int(64)  `creation_time`;
+        unsigned int(64)  `modification_time`;
         unsigned int(32)  timescale;
         unsigned int(64)  duration;
     } else { // version==0
-        unsigned int(32)  creation_time;
-        unsigned int(32)  modification_time;
+        unsigned int(32)  `creation_time`;
+        unsigned int(32)  `modification_time`;
         unsigned int(32)  timescale;
         unsigned int(32)  duration;
     }
     bit(1) pad = 0;
     unsigned int(5)[3] language; // ISO-639-2/T language code
-    unsigned int(16) pre_defined = 0;
+    unsigned int(16) `pre_defined` = 0;
 }
 
 **/
@@ -630,10 +630,10 @@ impl Mdhd {
             length += 28;
         } else {
             // header version == 0
-            creation_time = f.read_u32().unwrap() as u64;
-            modification_time = f.read_u32().unwrap() as u64;
+            creation_time = u64::from(f.read_u32().unwrap());
+            modification_time = u64::from(f.read_u32().unwrap());
             timescale = f.read_u32().unwrap();
-            duration = f.read_u32().unwrap() as u64;
+            duration = u64::from(f.read_u32().unwrap());
             length += 16;
         }
 
@@ -648,13 +648,13 @@ impl Mdhd {
         f.seek(curr_offset + length);
         f.offset_inc(length);
 
-        Ok(Mdhd {
-            header: header,
-            creation_time: creation_time,
-            modification_time: modification_time,
-            timescale: timescale,
-            duration: duration,
-            language: language,
+        Ok(Self {
+            header,
+            creation_time,
+            modification_time,
+            timescale,
+            duration,
+            language,
         })
     }
 }
@@ -662,9 +662,9 @@ impl Mdhd {
 /**
 8.4.3.2 Syntax
 
-aligned(8) class HandlerBox extends FullBox(‘hdlr’, version = 0, 0) {
-    unsigned int(32) pre_defined = 0;
-    unsigned int(32) handler_type;
+aligned(8) class `HandlerBox` extends FullBox(‘hdlr’, version = 0, 0) {
+    unsigned int(32) `pre_defined` = 0;
+    unsigned int(32) `handler_type`;
     const unsigned int(32)[3] reserved = 0;
     string   name;
 }
@@ -720,10 +720,10 @@ impl Hdlr {
         let name = String::from_utf8(name_bytes).unwrap();
 
         f.offset_inc(header.data_size);
-        Ok(Hdlr {
-            header: header,
-            handler_type: handler_type,
-            name: name,
+        Ok(Self {
+            header,
+            handler_type,
+            name,
         })
     }
 }
@@ -737,9 +737,9 @@ pub struct Minf {
 impl Minf {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Minf {
-            header: header,
-            children: children,
+        Ok(Self {
+            header,
+            children,
         })
     }
 }
@@ -839,7 +839,7 @@ impl Nmhd {
         header.parse_version(f);
         header.parse_flags(f);
 
-        Ok(Nmhd { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -852,9 +852,9 @@ pub struct Stbl {
 impl Stbl {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Stbl {
-            header: header,
-            children: children,
+        Ok(Self {
+            header,
+            children,
         })
     }
 }
@@ -888,22 +888,22 @@ impl Stsz {
 
         f.offset_inc(header.data_size);
 
-        Ok(Stsz {
-            header: header,
-            sample_size: sample_size,
-            sample_count: sample_count,
-            entry_size: entry_size,
+        Ok(Self {
+            header,
+            sample_size,
+            sample_count,
+            entry_size,
         })
     }
 }
 
 /**
-aligned(8) class CompactSampleSizeBox extends FullBox(‘stz2’, version = 0, 0) {
+aligned(8) class `CompactSampleSizeBox` extends FullBox(‘stz2’, version = 0, 0) {
     unsigned int(24) reserved = 0;
-    unisgned int(8) field_size;
-    unsigned int(32) sample_count;
-    for (i=1; i <= sample_count; i++) {
-        unsigned int(field_size)   entry_size;
+    unisgned int(8) `field_size`;
+    unsigned int(32) `sample_count`;
+    for (i=1; i <= `sample_count`; i++) {
+        unsigned `int(field_size`)   `entry_size`;
     }
 }
 
@@ -954,20 +954,20 @@ impl Stz2 {
                     next_val = Some(u32::from_str_radix(&bits[4..8], 2).unwrap());
                 }
             } else if field_size == 8u8 {
-                entry_size.push(f.read_u8().unwrap() as u32);
+                entry_size.push(u32::from(f.read_u8().unwrap()));
             } else if field_size == 16u8 {
-                entry_size.push(f.read_u16().unwrap() as u32);
+                entry_size.push(u32::from(f.read_u16().unwrap()));
             } else {
                 panic!("STZ2 parse error.");
             }
         }
 
         f.offset_inc(header.data_size);
-        Ok(Stz2 {
-            header: header,
-            field_size: field_size,
-            sample_count: sample_count,
-            entry_size: entry_size,
+        Ok(Self {
+            header,
+            field_size,
+            sample_count,
+            entry_size,
         })
     }
 }
@@ -976,11 +976,11 @@ impl Stz2 {
 
 8.7.4.2 Syntax
 
-aligned(8) class SampleToChunkBox extends FullBox(‘stsc’, version = 0, 0) {
-   unsigned int(32)  entry_count;
-   for (i=1; i <= entry_count; i++) {
-        unsigned int(32) first_chunk;
-        unsigned int(32) samples_per_chunk; unsigned int(32) sample_description_index;
+aligned(8) class `SampleToChunkBox` extends FullBox(‘stsc’, version = 0, 0) {
+   unsigned int(32)  `entry_count`;
+   for (i=1; i <= `entry_count`; i++) {
+        unsigned int(32) `first_chunk`;
+        unsigned int(32) `samples_per_chunk`; unsigned int(32) `sample_description_index`;
     }
 }
 
@@ -992,7 +992,7 @@ aligned(8) class SampleToChunkBox extends FullBox(‘stsc’, version = 0, 0) {
     the index of the first chunk in a track has the value 1 (the `first_chunk` field in the
     first record of this box has the value 1, identifying that the first sample maps to the first chunk).
 `samples_per_chunk` is an integer that gives the number of samples in each of these chunks
-    sample_description_index is an integer that gives the index of the sample entry
+    `sample_description_index` is an integer that gives the index of the sample entry
     that describes the samples in this chunk. The index ranges from 1 to the number
     of sample entries in the Sample Description Box
 
@@ -1025,10 +1025,10 @@ impl Stsc {
         }
 
         f.offset_inc(header.data_size);
-        Ok(Stsc {
-            header: header,
-            entry_count: entry_count,
-            entries: entries,
+        Ok(Self {
+            header,
+            entry_count,
+            entries,
         })
     }
 }
@@ -1054,18 +1054,18 @@ that care must be taken when constructing a self-contained ISO file with its met
 at the front, as the size of the Movie Box will affect the chunk offsets to the media data.
 
 8.7.5.2 Syntax
-aligned(8) class ChunkOffsetBox
+aligned(8) class `ChunkOffsetBox`
    extends FullBox(‘stco’, version = 0, 0) {
-   unsigned int(32)  entry_count;
-   for (i=1; i <= entry_count; i++) {
-      unsigned int(32)  chunk_offset;
+   unsigned int(32)  `entry_count`;
+   for (i=1; i <= `entry_count`; i++) {
+      unsigned int(32)  `chunk_offset`;
    }
 }
-aligned(8) class ChunkLargeOffsetBox
+aligned(8) class `ChunkLargeOffsetBox`
    extends FullBox(‘co64’, version = 0, 0) {
-   unsigned int(32)  entry_count;
-   for (i=1; i <= entry_count; i++) {
-      unsigned int(64)  chunk_offset;
+   unsigned int(32)  `entry_count`;
+   for (i=1; i <= `entry_count`; i++) {
+      unsigned int(64)  `chunk_offset`;
    }
 }
 
@@ -1099,10 +1099,10 @@ impl Stco {
         }
 
         f.offset_inc(header.data_size);
-        Ok(Stco {
-            header: header,
-            entry_count: entry_count,
-            chunks: chunks,
+        Ok(Self {
+            header,
+            entry_count,
+            chunks,
         })
     }
 }
@@ -1129,10 +1129,10 @@ impl Co64 {
         }
 
         f.offset_inc(header.data_size);
-        Ok(Co64 {
-            header: header,
-            entry_count: entry_count,
-            chunks: chunks,
+        Ok(Self {
+            header,
+            entry_count,
+            chunks,
         })
     }
 }
@@ -1152,10 +1152,10 @@ externally the number of padding bits used. This table supplies that information
 
 8.7.6.2 Syntax
 
-aligned(8) class PaddingBitsBox extends FullBox(‘padb’, version = 0, 0) {
-    unsigned int(32) sample_count;
+aligned(8) class `PaddingBitsBox` extends FullBox(‘padb’, version = 0, 0) {
+    unsigned int(32) `sample_count`;
     int i;
-    for (i=0; i < ((sample_count + 1)/2); i++) {
+    for (i=0; i < ((`sample_count` + 1)/2); i++) {
         bit(1)   reserved = 0;
         bit(3)   pad1;
         bit(1)   reserved = 0;
@@ -1194,9 +1194,9 @@ impl Padb {
 
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Padb {
-            header: header,
-            sample_count: sample_count,
+        Ok(Self {
+            header,
+            sample_count,
         })
     }
 }
@@ -1213,7 +1213,7 @@ impl Stsd {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Stsd { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -1229,7 +1229,7 @@ impl Stdp {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Stdp { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -1260,12 +1260,12 @@ The Edit List Box provides the initial CT value if it is non-empty (non-zero).
 
 8.6.1.2.2 Syntax
 
-aligned(8) class TimeToSampleBox extends FullBox(’stts’, version = 0, 0) {
-    unsigned int(32)  entry_count;
+aligned(8) class `TimeToSampleBox` extends FullBox(’stts’, version = 0, 0) {
+    unsigned int(32)  `entry_count`;
     int i;
-    for (i=0; i < entry_count; i++) {
-        unsigned int(32)  sample_count;
-        unsigned int(32)  sample_delta;
+    for (i=0; i < `entry_count`; i++) {
+        unsigned int(32)  `sample_count`;
+        unsigned int(32)  `sample_delta`;
     }
 }
 
@@ -1315,16 +1315,16 @@ impl Stts {
             let sample_count: u32 = f.read_u32().unwrap();
             let sample_delta: u32 = f.read_u32().unwrap();
             entries.push(SttsEntry {
-                sample_count: sample_count,
-                sample_delta: sample_delta,
+                sample_count,
+                sample_delta,
             });
         }
 
         f.offset_inc(header.data_size);
-        Ok(Stts {
-            header: header,
-            entry_count: entry_count,
-            entries: entries,
+        Ok(Self {
+            header,
+            entry_count,
+            entries,
         })
     }
 }
@@ -1355,7 +1355,7 @@ that is, the timestamp for two samples shall never be the same.
 It may be true that there is no frame to compose at time 0; the handling of
 this is unspecified (systems might display the first frame for longer, or a suitable fill colour).
 
-When version 1 of this box is used, the CompositionToDecodeBox may also be present in
+When version 1 of this box is used, the `CompositionToDecodeBox` may also be present in
 the sample table to relate the composition and decoding timelines.
 When backwards-compatibility or compatibility with an unknown set
 of readers is desired, version 0 of this box should be used when possible.
@@ -1371,7 +1371,7 @@ Hint tracks do not use this box.
 For example in Table 2
 
 +++++++++++++++++++++++++++++++
-| Sample count | Sample_offset|
+| Sample count | `Sample_offset`|
 +++++++++++++++++++++++++++++++
 |      1       |      10      |
 -------------------------------
@@ -1396,18 +1396,18 @@ For example in Table 2
 
 8.6.1.3.2 Syntax
 
-aligned(8) class CompositionOffsetBox extends FullBox(‘ctts’, version = 0, 0) {
-    unsigned int(32) entry_count;
+aligned(8) class `CompositionOffsetBox` extends FullBox(‘ctts’, version = 0, 0) {
+    unsigned int(32) `entry_count`;
     int i;
     if (version==0) {
-        for (i=0; i < entry_count; i++) {
-            unsigned int(32)  sample_count;
-            unsigned int(32)  sample_offset;
+        for (i=0; i < `entry_count`; i++) {
+            unsigned int(32)  `sample_count`;
+            unsigned int(32)  `sample_offset`;
         }
     } else if (version == 1) {
-        for (i=0; i < entry_count; i++) {
-            unsigned int(32)  sample_count;
-            signed   int(32)  sample_offset;
+        for (i=0; i < `entry_count`; i++) {
+            unsigned int(32)  `sample_count`;
+            signed   int(32)  `sample_offset`;
         }
     }
 }
@@ -1417,7 +1417,7 @@ aligned(8) class CompositionOffsetBox extends FullBox(‘ctts’, version = 0, 0
 `version` - is an integer that specifies the version of this box.
 `entry_count` is an integer that gives the number of entries in the following table.
 `sample_count` is an integer that counts the number of consecutive samples that have the given offset.
-    sample_offset is an integer that gives the offset between CT and DT,
+    `sample_offset` is an integer that gives the offset between CT and DT,
     such that CT(n) = DT(n) + CTTS(n).
 
 **/
@@ -1458,16 +1458,16 @@ impl Ctts {
             }
 
             entries.push(CttsEntryOffset {
-                sample_count: sample_count,
-                sample_offset: sample_offset,
+                sample_count,
+                sample_offset,
             });
         }
 
         f.offset_inc(header.data_size);
-        Ok(Ctts {
-            header: header,
-            entry_count: entry_count,
-            entries: entries,
+        Ok(Self {
+            header,
+            entry_count,
+            entries,
         })
     }
 }
@@ -1484,7 +1484,7 @@ impl Cslg {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Cslg { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -1500,7 +1500,7 @@ impl Stss {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Stss { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -1516,7 +1516,7 @@ impl Stsh {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Stsh { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -1532,7 +1532,7 @@ impl Sdtp {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Sdtp { header: header })
+        Ok(Self { header })
     }
 }
 
@@ -1545,9 +1545,9 @@ pub struct Mvex {
 impl Mvex {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Mvex {
-            header: header,
-            children: children,
+        Ok(Self {
+            header,
+            children,
         })
     }
 }
@@ -1562,11 +1562,11 @@ The Movie Extends Header is optional, and provides the overall duration,
 including fragments, of a fragmented movie. If this box is not present,
 the overall duration must be computed by examining each fragment.
 
-aligned(8) class MovieExtendsHeaderBox extends FullBox(‘mehd’, version, 0) {
+aligned(8) class `MovieExtendsHeaderBox` extends FullBox(‘mehd’, version, 0) {
     if (version==1) {
-        unsigned int(64)  fragment_duration;
+        unsigned int(64)  `fragment_duration`;
    } else { // version==0
-        unsigned int(32)  fragment_duration;
+        unsigned int(32)  `fragment_duration`;
    }
 }
 **/
@@ -1586,13 +1586,13 @@ impl Mehd {
         if header.version.unwrap() == 1u8 {
             fragment_duration = f.read_u64().unwrap();
         } else {
-            fragment_duration = f.read_u32().unwrap() as u64;
+            fragment_duration = u64::from(f.read_u32().unwrap());
         }
         // f.seek(curr_offset+header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Mehd {
-            header: header,
-            fragment_duration: fragment_duration,
+        Ok(Self {
+            header,
+            fragment_duration,
         })
     }
 }
@@ -1609,6 +1609,6 @@ impl Trex {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Trex { header: header })
+        Ok(Self { header })
     }
 }

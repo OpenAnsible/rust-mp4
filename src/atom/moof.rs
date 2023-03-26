@@ -21,9 +21,9 @@ pub struct Moof {
 impl Moof {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Moof {
-            header: header,
-            children: children,
+        Ok(Self {
+            header,
+            children,
         })
     }
 }
@@ -31,8 +31,8 @@ impl Moof {
 /**
 
 
-aligned(8) class MovieFragmentHeaderBox extends FullBox(‘mfhd’, 0, 0){
-   unsigned int(32)  sequence_number;
+aligned(8) class `MovieFragmentHeaderBox` extends FullBox(‘mfhd’, 0, 0){
+   unsigned int(32)  `sequence_number`;
 }
 
 **/
@@ -83,7 +83,7 @@ Each movie fragment can add zero or more fragments to each track;
 and a track fragment can add zero or more contiguous runs of samples.
 The track fragment header sets up information and defaults used for those runs of samples.
 
-The following flags are defined in the tf_flags:
+The following flags are defined in the `tf_flags`:
     0x000001 base-data-offset-present: indicates the presence of the base-data-offset field.
              This provides an explicit anchor for the data offsets in each track run (see below).
              If not provided, the base-data-offset for the first track in the movie fragment is
@@ -111,14 +111,14 @@ NOTE:
     the default-base-is-moof flag cannot be set when earlier brands are included in the File Type box.
 
 8.8.7.2 Syntax
-aligned(8) class TrackFragmentHeaderBox extends FullBox(‘tfhd’, 0, tf_flags){
-    unsigned int(32) track_ID;
+aligned(8) class `TrackFragmentHeaderBox` extends FullBox(‘tfhd’, 0, `tf_flags`){
+    unsigned int(32) `track_ID`;
     // all the following are optional fields
-    unsigned int(64) base_data_offset;
-    unsigned int(32) sample_description_index;
-    unsigned int(32) default_sample_duration;
-    unsigned int(32) default_sample_size;
-    unsigned int(32) default_sample_flags
+    unsigned int(64) `base_data_offset`;
+    unsigned int(32) `sample_description_index`;
+    unsigned int(32) `default_sample_duration`;
+    unsigned int(32) `default_sample_size`;
+    unsigned int(32) `default_sample_flags`
 }
 
 8.8.7.3 Semantics
@@ -179,10 +179,10 @@ impl Tfhd {
             }
         }
         f.offset_inc(header.data_size);
-        Ok(Tfhd {
-            header: header,
-            track_id: track_id,
-            base_data_offset: base_data_offset,
+        Ok(Self {
+            header,
+            track_id,
+            base_data_offset,
             sample: Sample {
                 duration: default_sample_duration,
                 size: default_sample_size,
@@ -233,27 +233,27 @@ or unsigned. The recommendations given in the composition time-to-sample box con
 signed composition offsets also apply here.
 
 
-aligned(8) class TrackRunBox extends FullBox(‘trun’, version, tr_flags) {
-    unsigned int(32) sample_count;
+aligned(8) class `TrackRunBox` extends FullBox(‘trun’, version, `tr_flags`) {
+    unsigned int(32) `sample_count`;
     // the following are optional fields
-    signed int(32) data_offset;
-    unsigned int(32) first_sample_flags;
+    signed int(32) `data_offset`;
+    unsigned int(32) `first_sample_flags`;
     // all fields in the following array are optional
     {
-      unsigned int(32)  sample_duration;
-      unsigned int(32)  sample_size;
-      unsigned int(32)  sample_flags
+      unsigned int(32)  `sample_duration`;
+      unsigned int(32)  `sample_size`;
+      unsigned int(32)  `sample_flags`
       if (version == 0) {
-            unsigned int(32) sample_composition_time_offset;
+            unsigned int(32) `sample_composition_time_offset`;
       } else {
-            signed int(32) sample_composition_time_offset;
-      }[ sample_count ]
+            signed int(32) `sample_composition_time_offset`;
+      }[ `sample_count` ]
     }
 }
 
 `sample_count` the number of samples being added in this run;
     also the number of rows in the following table (the rows can be empty)
-`data_offset` is added to the implicit or explicit data_offset established in the track fragment header.
+`data_offset` is added to the implicit or explicit `data_offset` established in the track fragment header.
 `first_sample_flags` provides a set of flags for the first sample only of this run.
 
 **/
@@ -331,13 +331,13 @@ impl Trun {
         // f.seek(curr_offset+header.data_size);
 
         f.offset_inc(header.data_size);
-        Ok(Trun {
-            header: header,
-            sample_count: sample_count,
-            data_offset: data_offset,
+        Ok(Self {
+            header,
+            sample_count,
+            data_offset,
 
-            first_sample_flags: first_sample_flags,
-            samples: samples,
+            first_sample_flags,
+            samples,
         })
     }
 }

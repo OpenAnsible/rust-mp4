@@ -296,7 +296,7 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn parse(f: &mut Mp4File) -> Result<Header, &'static str> {
+    pub fn parse(f: &mut Mp4File) -> Result<Self, &'static str> {
         let curr_offset = f.offset();
         let size: u32 = f.read_u32().unwrap();
 
@@ -309,24 +309,24 @@ impl Header {
         let kind = Kind::from_bytes(&kind_bytes).unwrap();
 
         let header_size = 8u64;
-        let atom_size = size as u64;
+        let atom_size = u64::from(size);
         // let data_size = atom_size - header_size;
         let data_size = 0u64;
 
         f.offset_inc(header_size);
 
-        let mut header = Header {
-            size: size,
-            kind: kind,
+        let mut header = Self {
+            size,
+            kind,
 
             largesize: None,
             usertype: None,
             version: None,
             flags: None,
 
-            atom_size: atom_size,     // atom size , include header and data.
-            header_size: header_size, // atom header size, not include data size.
-            data_size: data_size,     // atom data size , not include header size.
+            atom_size,     // atom size , include header and data.
+            header_size, // atom header size, not include data size.
+            data_size,     // atom data size , not include header size.
             offset: curr_offset,      // file offset.
         };
         if size == 1u32 {
@@ -344,7 +344,7 @@ impl Header {
 
         let largesize = f.read_u64().unwrap();
         self.atom_size = largesize;
-        self.header_size = self.header_size + 8;
+        self.header_size += 8;
         self.data_size = largesize - self.header_size;
 
         self.largesize = Some(largesize);
@@ -372,7 +372,7 @@ impl Header {
         ];
         self.usertype = Some(usertype);
 
-        self.header_size = self.header_size + 16;
+        self.header_size += 16;
         self.data_size = self.atom_size - self.header_size;
         f.offset_inc(16);
     }
@@ -381,7 +381,7 @@ impl Header {
         let version = f.read_u8().unwrap();
         self.version = Some(version);
 
-        self.header_size = self.header_size + 1;
+        self.header_size += 1;
         self.data_size = self.atom_size - self.header_size;
         f.offset_inc(1);
     }
@@ -394,7 +394,7 @@ impl Header {
         ];
         self.flags = Some(flags);
 
-        self.header_size = self.header_size + 3;
+        self.header_size += 3;
         self.data_size = self.atom_size - self.header_size;
         f.offset_inc(3);
     }
@@ -481,11 +481,11 @@ impl Atom {
         let header = Header::parse(f).unwrap();
 
         let data = match header.kind {
-            Kind::Bxml => Ok(Atom::Bxml(Bxml::parse(f, header).unwrap())),
-            Kind::Co64 => Ok(Atom::Co64(Co64::parse(f, header).unwrap())),
-            Kind::Cslg => Ok(Atom::Cslg(Cslg::parse(f, header).unwrap())),
+            Kind::Bxml => Ok(Self::Bxml(Bxml::parse(f, header).unwrap())),
+            Kind::Co64 => Ok(Self::Co64(Co64::parse(f, header).unwrap())),
+            Kind::Cslg => Ok(Self::Cslg(Cslg::parse(f, header).unwrap())),
             // Kind::cprt => ,
-            Kind::Ctts => Ok(Atom::Ctts(Ctts::parse(f, header).unwrap())),
+            Kind::Ctts => Ok(Self::Ctts(Ctts::parse(f, header).unwrap())),
             // Kind::dinf => ,
             // Kind::dref => ,
             // Kind::edts => ,
@@ -493,86 +493,86 @@ impl Atom {
             // Kind::fecr => ,
             // Kind::fiin => ,
             // Kind::fpar => ,
-            Kind::Free => Ok(Atom::Free(Free::parse(f, header).unwrap())),
+            Kind::Free => Ok(Self::Free(Free::parse(f, header).unwrap())),
             // Kind::frma => ,
-            Kind::Ftyp => Ok(Atom::Ftyp(Ftyp::parse(f, header).unwrap())),
-            Kind::Hdlr => Ok(Atom::Hdlr(Hdlr::parse(f, header).unwrap())),
-            Kind::Hmhd => Ok(Atom::Hmhd(Hmhd::parse(f, header).unwrap())),
+            Kind::Ftyp => Ok(Self::Ftyp(Ftyp::parse(f, header).unwrap())),
+            Kind::Hdlr => Ok(Self::Hdlr(Hdlr::parse(f, header).unwrap())),
+            Kind::Hmhd => Ok(Self::Hmhd(Hmhd::parse(f, header).unwrap())),
             // Kind::iinf => ,
             // Kind::iloc => ,
             // Kind::imif => ,
             // Kind::ipmc => ,
             // Kind::ipro => ,
             // Kind::itn  => ,
-            Kind::Mdat => Ok(Atom::Mdat(Mdat::parse(f, header).unwrap())),
-            Kind::Mdhd => Ok(Atom::Mdhd(Mdhd::parse(f, header).unwrap())),
-            Kind::Mdia => Ok(Atom::Mdia(Mdia::parse(f, header).unwrap())),
-            Kind::Meco => Ok(Atom::Meco(Meco::parse(f, header).unwrap())),
-            Kind::Mehd => Ok(Atom::Mehd(Mehd::parse(f, header).unwrap())),
-            Kind::Mere => Ok(Atom::Mere(Mere::parse(f, header).unwrap())),
-            Kind::Meta => Ok(Atom::Meta(Meta::parse(f, header).unwrap())),
-            Kind::Mfhd => Ok(Atom::Mfhd(Mfhd::parse(f, header).unwrap())),
-            Kind::Mfra => Ok(Atom::Mfra(Mfra::parse(f, header).unwrap())),
-            Kind::Mfro => Ok(Atom::Mfro(Mfro::parse(f, header).unwrap())),
-            Kind::Minf => Ok(Atom::Minf(Minf::parse(f, header).unwrap())),
-            Kind::Moof => Ok(Atom::Moof(Moof::parse(f, header).unwrap())),
-            Kind::Moov => Ok(Atom::Moov(Moov::parse(f, header).unwrap())),
-            Kind::Mvex => Ok(Atom::Mvex(Mvex::parse(f, header).unwrap())),
-            Kind::Mvhd => Ok(Atom::Mvhd(Mvhd::parse(f, header).unwrap())),
-            Kind::Mmhd => Ok(Atom::Mmhd(Nmhd::parse(f, header).unwrap())),
-            Kind::Padb => Ok(Atom::Padb(Padb::parse(f, header).unwrap())),
+            Kind::Mdat => Ok(Self::Mdat(Mdat::parse(f, header).unwrap())),
+            Kind::Mdhd => Ok(Self::Mdhd(Mdhd::parse(f, header).unwrap())),
+            Kind::Mdia => Ok(Self::Mdia(Mdia::parse(f, header).unwrap())),
+            Kind::Meco => Ok(Self::Meco(Meco::parse(f, header).unwrap())),
+            Kind::Mehd => Ok(Self::Mehd(Mehd::parse(f, header).unwrap())),
+            Kind::Mere => Ok(Self::Mere(Mere::parse(f, header).unwrap())),
+            Kind::Meta => Ok(Self::Meta(Meta::parse(f, header).unwrap())),
+            Kind::Mfhd => Ok(Self::Mfhd(Mfhd::parse(f, header).unwrap())),
+            Kind::Mfra => Ok(Self::Mfra(Mfra::parse(f, header).unwrap())),
+            Kind::Mfro => Ok(Self::Mfro(Mfro::parse(f, header).unwrap())),
+            Kind::Minf => Ok(Self::Minf(Minf::parse(f, header).unwrap())),
+            Kind::Moof => Ok(Self::Moof(Moof::parse(f, header).unwrap())),
+            Kind::Moov => Ok(Self::Moov(Moov::parse(f, header).unwrap())),
+            Kind::Mvex => Ok(Self::Mvex(Mvex::parse(f, header).unwrap())),
+            Kind::Mvhd => Ok(Self::Mvhd(Mvhd::parse(f, header).unwrap())),
+            Kind::Mmhd => Ok(Self::Mmhd(Nmhd::parse(f, header).unwrap())),
+            Kind::Padb => Ok(Self::Padb(Padb::parse(f, header).unwrap())),
             // Kind::paen => ,
-            Kind::Pdin => Ok(Atom::Pdin(Pdin::parse(f, header).unwrap())),
+            Kind::Pdin => Ok(Self::Pdin(Pdin::parse(f, header).unwrap())),
             // Kind::pitm => ,
             // Kind::sbgp => ,
             // Kind::schi => ,
             // Kind::schm => ,
-            Kind::Sdtp => Ok(Atom::Sdtp(Sdtp::parse(f, header).unwrap())),
+            Kind::Sdtp => Ok(Self::Sdtp(Sdtp::parse(f, header).unwrap())),
             // Kind::sgpd => ,
             // Kind::sinf => ,
-            Kind::Skip => Ok(Atom::Skip(Skip::parse(f, header).unwrap())),
-            Kind::Smhd => Ok(Atom::Smhd(Smhd::parse(f, header).unwrap())),
-            Kind::Stbl => Ok(Atom::Stbl(Stbl::parse(f, header).unwrap())),
-            Kind::Stco => Ok(Atom::Stco(Stco::parse(f, header).unwrap())),
-            Kind::Stdp => Ok(Atom::Stdp(Stdp::parse(f, header).unwrap())),
-            Kind::Stsc => Ok(Atom::Stsc(Stsc::parse(f, header).unwrap())),
-            Kind::Stsd => Ok(Atom::Stsd(Stsd::parse(f, header).unwrap())),
-            Kind::Stsh => Ok(Atom::Stsh(Stsh::parse(f, header).unwrap())),
-            Kind::Stss => Ok(Atom::Stss(Stss::parse(f, header).unwrap())),
-            Kind::Stsz => Ok(Atom::Stsz(Stsz::parse(f, header).unwrap())),
-            Kind::Stts => Ok(Atom::Stts(Stts::parse(f, header).unwrap())),
-            Kind::Stz2 => Ok(Atom::Stz2(Stz2::parse(f, header).unwrap())),
+            Kind::Skip => Ok(Self::Skip(Skip::parse(f, header).unwrap())),
+            Kind::Smhd => Ok(Self::Smhd(Smhd::parse(f, header).unwrap())),
+            Kind::Stbl => Ok(Self::Stbl(Stbl::parse(f, header).unwrap())),
+            Kind::Stco => Ok(Self::Stco(Stco::parse(f, header).unwrap())),
+            Kind::Stdp => Ok(Self::Stdp(Stdp::parse(f, header).unwrap())),
+            Kind::Stsc => Ok(Self::Stsc(Stsc::parse(f, header).unwrap())),
+            Kind::Stsd => Ok(Self::Stsd(Stsd::parse(f, header).unwrap())),
+            Kind::Stsh => Ok(Self::Stsh(Stsh::parse(f, header).unwrap())),
+            Kind::Stss => Ok(Self::Stss(Stss::parse(f, header).unwrap())),
+            Kind::Stsz => Ok(Self::Stsz(Stsz::parse(f, header).unwrap())),
+            Kind::Stts => Ok(Self::Stts(Stts::parse(f, header).unwrap())),
+            Kind::Stz2 => Ok(Self::Stz2(Stz2::parse(f, header).unwrap())),
             // Kind::subs => ,
-            Kind::Tfhd => Ok(Atom::Tfhd(Tfhd::parse(f, header).unwrap())),
-            Kind::Tfra => Ok(Atom::Tfra(Tfra::parse(f, header).unwrap())),
-            Kind::Tkhd => Ok(Atom::Tkhd(Tkhd::parse(f, header).unwrap())),
-            Kind::Traf => Ok(Atom::Traf(Traf::parse(f, header).unwrap())),
-            Kind::Trak => Ok(Atom::Trak(Trak::parse(f, header).unwrap())),
-            Kind::Tref => Ok(Atom::Tref(Tref::parse(f, header).unwrap())),
-            Kind::Trex => Ok(Atom::Trex(Trex::parse(f, header).unwrap())),
-            Kind::Trun => Ok(Atom::Trun(Trun::parse(f, header).unwrap())),
+            Kind::Tfhd => Ok(Self::Tfhd(Tfhd::parse(f, header).unwrap())),
+            Kind::Tfra => Ok(Self::Tfra(Tfra::parse(f, header).unwrap())),
+            Kind::Tkhd => Ok(Self::Tkhd(Tkhd::parse(f, header).unwrap())),
+            Kind::Traf => Ok(Self::Traf(Traf::parse(f, header).unwrap())),
+            Kind::Trak => Ok(Self::Trak(Trak::parse(f, header).unwrap())),
+            Kind::Tref => Ok(Self::Tref(Tref::parse(f, header).unwrap())),
+            Kind::Trex => Ok(Self::Trex(Trex::parse(f, header).unwrap())),
+            Kind::Trun => Ok(Self::Trun(Trun::parse(f, header).unwrap())),
             // Kind::tsel => ,
             // Kind::udta => ,
-            Kind::Uuid => Ok(Atom::Uuid(Uuid::parse(f, header).unwrap())),
-            Kind::Vmhd => Ok(Atom::Vmhd(Vmhd::parse(f, header).unwrap())),
-            Kind::Xml => Ok(Atom::Xml(Xml::parse(f, header).unwrap())),
+            Kind::Uuid => Ok(Self::Uuid(Uuid::parse(f, header).unwrap())),
+            Kind::Vmhd => Ok(Self::Vmhd(Vmhd::parse(f, header).unwrap())),
+            Kind::Xml => Ok(Self::Xml(Xml::parse(f, header).unwrap())),
             // Kind::strk => ,
             // Kind::stri => ,
             // Kind::strd =>
             Kind::Unrecognized(_) => {
-                Ok(Atom::Unrecognized(Unrecognized::parse(f, header).unwrap()))
+                Ok(Self::Unrecognized(Unrecognized::parse(f, header).unwrap()))
             }
-            _ => Ok(Atom::Ignore(Ignore::parse(f, header).unwrap())),
+            _ => Ok(Self::Ignore(Ignore::parse(f, header).unwrap())),
         };
         data
     }
-    pub fn parse_children(f: &mut Mp4File) -> Vec<Atom> {
-        let mut atoms: Vec<Atom> = Vec::new();
+    pub fn parse_children(f: &mut Mp4File) -> Vec<Self> {
+        let mut atoms: Vec<Self> = Vec::new();
         loop {
             if f.offset() == f.file_size() {
                 break;
             }
-            match Atom::parse(f) {
+            match Self::parse(f) {
                 Ok(atom) => {
                     atoms.push(atom);
                 }

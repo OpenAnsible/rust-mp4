@@ -1,17 +1,17 @@
 use super::{Atom, Header, Kind, Mp4File};
 
 /**
-BoxTypes : `pdin`
+`BoxTypes` : `pdin`
 Container: File
 Mandatory: No
 Quantity : Zero or One
 
 8.1.3.2 Syntax
 
-aligned(8) class ProgressiveDownloadInfoBox extends FullBox(‘pdin’, version = 0, 0) {
+aligned(8) class `ProgressiveDownloadInfoBox` extends FullBox(‘pdin’, version = 0, 0) {
     for(i=0;;i++){ //to end of box
         unsigned int(32) rate;
-        unsigned int(32) initial_delay;
+        unsigned int(32) `initial_delay`;
     }
 }
 
@@ -36,10 +36,10 @@ impl Pdin {
         let rate = f.read_u32().unwrap();
         let initial_delay = f.read_u32().unwrap();
         f.offset_inc(header.data_size);
-        Ok(Pdin {
-            header: header,
-            rate: rate,
-            initial_delay: initial_delay,
+        Ok(Self {
+            header,
+            rate,
+            initial_delay,
         })
     }
 }

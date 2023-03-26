@@ -19,7 +19,7 @@ Quantity : Zero or one
 
 8.11.7.2 Syntax
 
-aligned(8) class AdditionalMetadataContainerBox extends Box('meco') {
+aligned(8) class `AdditionalMetadataContainerBox` extends Box('meco') {
 
 }
 **/

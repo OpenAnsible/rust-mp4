@@ -41,31 +41,31 @@ impl Mp4File {
             .unwrap();
         let file_size = file.metadata().unwrap().len();
 
-        let mp4 = Mp4File {
-            file: file,
-            file_size: file_size,
+        let mp4 = Self {
+            file,
+            file_size,
             offset: 0,
             atoms: vec![],
         };
         Ok(mp4)
     }
-    pub fn file(&self) -> &File {
+    #[must_use] pub fn file(&self) -> &File {
         &self.file
     }
-    pub fn file_size(&self) -> u64 {
+    #[must_use] pub fn file_size(&self) -> u64 {
         self.file_size
     }
-    pub fn offset(&self) -> u64 {
+    #[must_use] pub fn offset(&self) -> u64 {
         self.offset
     }
     pub fn offset_inc(&mut self, num: u64) -> u64 {
         self.offset += num;
         self.offset
     }
-    pub fn atoms_as_ref(&self) -> &Vec<atom::Atom> {
+    #[must_use] pub fn atoms_as_ref(&self) -> &Vec<atom::Atom> {
         &self.atoms
     }
-    pub fn atoms(&self) -> Vec<atom::Atom> {
+    #[must_use] pub fn atoms(&self) -> Vec<atom::Atom> {
         self.atoms.clone()
     }
     pub fn parse(&mut self) {
@@ -120,14 +120,14 @@ impl Mp4File {
             let integer: u16 = n >> fractionalLength as u16;
             let fractional_mask: u16 = 2u16.pow(fractionalLength as u32) - 1;
             let fractional: u16 = (n & fractional_mask) / (1 << (fractionalLength as u16));
-            let result = (integer + fractional) as f64;
+            let result = f64::from(integer + fractional);
             Ok(result)
         } else {
             let n = self.read_u32().unwrap();
             let integer: u32 = n >> fractionalLength as u32;
             let fractional_mask: u32 = 2u32.pow(fractionalLength as u32) - 1;
             let fractional: u32 = (n & fractional_mask) / (1 << (fractionalLength as u32));
-            let result = (integer + fractional) as f64;
+            let result = f64::from(integer + fractional);
             Ok(result)
         }
     }
@@ -143,15 +143,15 @@ impl Mp4File {
         let y = self.read_fixed_point(16, 16).unwrap();
         let w = self.read_fixed_point(2, 30).unwrap();
         Ok(Matrix {
-            a: a,
-            b: b,
-            u: u,
-            c: c,
-            d: d,
-            v: v,
-            x: x,
-            y: y,
-            w: w,
+            a,
+            b,
+            u,
+            c,
+            d,
+            v,
+            x,
+            y,
+            w,
         })
     }
     pub fn read_iso639_code(&mut self) -> Result<String, Error> {
@@ -178,7 +178,7 @@ pub fn parse_file(filename: &str) -> Result<Mp4File, &'static str> {
     let mut mp4 = Mp4File::new(filename).unwrap();
     mp4.parse();
     for atom in mp4.atoms() {
-        println!("Atom: \n\t{:?}", atom);
+        println!("Atom: \n\t{atom:?}");
     }
     Ok(mp4)
 }
@@ -187,6 +187,6 @@ pub fn parse_file(filename: &str) -> Result<Mp4File, &'static str> {
 /// to the UNIX epoch time (seconds since 1970-01-01 00:00:00). This is done by subtracting 2,082,844,800 seconds from
 /// the given time to return the new time.
 /// There are 2,082,844,800 seconds from 1904-01-01 00:00:00 to 1970-01-01 00:00:00.
-pub fn mp4time_to_unix_time(time: u64) -> u64 {
+#[must_use] pub fn mp4time_to_unix_time(time: u64) -> u64 {
     time - 2_082_844_800
 }

@@ -10,7 +10,7 @@ mp21    MPEG-21 [ISO/IEC 21000-9]                       ISO     YES various
 mp41    MP4 v1 [ISO 14496-1:ch13]                       ISO     YES video/mp4
 mp42    MP4 v2 [ISO 14496-14]                           ISO     YES video/mp4
 
-qt      Apple QuickTime (.MOV/QT)                       Apple   YES video/quicktime
+qt      Apple `QuickTime` (.MOV/QT)                       Apple   YES video/quicktime
 M4B     Apple iTunes AAC-LC (.M4B) Audio Book           Apple   YES audio/mp4   [9]
 M4P     Apple iTunes AAC-LC (.M4P) AES Protected Audio  Apple   YES audio/mp4   [9]
 M4A     Apple iTunes AAC-LC (.M4A) Audio                Apple   YES audio/x-m4a [9]
@@ -68,24 +68,24 @@ impl FromStr for FileType {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "avc1" => Ok(FileType::AVC1),
-            "iso2" => Ok(FileType::ISO2),
-            "isom" => Ok(FileType::ISOM),
-            "mp21" => Ok(FileType::MP21),
-            "mp41" => Ok(FileType::MP41),
-            "mp42" => Ok(FileType::MP42),
-            "qt" | "qt\u{0}\u{0}" => Ok(FileType::QT),
-            "M4B" | "M4B\u{0}" => Ok(FileType::M4B),
-            "M4P" | "M4P\u{0}" => Ok(FileType::M4P),
-            "M4A" | "M4A\u{0}" => Ok(FileType::M4A),
-            "M4V" | "M4V\u{0}" => Ok(FileType::M4V),
-            "M4VH" => Ok(FileType::M4VH),
-            "M4VP" => Ok(FileType::M4VP),
-            "F4V" | "F4V\u{0}" => Ok(FileType::F4V),
-            "F4P" | "F4P\u{0}" => Ok(FileType::F4P),
-            "F4A" | "F4A\u{0}" => Ok(FileType::F4A),
-            "F4B" | "F4B\u{0}" => Ok(FileType::F4B),
-            "mmp4" => Ok(FileType::MMP4),
+            "avc1" => Ok(Self::AVC1),
+            "iso2" => Ok(Self::ISO2),
+            "isom" => Ok(Self::ISOM),
+            "mp21" => Ok(Self::MP21),
+            "mp41" => Ok(Self::MP41),
+            "mp42" => Ok(Self::MP42),
+            "qt" | "qt\u{0}\u{0}" => Ok(Self::QT),
+            "M4B" | "M4B\u{0}" => Ok(Self::M4B),
+            "M4P" | "M4P\u{0}" => Ok(Self::M4P),
+            "M4A" | "M4A\u{0}" => Ok(Self::M4A),
+            "M4V" | "M4V\u{0}" => Ok(Self::M4V),
+            "M4VH" => Ok(Self::M4VH),
+            "M4VP" => Ok(Self::M4VP),
+            "F4V" | "F4V\u{0}" => Ok(Self::F4V),
+            "F4P" | "F4P\u{0}" => Ok(Self::F4P),
+            "F4A" | "F4A\u{0}" => Ok(Self::F4A),
+            "F4B" | "F4B\u{0}" => Ok(Self::F4B),
+            "mmp4" => Ok(Self::MMP4),
             _ => Err("unknow fileType"),
         }
     }
@@ -94,24 +94,24 @@ impl FromStr for FileType {
 impl ToString for FileType {
     fn to_string(&self) -> String {
         match *self {
-            FileType::AVC1 => "avc1".to_owned(),
-            FileType::ISO2 => "iso2".to_owned(),
-            FileType::ISOM => "isom".to_owned(),
-            FileType::MP21 => "mp21".to_owned(),
-            FileType::MP41 => "mp41".to_owned(),
-            FileType::MP42 => "mp42".to_owned(),
-            FileType::QT => "qt\u{0}\u{0}".to_owned(),
-            FileType::M4B => "M4B\u{0}".to_owned(),
-            FileType::M4P => "M4P\u{0}".to_owned(),
-            FileType::M4A => "M4A\u{0}".to_owned(),
-            FileType::M4V => "M4V\u{0}".to_owned(),
-            FileType::M4VH => "M4VH".to_owned(),
-            FileType::M4VP => "M4VP".to_owned(),
-            FileType::F4V => "F4V\u{0}".to_owned(),
-            FileType::F4P => "F4P\u{0}".to_owned(),
-            FileType::F4A => "F4A\u{0}".to_owned(),
-            FileType::F4B => "F4B\u{0}".to_owned(),
-            FileType::MMP4 => "mmp4".to_owned(),
+            Self::AVC1 => "avc1".to_owned(),
+            Self::ISO2 => "iso2".to_owned(),
+            Self::ISOM => "isom".to_owned(),
+            Self::MP21 => "mp21".to_owned(),
+            Self::MP41 => "mp41".to_owned(),
+            Self::MP42 => "mp42".to_owned(),
+            Self::QT => "qt\u{0}\u{0}".to_owned(),
+            Self::M4B => "M4B\u{0}".to_owned(),
+            Self::M4P => "M4P\u{0}".to_owned(),
+            Self::M4A => "M4A\u{0}".to_owned(),
+            Self::M4V => "M4V\u{0}".to_owned(),
+            Self::M4VH => "M4VH".to_owned(),
+            Self::M4VP => "M4VP".to_owned(),
+            Self::F4V => "F4V\u{0}".to_owned(),
+            Self::F4P => "F4P\u{0}".to_owned(),
+            Self::F4A => "F4A\u{0}".to_owned(),
+            Self::F4B => "F4B\u{0}".to_owned(),
+            Self::MMP4 => "mmp4".to_owned(),
         }
     }
 }
@@ -121,11 +121,11 @@ impl FileType {
         let kind_str = match str::from_utf8(bytes) {
             Ok(s) => s,
             Err(_) => {
-                println!("ftyp ({:?}) parse error.", bytes);
+                println!("ftyp ({bytes:?}) parse error.");
                 return Err("ftyp parse error.");
             }
         };
-        FileType::from_str(kind_str)
+        Self::from_str(kind_str)
     }
     pub fn into_bytes(&self) -> Vec<u8> {
         self.to_string().into_bytes()
@@ -143,7 +143,7 @@ Files written to this version of this specification must contain a file-type box
 For compatibility with an earlier version of this specification,
 files may be conformant to this specification and not contain a file-type box.
 Files with no file-type box should be read as
-if they contained an FTYP box with Major_brand='mp41', minor_version=0,
+if they contained an FTYP box with `Major_brand`='mp41', `minor_version=0`,
 and the single compatible brand 'mp41'.
 
 A media-file structured to this part of this specification may be compatible with
@@ -175,11 +175,11 @@ This section of this specification does not define any brands. However,
 
 4.3.2 Syntax
 
-aligned(8) class FileTypeBox
+aligned(8) class `FileTypeBox`
 extends Box(‘ftyp’) {
-    unsigned int(32) major_brand;
-    unsigned int(32) minor_version;
-    unsigned int(32) compatible_brands[]; // to end of the box
+    unsigned int(32) `major_brand`;
+    unsigned int(32) `minor_version`;
+    unsigned int(32) `compatible_brands`[]; // to end of the box
 }
 
 4.3.3 Semantics
@@ -213,20 +213,20 @@ impl Ftyp {
         FileType::from_bytes(&ft_bytes)
     }
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
-        let major_brand = Ftyp::parse_filetype(f).unwrap();
+        let major_brand = Self::parse_filetype(f).unwrap();
         let minor_version = f.read_u32().unwrap();
         let mut compatible_brands: Vec<FileType> = Vec::new();
         let mut idx = (header.data_size - 8) / 4;
         while idx > 0 {
-            compatible_brands.push(Ftyp::parse_filetype(f).unwrap());
+            compatible_brands.push(Self::parse_filetype(f).unwrap());
             idx -= 1;
         }
         f.offset_inc(header.data_size);
-        Ok(Ftyp {
-            header: header,
-            major_brand: major_brand,
-            minor_version: minor_version,
-            compatible_brands: compatible_brands,
+        Ok(Self {
+            header,
+            major_brand,
+            minor_version,
+            compatible_brands,
         })
     }
 }

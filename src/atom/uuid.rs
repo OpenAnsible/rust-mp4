@@ -12,6 +12,6 @@ impl Uuid {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Uuid { header: header })
+        Ok(Self { header })
     }
 }
