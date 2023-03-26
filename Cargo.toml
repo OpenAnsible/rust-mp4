@@ -1,7 +1,8 @@
 [package]
 name = "mp4"
 version = "0.1.0"
-authors = ["Luo <gnulinux@126.com>"]
+edition = "2021"
+authors = ["Luo <gnulinux@126.com>", "Even Solberg (even.solberg@gmail.com)"]
 
 [lib]
 name = "mp4"
@@ -12,4 +13,4 @@ path = "src/lib.rs"
 # path = "src/main.rs"
 
 [dependencies]
-byteorder = "0.5.3"
+byteorder = "1.4.3"

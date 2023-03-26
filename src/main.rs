@@ -1,6 +1,5 @@
-
 // mod lib;
 
-fn main(){
-	// lib::parse_file("test.mp4");
+fn main() {
+    // lib::parse_file("test.mp4");
 }
