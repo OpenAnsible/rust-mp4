@@ -10,7 +10,7 @@ moof
         subs
 
 **/
-use super::{Atom, Header, Kind, Mp4File, Sample};
+use super::{Atom, Header, Mp4File, Sample};
 
 #[derive(Debug, Clone)]
 pub struct Moof {
@@ -22,6 +22,22 @@ impl Moof {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
         Ok(Self { header, children })
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn children_ref(&self) -> &Vec<Atom> {
+        &self.children
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
+
+    pub fn children(&self) -> Vec<Atom> {
+        self.children.clone()
     }
 }
 

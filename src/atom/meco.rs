@@ -11,17 +11,27 @@ pub struct Meco {
 }
 
 impl Meco {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self { header, children })
+        Self { header, children }
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn children_ref(&self) -> &Vec<Atom> {
+        &self.children
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
+
+    pub fn children(&self) -> Vec<Atom> {
+        self.children.clone()
     }
 }
-
-#[allow(clippy::doc_markdown)]
-/**
-
-
-**/
 
 #[derive(Debug, Clone)]
 pub struct Mere {
@@ -49,5 +59,25 @@ impl Mere {
             second_metabox_handler_type,
             metabox_relation,
         })
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
+
+    pub fn first_metabox_handler_type(&self) -> u32 {
+        self.first_metabox_handler_type
+    }
+
+    pub fn second_metabox_handler_type(&self) -> u32 {
+        self.second_metabox_handler_type
+    }
+
+    pub fn metabox_relation(&self) -> u8 {
+        self.metabox_relation
     }
 }

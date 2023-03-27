@@ -1,6 +1,6 @@
 use super::{Header, Mp4File};
 
-/**
+/*
 
 skip
     udta
@@ -10,27 +10,9 @@ skip
             stri
             strd
 
-`BoxTypes` : ‘free’,‘skip’
-Container: File or other box
-Mandatory: No
-Quantity : Zero or more
+Ref: "free skip.md"
 
-The contents of a free-space box are irrelevant and may be ignored,
-or the object deleted, without affecting the presentation. (Care should be exercised
-when deleting the object, as this may invalidate the offsets used in the sample table,
-unless this object is after all the media data).
-
-8.1.2.2 Syntax
-
-aligned(8) class `FreeSpaceBox` extends `Box(free_type`) {
-    unsigned int(8) data[];
-}
-
-8.1.2.3 Semantics
-
-`free_type` may be ‘free’ or ‘skip’.
-
-**/
+*/
 
 #[derive(Debug, Clone)]
 pub struct Skip {
@@ -43,6 +25,14 @@ impl Skip {
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
         Self { header }
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
     }
 }
 
@@ -57,5 +47,13 @@ impl Free {
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
         Self { header }
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
     }
 }

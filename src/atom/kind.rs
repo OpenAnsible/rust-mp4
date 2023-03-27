@@ -416,15 +416,13 @@ impl ToString for Kind {
 
 impl Kind {
     pub fn from_bytes(bytes: &[u8; 4]) -> Result<Self, &'static str> {
-        let kind_str = match str::from_utf8(bytes) {
-            Ok(s) => s,
-            Err(_) => {
-                println!("Atom Kind ({bytes:?}) parse error.");
+        let Ok(kind_str) = str::from_utf8(bytes) else {
+                eprintln!("Atom Kind ({bytes:?}) parse error.");
                 return Err("Atom Kind parse error.");
-            }
         };
         Self::from_str(kind_str)
     }
+
     #[must_use]
     pub fn into_bytes(&self) -> Vec<u8> {
         self.to_string().into_bytes()

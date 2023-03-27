@@ -1,4 +1,4 @@
-use super::{Atom, Header, Kind, Mp4File};
+use super::{Header, Mp4File};
 
 /**
 Box Type: ‘mdat’
@@ -26,4 +26,12 @@ impl Mdat {
     // pub fn read_to_end(&self, buf: &mut Vec<u8>) -> Result<usize>{
 
     // }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
 }

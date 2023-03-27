@@ -7,8 +7,6 @@
 
 // box types: http://mp4ra.org/atoms.html
 
-use std::fs::File;
-use std::mem::transmute;
 /**
     Box Struct:
 
@@ -144,15 +142,9 @@ Media Segments
     mdat
 **/
 use std::str;
-use std::string::String;
-
-use std::convert::AsRef;
-use std::str::FromStr;
-use std::string::ToString;
 
 pub use super::Mp4File;
-use byteorder::{BigEndian, ReadBytesExt};
-use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
+use byteorder::ReadBytesExt;
 
 mod kind;
 
@@ -296,7 +288,7 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn parse(f: &mut Mp4File) -> Result<Header, &'static str> {
+    pub fn parse(f: &mut Mp4File) -> Result<Self, &'static str> {
         let curr_offset = f.offset();
         let size: u32 = f.read_u32().unwrap();
 
@@ -309,25 +301,25 @@ impl Header {
         let kind = Kind::from_bytes(&kind_bytes).unwrap();
 
         let header_size = 8u64;
-        let atom_size = size as u64;
+        let atom_size = u64::from(size);
         // let data_size = atom_size - header_size;
         let data_size = 0u64;
 
         f.offset_inc(header_size);
 
-        let mut header = Header {
-            size: size,
-            kind: kind,
+        let mut header = Self {
+            size,
+            kind,
 
             largesize: None,
             usertype: None,
             version: None,
             flags: None,
 
-            atom_size: atom_size,     // atom size , include header and data.
-            header_size: header_size, // atom header size, not include data size.
-            data_size: data_size,     // atom data size , not include header size.
-            offset: curr_offset,      // file offset.
+            atom_size,           // atom size , include header and data.
+            header_size,         // atom header size, not include data size.
+            data_size,           // atom data size , not include header size.
+            offset: curr_offset, // file offset.
         };
         if size == 1u32 {
             header.parse_largesize(f);
@@ -344,7 +336,7 @@ impl Header {
 
         let largesize = f.read_u64().unwrap();
         self.atom_size = largesize;
-        self.header_size = self.header_size + 8;
+        self.header_size += 8;
         self.data_size = largesize - self.header_size;
 
         self.largesize = Some(largesize);
@@ -372,7 +364,7 @@ impl Header {
         ];
         self.usertype = Some(usertype);
 
-        self.header_size = self.header_size + 16;
+        self.header_size += 16;
         self.data_size = self.atom_size - self.header_size;
         f.offset_inc(16);
     }
@@ -381,7 +373,7 @@ impl Header {
         let version = f.read_u8().unwrap();
         self.version = Some(version);
 
-        self.header_size = self.header_size + 1;
+        self.header_size += 1;
         self.data_size = self.atom_size - self.header_size;
         f.offset_inc(1);
     }
@@ -394,7 +386,7 @@ impl Header {
         ];
         self.flags = Some(flags);
 
-        self.header_size = self.header_size + 3;
+        self.header_size += 3;
         self.data_size = self.atom_size - self.header_size;
         f.offset_inc(3);
     }
@@ -507,7 +499,7 @@ impl Atom {
             Kind::Mdat => Ok(Self::Mdat(Mdat::parse(f, header).unwrap())),
             Kind::Mdhd => Ok(Self::Mdhd(Mdhd::parse(f, header).unwrap())),
             Kind::Mdia => Ok(Self::Mdia(Mdia::parse(f, header).unwrap())),
-            Kind::Meco => Ok(Self::Meco(Meco::parse(f, header).unwrap())),
+            Kind::Meco => Ok(Self::Meco(Meco::parse(f, header))),
             Kind::Mehd => Ok(Self::Mehd(Mehd::parse(f, header).unwrap())),
             Kind::Mere => Ok(Self::Mere(Mere::parse(f, header).unwrap())),
             Kind::Meta => Ok(Self::Meta(Meta::parse(f, header).unwrap())),
@@ -566,8 +558,8 @@ impl Atom {
         };
         data
     }
-    pub fn parse_children(f: &mut Mp4File) -> Vec<Atom> {
-        let mut atoms: Vec<Atom> = Vec::new();
+    pub fn parse_children(f: &mut Mp4File) -> Vec<Self> {
+        let mut atoms: Vec<Self> = Vec::new();
         loop {
             if f.offset() == f.file_size() {
                 break;

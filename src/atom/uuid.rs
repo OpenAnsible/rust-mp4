@@ -1,4 +1,4 @@
-use super::{Header, Mp4File};
+use super::{Header, Kind, Mp4File};
 
 #[derive(Debug, Clone)]
 pub struct Uuid {
@@ -13,5 +13,13 @@ impl Uuid {
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
         Ok(Self { header })
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
     }
 }
