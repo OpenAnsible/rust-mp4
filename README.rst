@@ -1,19 +1,17 @@
-Rust MP4 编解码实现 -- My Fork
+Rust MP4 Codec Implementation -- My Fork
 =======================
 
-:Date: 12/14 2016
+:Date: 2023-03-27
 
 .. contents::
 
 
-介绍
+Introduction
 ------
 
-`MPEG-4` (MP4) 容器格式的 `Rust` 代码实现。
+A Rust implementation of the MPEG-4 (MP4) container format. My fork cleans up some of the code (work in progress) and adds functionality to make data acccess easier.
 
-
-
-测试
+Example
 ------
 
 .. code:: bash
@@ -24,7 +22,7 @@ Rust MP4 编解码实现 -- My Fork
 	cargo run --example parse
 
 
-参考
+References
 -------
 
 *	`MPEG-4 <http://mpeg.chiariglione.org/standards/mpeg-4>`_
