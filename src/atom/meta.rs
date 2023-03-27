@@ -136,10 +136,7 @@ impl Xml {
         let xml: String = String::from_utf8(xml_bytes).unwrap();
 
         f.offset_inc(header.data_size);
-        Ok(Self {
-            header,
-            xml,
-        })
+        Ok(Self { header, xml })
     }
 }
 
@@ -163,9 +160,6 @@ impl Bxml {
         // let xml: String = String::from_utf8(xml_bytes).unwrap();
 
         f.offset_inc(header.data_size);
-        Ok(Self {
-            header,
-            data,
-        })
+        Ok(Self { header, data })
     }
 }

@@ -16,10 +16,7 @@ pub struct Mfra {
 impl Mfra {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self {
-            header,
-            children,
-        })
+        Ok(Self { header, children })
     }
 }
 
@@ -123,9 +120,6 @@ impl Mfro {
         // f.seek(curr_offset+header.data_size);
         let size: u32 = f.read_u32().unwrap();
         f.offset_inc(header.data_size);
-        Ok(Self {
-            header,
-            size,
-        })
+        Ok(Self { header, size })
     }
 }

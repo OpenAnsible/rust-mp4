@@ -1,12 +1,12 @@
-#![allow(dead_code, unused_imports)]
-#![allow(unused_must_use, non_snake_case, unused_assignments, unused_parens)]
+// #![allow(dead_code, unused_imports)]
+// #![allow(unused_must_use, non_snake_case, unused_assignments, unused_parens)]
 
 extern crate byteorder;
 
 use byteorder::{BigEndian, ReadBytesExt};
 use std::fs;
 use std::fs::File;
-use std::io::{Error, ErrorKind, Read, Seek, SeekFrom, Write};
+use std::io::{Error, Seek, SeekFrom};
 
 pub mod atom;
 
@@ -49,23 +49,30 @@ impl Mp4File {
         };
         Ok(mp4)
     }
-    #[must_use] pub fn file(&self) -> &File {
+
+    #[must_use]
+    pub fn file(&self) -> &File {
         &self.file
     }
-    #[must_use] pub fn file_size(&self) -> u64 {
+
+    #[must_use]
+    pub fn file_size(&self) -> u64 {
         self.file_size
     }
-    #[must_use] pub fn offset(&self) -> u64 {
+    #[must_use]
+    pub fn offset(&self) -> u64 {
         self.offset
     }
     pub fn offset_inc(&mut self, num: u64) -> u64 {
         self.offset += num;
         self.offset
     }
-    #[must_use] pub fn atoms_as_ref(&self) -> &Vec<atom::Atom> {
+    #[must_use]
+    pub fn atoms_as_ref(&self) -> &Vec<atom::Atom> {
         &self.atoms
     }
-    #[must_use] pub fn atoms(&self) -> Vec<atom::Atom> {
+    #[must_use]
+    pub fn atoms(&self) -> Vec<atom::Atom> {
         self.atoms.clone()
     }
     pub fn parse(&mut self) {
@@ -111,22 +118,22 @@ impl Mp4File {
     }
     pub fn read_fixed_point(
         &mut self,
-        integerLength: usize,
-        fractionalLength: usize,
+        integer_length: usize,
+        fractional_length: usize,
     ) -> Result<f64, Error> {
         // https://en.wikipedia.org/wiki/Fixed_point_(mathematics)
-        if integerLength + fractionalLength == 16 {
+        if integer_length + fractional_length == 16 {
             let n = self.read_u16().unwrap();
-            let integer: u16 = n >> fractionalLength as u16;
-            let fractional_mask: u16 = 2u16.pow(fractionalLength as u32) - 1;
-            let fractional: u16 = (n & fractional_mask) / (1 << (fractionalLength as u16));
+            let integer: u16 = n >> fractional_length as u16;
+            let fractional_mask: u16 = 2u16.pow(fractional_length as u32) - 1;
+            let fractional: u16 = (n & fractional_mask) / (1 << (fractional_length as u16));
             let result = f64::from(integer + fractional);
             Ok(result)
         } else {
             let n = self.read_u32().unwrap();
-            let integer: u32 = n >> fractionalLength as u32;
-            let fractional_mask: u32 = 2u32.pow(fractionalLength as u32) - 1;
-            let fractional: u32 = (n & fractional_mask) / (1 << (fractionalLength as u32));
+            let integer: u32 = n >> fractional_length as u32;
+            let fractional_mask: u32 = 2u32.pow(fractional_length as u32) - 1;
+            let fractional: u32 = (n & fractional_mask) / (1 << (fractional_length as u32));
             let result = f64::from(integer + fractional);
             Ok(result)
         }
@@ -160,9 +167,9 @@ impl Mp4File {
         //      string: 15 Bit
         let mut s = String::new();
         let n = self.read_u16().unwrap();
-        let mut c1 = (n & 0x7C00) >> 10; // Mask is 0111 1100 0000 0000
-        let mut c2 = (n & 0x03E0) >> 5; // Mask is 0000 0011 1110 0000
-        let mut c3 = (n & 0x001F); // Mask is 0000 0000 0001 1111
+        let mut c1 = n & 0x7C00 >> 10; // Mask is 0111 1100 0000 0000
+        let mut c2 = n & 0x03E0 >> 5; // Mask is 0000 0011 1110 0000
+        let mut c3 = n & 0x001F; // Mask is 0000 0000 0001 1111
         c1 += 0x60;
         c2 += 0x60;
         c3 += 0x60;
@@ -187,6 +194,7 @@ pub fn parse_file(filename: &str) -> Result<Mp4File, &'static str> {
 /// to the UNIX epoch time (seconds since 1970-01-01 00:00:00). This is done by subtracting 2,082,844,800 seconds from
 /// the given time to return the new time.
 /// There are 2,082,844,800 seconds from 1904-01-01 00:00:00 to 1970-01-01 00:00:00.
-#[must_use] pub fn mp4time_to_unix_time(time: u64) -> u64 {
+#[must_use]
+pub fn mp4time_to_unix_time(time: u64) -> u64 {
     time - 2_082_844_800
 }

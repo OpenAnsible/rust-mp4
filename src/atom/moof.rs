@@ -21,10 +21,7 @@ pub struct Moof {
 impl Moof {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self {
-            header,
-            children,
-        })
+        Ok(Self { header, children })
     }
 }
 

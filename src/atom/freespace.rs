@@ -1,4 +1,4 @@
-use super::{Atom, Header, Kind, Mp4File};
+use super::{Header, Mp4File};
 
 /**
 
@@ -38,11 +38,11 @@ pub struct Skip {
 }
 
 impl Skip {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Self { header })
+        Self { header }
     }
 }
 
@@ -52,10 +52,10 @@ pub struct Free {
 }
 
 impl Free {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let curr_offset = f.offset();
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Self { header })
+        Self { header }
     }
 }

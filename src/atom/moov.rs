@@ -3,7 +3,9 @@
 use super::{Atom, Entry, Header, Kind, Mp4File};
 use crate::Matrix;
 use std::mem;
-/**
+use std::string::String;
+
+/*
 
 moov
     mvhd
@@ -45,84 +47,8 @@ moov
         trex
     ipmc
 
-参考:
-    http://blog.csdn.net/yu_yuan_1314/article/details/9078287
-    http://www.cnblogs.com/tocy/p/media_container_3_mp4.html
-
-在MOV和MP4文件格式中包括几个重要的Table，对应的atoms分别为:
-
-    stts, ctts, stss, stsc, stsz, stco/co64
-
-0. 节目时间计算(MVHD/MDHD)
-    t = duration / timescale (MVHD/MDHD)
-
-1. Sample时间表(stts)
-    Time-To-Sample Atoms，存储了媒体sample的时常信息，提供了时间和相关sample之间的映射关系。
-    该atom包含了一个表，关于time和sample号之间的索引关系。
-    表的每个entry给出了具有相同时间间隔的连续的sample的个数和这些sample的时间间隔值。
-    将这些时间间隔相加在一起，就可以得到一个完整的time与sample之间的映射。
-    将所有的时间间隔相加在一起，就可以得到该track的时间总长。
-
-    每个sample的显示时间可以通过如下的公式得到：
-        D(n+1) = D(n) + STTS(n)
-    其中，STTS(n)是sample n的时间间隔，包含在表格中；D(n)是sample n的显示时间。
-
-2. 时间合成偏移表(ctts)
-    Composition Offset Atom。每一个视频sample都有一个解码顺序和一个显示顺序。
-    对于一个sample来说，解码顺序和显示顺序可能不一致，比如H.264格式，因此，
-    Composition Offset Atom就是在这种情况下被使用的。
-        （1）如果解码顺序和显示顺序是一致的，Composition Offset Atom就不会出现。
-             Time-To-Sample Atoms既提供了解码顺序也提供了显示顺序，
-             并能够计算出每个sample的开始时间和结束时间。
-        （2）如果解码顺序和显示顺序不一致，那么Time-To-Sample Atoms既提供解码顺序，
-            Composition Offset Atom则通过差值的形式来提供显示时间。
-
-    Composition Offset Atom提供了一个从解码时间到显示时间的sample一对一的映射，具有如下的映射关系：
-        CT(n) = DT(n) + CTTS(n)
-    其中，CTTS(n)是sample n在table中的entry（这里假设一个entry只对应一个sample）可以是正值也可是负值；
-    DT(n)是sample n的解码时间，通过Time-To-Sample Atoms计算获得；CT(n)便是sample n的显示时间。
-
-3. 同步Sample表(stss)
-    Sync Sample Atom，标识了媒体流中的关键帧，提供了随机访问点标记。
-    Sync Sample Atom包含了一个table，table的每个entry标识了一个sample，该sample是媒体流的关键帧。
-    Table中的sample号是严格按照增长的顺序排列的，如果该table不存在，那么每一个sample都可以作为随机访问点。
-    换句话说，如果Sync Sample Atom不存在，那么所有的sample都是关键帧。
-
-4. Chunk中的Sample信息表(stsc)
-    Sample-To-Chunk Atom。为了优化数据访问，通常把sample封装到chunk中，
-    一个chunk可能会包含一个或者几个sample。每个chunk会有不同的size，
-    每个chunk中的sample也会有不同的size。
-    在Sample-To-Chunk Atom中包含了个table，这个table提供了从sample到chunk的一个映射，
-    每个table entry可能包含一个或者多个chunk。
-    Table entry包含的内容包括第一个chunk号、每个chunk包含的sample的个数以及sample的描述ID。
-
-5. Sample大小表(stsz)
-    Sample Size Atom，指定了每个sample的size。Sample Size Atom给出了sample的总数和一张表，
-    这个表包含了每个sample的size。如果指定了默认的sampe size，那么这个table就不存在了。
-    即每个sample使用这个默认的sample size。
-
-6. Chunk的偏移量表(stco/co64)
-    Chunk Offset Atom，指定了每个chunk在文件中的位置。
-    Chunk Offset Atom包含了一个table，表中的每个entry给出了每个chunk在文件中的位置。
-    有两种形式来表示每个entry的值，即chunk的偏移量，32位和64位。
-    如果Chunk Offset Atom的类型为stco，则使用的是32位的，
-    如果是co64，那么使用的就是64位的。
-**/
-use std::string::String;
-
-/**
-
-Box Type : ‘moov’
-Container: File
-Mandatory: Yes
-Quantity : Exactly one
-
-The metadata for a presentation is stored in the single Movie Box
-which occurs at the top-level of a file. Normally this box is close
-to the beginning or end of the file, though this is not required.
-
-
-**/
+    See the moov.md
+*/
 
 #[derive(Debug, Clone)]
 pub struct Moov {
@@ -153,67 +79,7 @@ impl Moov {
     }
 }
 
-/**
-
-Box Type : ‘mvhd’
-Container: Movie Box (‘moov’)
-Mandatory: Yes
-Quantity : Exactly one
-
-This box defines overall information which is media-independent,
-and relevant to the entire presentation considered as a whole.
-
-aligned(8) class `MovieHeaderBox` extends FullBox(‘mvhd’, version, 0) {
-    if (version==1) {
-        unsigned int(64)  `creation_time`;
-        unsigned int(64)  `modification_time`;
-        unsigned int(32)  timescale;
-        unsigned int(64)  duration;
-    } else { // version==0
-        unsigned int(32)  `creation_time`;
-        unsigned int(32)  `modification_time`;
-        unsigned int(32)  timescale;
-        unsigned int(32)  duration;
-    }
-    template int(32) rate = 0x00010000; // typically 1.0
-    template int(16) volume = 0x0100;   // typically, full volume
-    const bit(16) reserved = 0;
-    const unsigned int(32)[2] reserved = 0;
-    // Unity matrix
-    template int(32)[9] matrix = { 0x00010000,0,0,0,0x00010000,0,0,0,0x40000000 };
-    bit(32)[6]  `pre_defined` = 0;
-    unsigned int(32)  `next_track_ID`;
-}
-
-8.2.2.3 Semantics
-
-`version` is an integer that specifies the version of this box (0 or 1 in this specification)
-`creation_time` is an integer that declares the creation time of the
-    presentation (in seconds since midnight, Jan. 1, 1904, in UTC time)
-`modification_time` is an integer that declares the most recent time the
-     presentation was modified (in seconds since midnight, Jan. 1, 1904, in UTC time)
-`timescale` is an integer that specifies the time-scale for the entire presentation;
-    this is the number of time units that pass in one second. For example,
-    a time coordinate system that measures time in sixtieths of a second has a time scale of 60.
-`duration` is an integer that declares length of the presentation (in the indicated timescale).
-    This property is derived from the presentation’s tracks:
-    the value of this field corresponds to the duration of the longest track in
-    the presentation. If the duration cannot be determined then duration is set
-    to all 1s.
-`rate` is a fixed point 16.16 number that indicates the preferred rate to play
-    the presentation; 1.0 (0x00010000) is normal forward playback
-
-`volume` is a fixed point 8.8 number that indicates the preferred playback volume.
-    1.0 (0x0100) is full volume.
-`matrix` provides a transformation matrix for the video; (u,v,w) are restricted here to (0,0,1),
-    hex values (0,0,0x40000000).
-`next_track_ID` is a non-zero integer that indicates a value to use for the track ID of
-    the next track to be added to this presentation. Zero is not a valid track ID value.
-    The value of `next_track_ID` shall be larger than the largest track-ID in use.
-    If this value is equal to all 1s (32-bit maxint), and a new media track is to be added,
-    then a search must be made in the file for an unused track identifier.
-**/
-
+// See mvhd.md for notes
 #[derive(Debug, Clone)]
 pub struct Mvhd {
     pub header: Header,
@@ -288,7 +154,6 @@ impl Mvhd {
             modification_time,
             timescale,
             duration,
-
             rate,
             volume,
             matrix,
@@ -297,9 +162,9 @@ impl Mvhd {
     }
 }
 
-/**
+/*
 
-Box Type : ‘trak’
+Box Type : trak
 Container: Movie Box (‘moov’)
 Mandatory: Yes
 Quantity : One or more
@@ -320,11 +185,11 @@ after deleting all hint tracks, the entire un-hinted presentation shall remain.
 
 8.3.1.2 Syntax
 
-aligned(8) class `TrackBox` extends Box(‘trak’) {
+aligned(8) class TrackBox extends Box(‘trak’) {
 
 }
 
-**/
+*/
 
 #[derive(Debug, Clone)]
 pub struct Trak {
@@ -356,10 +221,10 @@ at the beginning of the overall presentation. An empty edit is used
 to offset the start time of a track.
 
 The default value of the track header flags for media tracks
-is 7 (`track_enabled`, `track_in_movie`, `track_in_preview`).
-If in a presentation all tracks have neither `track_in_movie` nor `track_in_preview` set,
+is 7 (track_enabled, track_in_movie, track_in_preview).
+If in a presentation all tracks have neither track_in_movie nor track_in_preview set,
 then all tracks shall be treated as if both flags were set on all tracks.
-Server hint tracks should have the `track_in_movie` and `track_in_preview` set to 0,
+Server hint tracks should have the track_in_movie and track_in_preview set to 0,
 so that they are ignored for local playback and preview.
 
 Under the ‘iso3’ brand or brands that share its requirements,
@@ -370,25 +235,25 @@ also operate in this uniformly-scaled space.
 
 8.3.2.2 Syntax
 
-aligned(8) class `TrackHeaderBox`
+aligned(8) class TrackHeaderBox
 extends FullBox(‘tkhd’, version, flags){
     if (version==1) {
-        unsigned int(64)  `creation_time`;
-        unsigned int(64)  `modification_time`;
-        unsigned int(32)  `track_ID`;
+        unsigned int(64)  creation_time;
+        unsigned int(64)  modification_time;
+        unsigned int(32)  track_ID;
         const unsigned int(32)  reserved = 0;
         unsigned int(64)  duration;
     } else { // version==0
-        unsigned int(32)  `creation_time`;
-        unsigned int(32)  `modification_time`;
-        unsigned int(32)  `track_ID`;
+        unsigned int(32)  creation_time;
+        unsigned int(32)  modification_time;
+        unsigned int(32)  track_ID;
         const unsigned int(32)  reserved = 0;
         unsigned int(32)  duration;
     }
     const unsigned int(32)[2] reserved = 0;
     template int(16) layer = 0;
-    template int(16) `alternate_group` = 0;
-    template int(16) volume = {if `track_is_audio` 0x0100 else 0};
+    template int(16) alternate_group = 0;
+    template int(16) volume = {if track_is_audio 0x0100 else 0};
     const unsigned int(16) reserved = 0;
     // unity matrix
     template int(32)[9] matrix = { 0x00010000,0,0,0,0x00010000,0,0,0,0x40000000 };
@@ -399,49 +264,49 @@ extends FullBox(‘tkhd’, version, flags){
 
 8.3.2.3 Semantics
 
-`version` is an integer that specifies the version of this box (0 or 1 in this specification)
-`flags` is a 24-bit integer with flags; the following values are defined:
-            `Track_enabled`: Indicates that the track is enabled.
+version is an integer that specifies the version of this box (0 or 1 in this specification)
+flags is a 24-bit integer with flags; the following values are defined:
+            Track_enabled: Indicates that the track is enabled.
                 Flag value is 0x000001.
                 A disabled track (the low bit is zero) is treated as if it were not present.
-            `Track_in_movie`: Indicates that the track is used in the presentation.
+            Track_in_movie: Indicates that the track is used in the presentation.
                 Flag value is 0x000002.
-            `Track_in_preview`: Indicates that the track is used when previewing
+            Track_in_preview: Indicates that the track is used when previewing
                 the presentation. Flag value is 0x000004.
 
-`creation_time` is an integer that declares the creation time of
+creation_time is an integer that declares the creation time of
     this track (in seconds since midnight, Jan. 1, 1904, in UTC time)
-`modification_time` is an integer that declares the most recent time
+modification_time is an integer that declares the most recent time
     the track was modified (in seconds since midnight, Jan. 1, 1904, in UTC time)
-`track_ID` is an integer that uniquely identifies this track over
+track_ID is an integer that uniquely identifies this track over
     the entire life-time of this presentation.
     Track IDs are never re-used and cannot be zero.
-`duration` is an integer that indicates the duration of
+duration is an integer that indicates the duration of
     this track (in the timescale indicated in the Movie Header Box).
     The value of this field is equal to the sum of the durations
     of all of the track’s edits. If there is no edit list,
     then the duration is the sum of the sample durations,
     converted into the timescale in the Movie Header Box.
     If the duration of this track cannot be determined then duration is set to all 1s.
-`layer` specifies the front-to-back ordering of video tracks;
+layer specifies the front-to-back ordering of video tracks;
     tracks with lower numbers are closer to the viewer. 0 is the normal value,
     and -1 would be in front of track 0, and so on.
-`alternate_group` is an integer that specifies a group or collection of tracks.
+alternate_group is an integer that specifies a group or collection of tracks.
     If this field is 0 there is no information on possible relations to other tracks.
     If this field is not 0, it should be the same for tracks that contain alternate
     data for one another and different for tracks belonging to different such groups.
     Only one track within an alternate group should be played or streamed at any one time,
     and must be distinguishable from other tracks in the group via attributes such as bitrate,
     codec, language, packet size etc. A group may have only one member.
-`volume` is a fixed 8.8 value specifying the track's relative audio volume.
+volume is a fixed 8.8 value specifying the track's relative audio volume.
     Full volume is 1.0 (0x0100) and is the normal value.
     Its value is irrelevant for a purely visual track.
     Tracks may be composed by combining them according to their volume,
     and then using the overall Movie Header Box volume setting;
     or more complex audio composition (e.g. MPEG-4 BIFS) may be used.
-`matrix` provides a transformation matrix for the video; (u,v,w) are restricted here
+matrix provides a transformation matrix for the video; (u,v,w) are restricted here
     to (0,0,1), hex (0,0,0x40000000).
-`width` and `height` specify the track's visual presentation size as fixed-point 16.16 values.
+width and height specify the track's visual presentation size as fixed-point 16.16 values.
     These need not be the same as the pixel dimensions of the images,
     which is documented in the sample description(s);
     all images in the sequence are scaled to this size,
@@ -480,34 +345,34 @@ impl Tkhd {
 }
 
 /**
-Box Type : `tref`
-Container: Track Box(`trak`)
+Box Type : tref
+Container: Track Box(trak)
 Mandatory: No
 Quantity : Zero or one
 
 8.3.3.2 Syntax
 
-aligned(8) class `TrackReferenceBox` extends Box(‘tref’) {
+aligned(8) class TrackReferenceBox extends Box(‘tref’) {
 
 }
-aligned(8) class `TrackReferenceTypeBox` (unsigned int(32) `reference_type`) extends `Box(reference_type`) {
-   unsigned int(32) `track_IDs`[];
+aligned(8) class TrackReferenceTypeBox (unsigned int(32) reference_type) extends Box(reference_type) {
+   unsigned int(32) track_IDs[];
 }
 
 8.3.3.3 Semantics
 
 The Track Reference Box contains track reference type boxes.
 
-`track_ID` is an integer that provides a reference from the containing track
-    to another track in the presentation. `track_IDs` are never re-used and cannot be equal to zero.
-The `reference_type` shall be set to one of the following values, or a value registered
+track_ID is an integer that provides a reference from the containing track
+    to another track in the presentation. track_IDs are never re-used and cannot be equal to zero.
+The reference_type shall be set to one of the following values, or a value registered
     or from a derived specification or registration:
-        *   `hint` the referenced track(s) contain the original media for this hint track
-        *   `cdsc` this track describes the referenced track.
-        *   `hind` this track depends on the referenced hint track, i.e.,
+        *   hint the referenced track(s) contain the original media for this hint track
+        *   cdsc this track describes the referenced track.
+        *   hind this track depends on the referenced hint track, i.e.,
              it should only be used if the referenced hint track is used.
-        *   `vdep` this track contains auxiliary depth video information for the referenced video track
-        *   `vplx` this track contains auxiliary parallax video information for the referenced video track
+        *   vdep this track contains auxiliary depth video information for the referenced video track
+        *   vplx this track contains auxiliary parallax video information for the referenced video track
 
 **/
 
@@ -548,7 +413,7 @@ impl Trgr {
 }
 
 /**
-Box Type : `mdia`
+Box Type : mdia
 Container: Track Box (‘trak’)
 Mandatory: Yes
 Quantity : Exactly One
@@ -564,35 +429,32 @@ pub struct Mdia {
 impl Mdia {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self {
-            header,
-            children,
-        })
+        Ok(Self { header, children })
     }
 }
 
 /**
-Box Type : `mdhd`
-Container: Media Box(`mdia`)
+Box Type : mdhd
+Container: Media Box(mdia)
 Mandatory: Yes
 Quantity : Exactly one
 
 8.4.2.2 Syntax
-aligned(8) class `MediaHeaderBox` extends FullBox(‘mdhd’, version, 0) {
+aligned(8) class MediaHeaderBox extends FullBox(‘mdhd’, version, 0) {
     if (version==1) {
-        unsigned int(64)  `creation_time`;
-        unsigned int(64)  `modification_time`;
+        unsigned int(64)  creation_time;
+        unsigned int(64)  modification_time;
         unsigned int(32)  timescale;
         unsigned int(64)  duration;
     } else { // version==0
-        unsigned int(32)  `creation_time`;
-        unsigned int(32)  `modification_time`;
+        unsigned int(32)  creation_time;
+        unsigned int(32)  modification_time;
         unsigned int(32)  timescale;
         unsigned int(32)  duration;
     }
     bit(1) pad = 0;
     unsigned int(5)[3] language; // ISO-639-2/T language code
-    unsigned int(16) `pre_defined` = 0;
+    unsigned int(16) pre_defined = 0;
 }
 
 **/
@@ -662,17 +524,17 @@ impl Mdhd {
 /**
 8.4.3.2 Syntax
 
-aligned(8) class `HandlerBox` extends FullBox(‘hdlr’, version = 0, 0) {
-    unsigned int(32) `pre_defined` = 0;
-    unsigned int(32) `handler_type`;
+aligned(8) class HandlerBox extends FullBox(‘hdlr’, version = 0, 0) {
+    unsigned int(32) pre_defined = 0;
+    unsigned int(32) handler_type;
     const unsigned int(32)[3] reserved = 0;
     string   name;
 }
 
 8.4.3.3 Semantics
 
-`version` is an integer that specifies the version of this box
-`handler_type` when present in a media box, is an integer containing one of the following values,
+version is an integer that specifies the version of this box
+handler_type when present in a media box, is an integer containing one of the following values,
     or a value from a derived specification:
         ‘vide’ Video track
         ‘soun’ Audio track
@@ -680,10 +542,10 @@ aligned(8) class `HandlerBox` extends FullBox(‘hdlr’, version = 0, 0) {
         ‘meta’ Timed Metadata track
         ‘auxv’ Auxiliary Video track
 
-`handler_type` when present in a meta box, contains an appropriate value to
+handler_type when present in a meta box, contains an appropriate value to
     indicate the format of the meta box contents. The value ‘null’ can be
     used in the primary meta box to indicate that it is merely being used to hold resources.
-`name` is a null-terminated string in UTF-8 characters which gives a human-readable name
+name is a null-terminated string in UTF-8 characters which gives a human-readable name
     for the track type (for debugging and inspection purposes).
 **/
 
@@ -737,10 +599,7 @@ pub struct Minf {
 impl Minf {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self {
-            header,
-            children,
-        })
+        Ok(Self { header, children })
     }
 }
 
@@ -852,10 +711,7 @@ pub struct Stbl {
 impl Stbl {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self {
-            header,
-            children,
-        })
+        Ok(Self { header, children })
     }
 }
 
@@ -898,24 +754,24 @@ impl Stsz {
 }
 
 /**
-aligned(8) class `CompactSampleSizeBox` extends FullBox(‘stz2’, version = 0, 0) {
+aligned(8) class CompactSampleSizeBox extends FullBox(‘stz2’, version = 0, 0) {
     unsigned int(24) reserved = 0;
-    unisgned int(8) `field_size`;
-    unsigned int(32) `sample_count`;
-    for (i=1; i <= `sample_count`; i++) {
-        unsigned `int(field_size`)   `entry_size`;
+    unisgned int(8) field_size;
+    unsigned int(32) sample_count;
+    for (i=1; i <= sample_count; i++) {
+        unsigned int(field_size)   entry_size;
     }
 }
 
 8.7.3.3.2 Semantics
 
-`version` is an integer that specifies the version of this box
-`field_size` is an integer specifying the size in bits of the entries in the following table;
+version is an integer that specifies the version of this box
+field_size is an integer specifying the size in bits of the entries in the following table;
     it shall take the value 4, 8 or 16.
     If the value 4 is used, then each byte contains two values: entry[i]<<4 + entry[i+1];
     if the sizes do not fill an integral number of bytes, the last byte is padded with zeros.
-`sample_count` is an integer that gives the number of entries in the following table
-`entry_size` is an integer specifying the size of a sample, indexed by its number.
+sample_count is an integer that gives the number of entries in the following table
+entry_size is an integer specifying the size of a sample, indexed by its number.
 
 **/
 
@@ -976,23 +832,23 @@ impl Stz2 {
 
 8.7.4.2 Syntax
 
-aligned(8) class `SampleToChunkBox` extends FullBox(‘stsc’, version = 0, 0) {
-   unsigned int(32)  `entry_count`;
-   for (i=1; i <= `entry_count`; i++) {
-        unsigned int(32) `first_chunk`;
-        unsigned int(32) `samples_per_chunk`; unsigned int(32) `sample_description_index`;
+aligned(8) class SampleToChunkBox extends FullBox(‘stsc’, version = 0, 0) {
+   unsigned int(32)  entry_count;
+   for (i=1; i <= entry_count; i++) {
+        unsigned int(32) first_chunk;
+        unsigned int(32) samples_per_chunk; unsigned int(32) sample_description_index;
     }
 }
 
 8.7.4.3 Semantics
-`version` is an integer that specifies the version of this box
-`entry_count` is an integer that gives the number of entries in the following table
-`first_chunk` is an integer that gives the index of the first chunk in this run of chunks
+version is an integer that specifies the version of this box
+entry_count is an integer that gives the number of entries in the following table
+first_chunk is an integer that gives the index of the first chunk in this run of chunks
     that share the same samples-per-chunk and sample-description-index;
-    the index of the first chunk in a track has the value 1 (the `first_chunk` field in the
+    the index of the first chunk in a track has the value 1 (the first_chunk field in the
     first record of this box has the value 1, identifying that the first sample maps to the first chunk).
-`samples_per_chunk` is an integer that gives the number of samples in each of these chunks
-    `sample_description_index` is an integer that gives the index of the sample entry
+samples_per_chunk is an integer that gives the number of samples in each of these chunks
+    sample_description_index is an integer that gives the index of the sample entry
     that describes the samples in this chunk. The index ranges from 1 to the number
     of sample entries in the Sample Description Box
 
@@ -1054,25 +910,25 @@ that care must be taken when constructing a self-contained ISO file with its met
 at the front, as the size of the Movie Box will affect the chunk offsets to the media data.
 
 8.7.5.2 Syntax
-aligned(8) class `ChunkOffsetBox`
+aligned(8) class ChunkOffsetBox
    extends FullBox(‘stco’, version = 0, 0) {
-   unsigned int(32)  `entry_count`;
-   for (i=1; i <= `entry_count`; i++) {
-      unsigned int(32)  `chunk_offset`;
+   unsigned int(32)  entry_count;
+   for (i=1; i <= entry_count; i++) {
+      unsigned int(32)  chunk_offset;
    }
 }
-aligned(8) class `ChunkLargeOffsetBox`
+aligned(8) class ChunkLargeOffsetBox
    extends FullBox(‘co64’, version = 0, 0) {
-   unsigned int(32)  `entry_count`;
-   for (i=1; i <= `entry_count`; i++) {
-      unsigned int(64)  `chunk_offset`;
+   unsigned int(32)  entry_count;
+   for (i=1; i <= entry_count; i++) {
+      unsigned int(64)  chunk_offset;
    }
 }
 
 8.7.5.3 Semantics
-`version` is an integer that specifies the version of this box
-`entry_count` is an integer that gives the number of entries in the following table
-`chunk_offset` is a 32 or 64 bit integer that gives the offset of the start
+version is an integer that specifies the version of this box
+entry_count is an integer that gives the number of entries in the following table
+chunk_offset is a 32 or 64 bit integer that gives the offset of the start
     of a chunk into its containing media file.
 
 **/
@@ -1138,7 +994,7 @@ impl Co64 {
 }
 
 /**
-Box Type : `padb`
+Box Type : padb
 Container: Sample Table (‘stbl’)
 Mandatory: No
 Quantity : Zero or one
@@ -1152,10 +1008,10 @@ externally the number of padding bits used. This table supplies that information
 
 8.7.6.2 Syntax
 
-aligned(8) class `PaddingBitsBox` extends FullBox(‘padb’, version = 0, 0) {
-    unsigned int(32) `sample_count`;
+aligned(8) class PaddingBitsBox extends FullBox(‘padb’, version = 0, 0) {
+    unsigned int(32) sample_count;
     int i;
-    for (i=0; i < ((`sample_count` + 1)/2); i++) {
+    for (i=0; i < ((sample_count + 1)/2); i++) {
         bit(1)   reserved = 0;
         bit(3)   pad1;
         bit(1)   reserved = 0;
@@ -1163,11 +1019,11 @@ aligned(8) class `PaddingBitsBox` extends FullBox(‘padb’, version = 0, 0) {
     }
 }
 
-`sample_count` – counts the number of samples in the track;
+sample_count – counts the number of samples in the track;
     it should match the count in other tables
-`pad1` – a value from 0 to 7, indicating the number of
+pad1 – a value from 0 to 7, indicating the number of
     bits at the end of sample (i*2)+1.
-`pad2` – a value from 0 to 7, indicating the number of
+pad2 – a value from 0 to 7, indicating the number of
     bits at the end of sample (i*2)+2
 
 **/
@@ -1237,7 +1093,7 @@ impl Stdp {
 
 8.6.1.2
 8.6.1.2.1 Decoding Time to Sample Box Definition
-Box Type : `stts`
+Box Type : stts
 Container: Sample Table Box (‘stbl’)
 Mandatory: Yes
 Quantity : Exactly one
@@ -1260,12 +1116,12 @@ The Edit List Box provides the initial CT value if it is non-empty (non-zero).
 
 8.6.1.2.2 Syntax
 
-aligned(8) class `TimeToSampleBox` extends FullBox(’stts’, version = 0, 0) {
-    unsigned int(32)  `entry_count`;
+aligned(8) class TimeToSampleBox extends FullBox(’stts’, version = 0, 0) {
+    unsigned int(32)  entry_count;
     int i;
-    for (i=0; i < `entry_count`; i++) {
-        unsigned int(32)  `sample_count`;
-        unsigned int(32)  `sample_delta`;
+    for (i=0; i < entry_count; i++) {
+        unsigned int(32)  sample_count;
+        unsigned int(32)  sample_delta;
     }
 }
 
@@ -1280,11 +1136,11 @@ For example with Table 2, the entry would be:
 
 8.6.1.2.3 Semantics
 
-`version` - is an integer that specifies the version of this box.
-`entry_count` - is an integer that gives the number of entries in the following table.
-`sample_count` - is an integer that counts the number of consecutive samples that have the given
+version - is an integer that specifies the version of this box.
+entry_count - is an integer that gives the number of entries in the following table.
+sample_count - is an integer that counts the number of consecutive samples that have the given
 duration.
-`sample_delta` - is an integer that gives the delta of these samples in the time-scale of the media.
+sample_delta - is an integer that gives the delta of these samples in the time-scale of the media.
 
 
 **/
@@ -1332,7 +1188,7 @@ impl Stts {
 /**
 8.6.1.3
 8.6.1.3.1 Composition Time to Sample Box Definition
-Box Type : `ctts`
+Box Type : ctts
 Container: Sample Table Box (‘stbl’)
 Mandatory: No
 Quantity : Zero or one
@@ -1355,7 +1211,7 @@ that is, the timestamp for two samples shall never be the same.
 It may be true that there is no frame to compose at time 0; the handling of
 this is unspecified (systems might display the first frame for longer, or a suitable fill colour).
 
-When version 1 of this box is used, the `CompositionToDecodeBox` may also be present in
+When version 1 of this box is used, the CompositionToDecodeBox may also be present in
 the sample table to relate the composition and decoding timelines.
 When backwards-compatibility or compatibility with an unknown set
 of readers is desired, version 0 of this box should be used when possible.
@@ -1371,7 +1227,7 @@ Hint tracks do not use this box.
 For example in Table 2
 
 +++++++++++++++++++++++++++++++
-| Sample count | `Sample_offset`|
+| Sample count | Sample_offset|
 +++++++++++++++++++++++++++++++
 |      1       |      10      |
 -------------------------------
@@ -1396,28 +1252,28 @@ For example in Table 2
 
 8.6.1.3.2 Syntax
 
-aligned(8) class `CompositionOffsetBox` extends FullBox(‘ctts’, version = 0, 0) {
-    unsigned int(32) `entry_count`;
+aligned(8) class CompositionOffsetBox extends FullBox(‘ctts’, version = 0, 0) {
+    unsigned int(32) entry_count;
     int i;
     if (version==0) {
-        for (i=0; i < `entry_count`; i++) {
-            unsigned int(32)  `sample_count`;
-            unsigned int(32)  `sample_offset`;
+        for (i=0; i < entry_count; i++) {
+            unsigned int(32)  sample_count;
+            unsigned int(32)  sample_offset;
         }
     } else if (version == 1) {
-        for (i=0; i < `entry_count`; i++) {
-            unsigned int(32)  `sample_count`;
-            signed   int(32)  `sample_offset`;
+        for (i=0; i < entry_count; i++) {
+            unsigned int(32)  sample_count;
+            signed   int(32)  sample_offset;
         }
     }
 }
 
 8.6.1.3.3 Semantics
 
-`version` - is an integer that specifies the version of this box.
-`entry_count` is an integer that gives the number of entries in the following table.
-`sample_count` is an integer that counts the number of consecutive samples that have the given offset.
-    `sample_offset` is an integer that gives the offset between CT and DT,
+version - is an integer that specifies the version of this box.
+entry_count is an integer that gives the number of entries in the following table.
+sample_count is an integer that counts the number of consecutive samples that have the given offset.
+    sample_offset is an integer that gives the offset between CT and DT,
     such that CT(n) = DT(n) + CTTS(n).
 
 **/
@@ -1545,10 +1401,7 @@ pub struct Mvex {
 impl Mvex {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self {
-            header,
-            children,
-        })
+        Ok(Self { header, children })
     }
 }
 
@@ -1562,11 +1415,11 @@ The Movie Extends Header is optional, and provides the overall duration,
 including fragments, of a fragmented movie. If this box is not present,
 the overall duration must be computed by examining each fragment.
 
-aligned(8) class `MovieExtendsHeaderBox` extends FullBox(‘mehd’, version, 0) {
+aligned(8) class MovieExtendsHeaderBox extends FullBox(‘mehd’, version, 0) {
     if (version==1) {
-        unsigned int(64)  `fragment_duration`;
+        unsigned int(64)  fragment_duration;
    } else { // version==0
-        unsigned int(32)  `fragment_duration`;
+        unsigned int(32)  fragment_duration;
    }
 }
 **/

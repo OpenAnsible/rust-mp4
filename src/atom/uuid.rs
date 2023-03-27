@@ -1,4 +1,4 @@
-use super::{Atom, Header, Kind, Mp4File};
+use super::{Header, Mp4File};
 
 #[derive(Debug, Clone)]
 pub struct Uuid {

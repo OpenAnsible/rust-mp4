@@ -425,7 +425,8 @@ impl Kind {
         };
         Self::from_str(kind_str)
     }
-    #[must_use] pub fn into_bytes(&self) -> Vec<u8> {
+    #[must_use]
+    pub fn into_bytes(&self) -> Vec<u8> {
         self.to_string().into_bytes()
     }
 }

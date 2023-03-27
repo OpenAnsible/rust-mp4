@@ -296,7 +296,7 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn parse(f: &mut Mp4File) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File) -> Result<Header, &'static str> {
         let curr_offset = f.offset();
         let size: u32 = f.read_u32().unwrap();
 
@@ -309,24 +309,24 @@ impl Header {
         let kind = Kind::from_bytes(&kind_bytes).unwrap();
 
         let header_size = 8u64;
-        let atom_size = u64::from(size);
+        let atom_size = size as u64;
         // let data_size = atom_size - header_size;
         let data_size = 0u64;
 
         f.offset_inc(header_size);
 
-        let mut header = Self {
-            size,
-            kind,
+        let mut header = Header {
+            size: size,
+            kind: kind,
 
             largesize: None,
             usertype: None,
             version: None,
             flags: None,
 
-            atom_size,     // atom size , include header and data.
-            header_size, // atom header size, not include data size.
-            data_size,     // atom data size , not include header size.
+            atom_size: atom_size,     // atom size , include header and data.
+            header_size: header_size, // atom header size, not include data size.
+            data_size: data_size,     // atom data size , not include header size.
             offset: curr_offset,      // file offset.
         };
         if size == 1u32 {
@@ -344,7 +344,7 @@ impl Header {
 
         let largesize = f.read_u64().unwrap();
         self.atom_size = largesize;
-        self.header_size += 8;
+        self.header_size = self.header_size + 8;
         self.data_size = largesize - self.header_size;
 
         self.largesize = Some(largesize);
@@ -372,7 +372,7 @@ impl Header {
         ];
         self.usertype = Some(usertype);
 
-        self.header_size += 16;
+        self.header_size = self.header_size + 16;
         self.data_size = self.atom_size - self.header_size;
         f.offset_inc(16);
     }
@@ -381,7 +381,7 @@ impl Header {
         let version = f.read_u8().unwrap();
         self.version = Some(version);
 
-        self.header_size += 1;
+        self.header_size = self.header_size + 1;
         self.data_size = self.atom_size - self.header_size;
         f.offset_inc(1);
     }
@@ -394,7 +394,7 @@ impl Header {
         ];
         self.flags = Some(flags);
 
-        self.header_size += 3;
+        self.header_size = self.header_size + 3;
         self.data_size = self.atom_size - self.header_size;
         f.offset_inc(3);
     }
@@ -493,7 +493,7 @@ impl Atom {
             // Kind::fecr => ,
             // Kind::fiin => ,
             // Kind::fpar => ,
-            Kind::Free => Ok(Self::Free(Free::parse(f, header).unwrap())),
+            Kind::Free => Ok(Self::Free(Free::parse(f, header))),
             // Kind::frma => ,
             Kind::Ftyp => Ok(Self::Ftyp(Ftyp::parse(f, header).unwrap())),
             Kind::Hdlr => Ok(Self::Hdlr(Hdlr::parse(f, header).unwrap())),
@@ -530,7 +530,7 @@ impl Atom {
             Kind::Sdtp => Ok(Self::Sdtp(Sdtp::parse(f, header).unwrap())),
             // Kind::sgpd => ,
             // Kind::sinf => ,
-            Kind::Skip => Ok(Self::Skip(Skip::parse(f, header).unwrap())),
+            Kind::Skip => Ok(Self::Skip(Skip::parse(f, header))),
             Kind::Smhd => Ok(Self::Smhd(Smhd::parse(f, header).unwrap())),
             Kind::Stbl => Ok(Self::Stbl(Stbl::parse(f, header).unwrap())),
             Kind::Stco => Ok(Self::Stco(Stco::parse(f, header).unwrap())),
@@ -566,8 +566,8 @@ impl Atom {
         };
         data
     }
-    pub fn parse_children(f: &mut Mp4File) -> Vec<Self> {
-        let mut atoms: Vec<Self> = Vec::new();
+    pub fn parse_children(f: &mut Mp4File) -> Vec<Atom> {
+        let mut atoms: Vec<Atom> = Vec::new();
         loop {
             if f.offset() == f.file_size() {
                 break;
