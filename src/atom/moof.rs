@@ -69,6 +69,18 @@ impl Mfhd {
             sequence_number,
         })
     }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
+
+    pub fn sequence_number(&self) -> u32 {
+        self.sequence_number
+    }
 }
 
 #[derive(Debug, Clone)]

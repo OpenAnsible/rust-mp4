@@ -713,6 +713,22 @@ impl Stbl {
         let children: Vec<Atom> = Atom::parse_children(f);
         Ok(Self { header, children })
     }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn children_ref(&self) -> &Vec<Atom> {
+        &self.children
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
+
+    pub fn children(&self) -> Vec<Atom> {
+        self.children.clone()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -750,6 +766,14 @@ impl Stsz {
             sample_count,
             entry_size,
         })
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
     }
 }
 
@@ -826,6 +850,14 @@ impl Stz2 {
             entry_size,
         })
     }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
 }
 
 /**
@@ -886,6 +918,14 @@ impl Stsc {
             entry_count,
             entries,
         })
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
     }
 }
 
@@ -961,6 +1001,14 @@ impl Stco {
             chunks,
         })
     }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -990,6 +1038,14 @@ impl Co64 {
             entry_count,
             chunks,
         })
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
     }
 }
 
@@ -1055,6 +1111,18 @@ impl Padb {
             sample_count,
         })
     }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
+
+    pub fn sample_count(&self) -> u32 {
+        self.sample_count
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -1071,6 +1139,14 @@ impl Stsd {
         f.offset_inc(header.data_size);
         Ok(Self { header })
     }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -1086,6 +1162,14 @@ impl Stdp {
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
         Ok(Self { header })
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
     }
 }
 
@@ -1342,6 +1426,14 @@ impl Cslg {
         f.offset_inc(header.data_size);
         Ok(Self { header })
     }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -1358,6 +1450,14 @@ impl Stss {
         f.offset_inc(header.data_size);
         Ok(Self { header })
     }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -1373,6 +1473,14 @@ impl Stsh {
         f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
         Ok(Self { header })
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
     }
 }
 
@@ -1402,6 +1510,22 @@ impl Mvex {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let children: Vec<Atom> = Atom::parse_children(f);
         Ok(Self { header, children })
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn children_ref(&self) -> &Vec<Atom> {
+        &self.children
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
+
+    pub fn children(&self) -> Vec<Atom> {
+        self.children.clone()
     }
 }
 
@@ -1434,19 +1558,31 @@ impl Mehd {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
-        // let curr_offset = f.offset();
-        let mut fragment_duration: u64 = 0;
-        if header.version.unwrap() == 1u8 {
-            fragment_duration = f.read_u64().unwrap();
+
+        let fragment_duration: u64 = if header.version.unwrap() == 1u8 {
+            f.read_u64().unwrap()
         } else {
-            fragment_duration = u64::from(f.read_u32().unwrap());
-        }
+            u64::from(f.read_u32().unwrap())
+        };
+
         // f.seek(curr_offset+header.data_size);
         f.offset_inc(header.data_size);
         Ok(Self {
             header,
             fragment_duration,
         })
+    }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
+
+    pub fn fragment_duration(&self) -> u64 {
+        self.fragment_duration
     }
 }
 

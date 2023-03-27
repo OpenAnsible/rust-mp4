@@ -42,4 +42,20 @@ impl Pdin {
             initial_delay,
         })
     }
+
+    pub fn header_ref(&self) -> &Header {
+        &self.header
+    }
+
+    pub fn header(&self) -> Header {
+        self.header.clone()
+    }
+
+    pub fn rate(&self) -> u32 {
+        self.rate
+    }
+
+    pub fn initial_delay(&self) -> u32 {
+        self.initial_delay
+    }
 }
