@@ -170,31 +170,19 @@ impl Ftyp {
         })
     }
 
-    pub fn header_ref(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn header(&self) -> Header {
-        self.header.clone()
-    }
-
-    pub fn major_brand_ref(&self) -> &FileType {
+    pub fn major_brand(&self) -> &FileType {
         &self.major_brand
-    }
-
-    pub fn major_brand(&self) -> FileType {
-        self.major_brand.clone()
     }
 
     pub fn minor_version(&self) -> u32 {
         self.minor_version
     }
 
-    pub fn compatible_brands_ref(&self) -> &Vec<FileType> {
+    pub fn compatible_brands(&self) -> &Vec<FileType> {
         &self.compatible_brands
-    }
-
-    pub fn compatible_brands(&self) -> Vec<FileType> {
-        self.compatible_brands.clone()
     }
 }

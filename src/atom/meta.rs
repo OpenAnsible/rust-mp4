@@ -38,49 +38,15 @@ impl Meta {
         header.parse_version(f);
         header.parse_flags(f);
         let curr_offset = f.offset();
-        f.seek(curr_offset + header.data_size);
+        let _ = f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
         Ok(Self { header })
     }
 
-    pub fn header_ref(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self.header
     }
-
-    pub fn header(&self) -> Header {
-        self.header.clone()
-    }
 }
-
-/**
-
-8.11.2 XML Boxes
-8.11.2.1 Definition
-
-Box Type : `xml ` or `bxml`
-Container: Meta box (`meta`)
-Mandatory: No
-Quantity : Zero or one
-
-When the primary data is in XML format and it is desired that the XML be stored directly
-in the meta-box, one of these forms may be used. The Binary XML Box may only be used
-when there is a single well-defined binarization of the XML for that defined format as
-identified by the handler.
-
-Within an XML box the data is in UTF-8 format unless the data starts with
-a byte-order-mark (BOM), which indicates that the data is in UTF-16 format.
-
-8.11.2.2 Syntax
-
-aligned(8) class `XMLBox` extends FullBox(‘xml ’, version = 0, 0) {
-    string xml;
-}
-
-aligned(8) class `BinaryXMLBox` extends FullBox(‘bxml’, version = 0, 0) {
-    unsigned int(8) data[]; // to end of box
-}
-
-**/
 
 #[derive(Debug, Clone)]
 pub struct Xml {
@@ -105,20 +71,12 @@ impl Xml {
         Ok(Self { header, xml })
     }
 
-    pub fn header_ref(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn header(&self) -> Header {
-        self.header.clone()
-    }
-
-    pub fn xml_ref(&self) -> &String {
+    pub fn xml(&self) -> &String {
         &self.xml
-    }
-
-    pub fn xml(&self) -> String {
-        self.xml.clone()
     }
 }
 
@@ -145,19 +103,11 @@ impl Bxml {
         Ok(Self { header, data })
     }
 
-    pub fn header_ref(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn header(&self) -> Header {
-        self.header.clone()
-    }
-
-    pub fn data_ref(&self) -> &Vec<u8> {
+    pub fn data(&self) -> &Vec<u8> {
         &self.data
-    }
-
-    pub fn data(&self) -> Vec<u8> {
-        self.data.clone()
     }
 }

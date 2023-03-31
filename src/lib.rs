@@ -18,19 +18,6 @@ pub struct Mp4File {
     atoms: Vec<atom::Atom>,
 }
 
-#[derive(Debug, Clone)]
-pub struct Matrix {
-    a: f64,
-    b: f64,
-    u: f64,
-    c: f64,
-    d: f64,
-    v: f64,
-    x: f64,
-    y: f64,
-    w: f64,
-}
-
 impl Mp4File {
     pub fn new(filename: &str) -> Result<Self, &'static str> {
         let file = fs::OpenOptions::new()
@@ -197,4 +184,37 @@ pub fn parse_file(filename: &str) -> Result<Mp4File, &'static str> {
 #[must_use]
 pub fn mp4time_to_unix_time(time: u64) -> u64 {
     time - 2_082_844_800
+}
+
+macro_rules! mtx {
+    ($id:ident) => {
+        pub fn $id(&self) -> f64 {
+            self.$id
+        }
+    };
+}
+
+#[derive(Debug, Clone)]
+pub struct Matrix {
+    a: f64,
+    b: f64,
+    u: f64,
+    c: f64,
+    d: f64,
+    v: f64,
+    x: f64,
+    y: f64,
+    w: f64,
+}
+
+impl Matrix {
+    mtx!(a);
+    mtx!(b);
+    mtx!(u);
+    mtx!(c);
+    mtx!(d);
+    mtx!(v);
+    mtx!(x);
+    mtx!(y);
+    mtx!(w);
 }

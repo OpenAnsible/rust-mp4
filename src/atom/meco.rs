@@ -16,20 +16,12 @@ impl Meco {
         Self { header, children }
     }
 
-    pub fn header_ref(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn children_ref(&self) -> &Vec<Atom> {
+    pub fn children(&self) -> &Vec<Atom> {
         &self.children
-    }
-
-    pub fn header(&self) -> Header {
-        self.header.clone()
-    }
-
-    pub fn children(&self) -> Vec<Atom> {
-        self.children.clone()
     }
 }
 
@@ -61,12 +53,8 @@ impl Mere {
         })
     }
 
-    pub fn header_ref(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self.header
-    }
-
-    pub fn header(&self) -> Header {
-        self.header.clone()
     }
 
     pub fn first_metabox_handler_type(&self) -> u32 {

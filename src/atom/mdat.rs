@@ -16,7 +16,7 @@ pub struct Mdat {
 impl Mdat {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let curr_offset = f.offset();
-        f.seek(curr_offset + header.data_size);
+        let _ = f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
         Ok(Self { header })
     }
@@ -27,11 +27,7 @@ impl Mdat {
 
     // }
 
-    pub fn header_ref(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self.header
-    }
-
-    pub fn header(&self) -> Header {
-        self.header.clone()
     }
 }

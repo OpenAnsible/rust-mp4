@@ -19,20 +19,12 @@ impl Mfra {
         Ok(Self { header, children })
     }
 
-    pub fn header_ref(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn header(&self) -> Header {
-        self.header.clone()
-    }
-
-    pub fn children_ref(&self) -> &Vec<Atom> {
+    pub fn children(&self) -> &Vec<Atom> {
         &self.children
-    }
-
-    pub fn children(&self) -> Vec<Atom> {
-        self.children.clone()
     }
 }
 
@@ -55,46 +47,14 @@ impl Tfra {
         })
     }
 
-    pub fn header_ref(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self.header
-    }
-
-    pub fn header(&self) -> Header {
-        self.header.clone()
     }
 
     pub fn sequence_number(&self) -> u32 {
         self.sequence_number
     }
 }
-
-/**
-8.8.11.1 Definition
-Box Type : ‘mfro’
-Container: Movie Fragment Random Access Box (‘mfra’)
-Mandatory: Yes
-Quantity : Exactly one
-
-The Movie Fragment Random Access Offset Box provides a copy of the length
-field from the enclosing Movie Fragment Random Access Box. It is placed last
-within that box, so that the size field is also last in the enclosing
-Movie Fragment Random Access Box. When the Movie Fragment Random Access Box is
-also last in the file this permits its easy location. The size field here must be correct.
-However, neither the presence of the Movie Fragment Random Access Box, nor its placement
-last in the file, are assured.
-
-8.8.11.2 Syntax
-
-aligned(8) class `MovieFragmentRandomAccessOffsetBox` extends FullBox(‘mfro’, version, 0) {
-   unsigned int(32)  size;
-}
-
-8.8.11.3 Semantics
-`size` is an integer gives the number of bytes of the enclosing ‘mfra’ box.
-    This field is placed at the last of the enclosing box to assist readers scanning
-    from the end of the file in finding the ‘mfra’ box.
-
-**/
 
 #[derive(Debug, Clone)]
 pub struct Mfro {
@@ -113,12 +73,8 @@ impl Mfro {
         Ok(Self { header, size })
     }
 
-    pub fn header_ref(&self) -> &Header {
+    pub fn header(&self) -> &Header {
         &self.header
-    }
-
-    pub fn header(&self) -> Header {
-        self.header.clone()
     }
 
     pub fn size(&self) -> u32 {

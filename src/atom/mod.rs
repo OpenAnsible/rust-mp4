@@ -13,9 +13,9 @@
         size(u32), type(u32), largesize(u64),
         data
 
-其中, `size` 指明了整个 `box` 的大小, 包括 `header` 部分.
-如果 `box` 大小超过了 `u32` 的最大数值, `size` 就被设置为 `1` ,
-并用接下来的 `8位` u64 来存放大小。
+Among them, `size` specifies the size of the entire `box`, including the `header` part.
+If the `box` size exceeds the maximum value of `u32`, `size` is set to `1`,
+And use the next `8-bit` u64 to store the size.
 
 Atoms:
 
@@ -144,7 +144,7 @@ Media Segments
 use std::str;
 
 pub use super::Mp4File;
-use byteorder::ReadBytesExt;
+// use byteorder::ReadBytesExt;
 
 mod kind;
 
@@ -195,80 +195,6 @@ pub struct Sample {
     pub composition_time_offset: Option<i32>,
     pub description_index: Option<u32>,
 }
-
-/**
-    aligned(8) class Box (unsigned int(32) boxtype,
-                          optional unsigned int(8)[16] extended_type) {
-        unsigned int(32) size;
-        unsigned int(32) type = boxtype;
-        if (size==1) {
-            unsigned int(64) largesize;
-        } else if (size==0) {
-            // box extends to end of file
-        }
-        if (boxtype==‘uuid’) {
-            unsigned int(8)[16] usertype = extended_type;
-        }
-    }
-
-    The semantics of these two fields are:
-
-        `size` is an integer that specifies the number of bytes in this box,
-            including all its fields and contained boxes; if size is 1 then the actual size is
-            in the field largesize; if size is 0, then this box is the last one in the file,
-            and its contents extend to the end of the file (normally only used for a Media Data Box)
-        `type` identifies the box type; standard boxes use a compact type,
-            which is normally four printable characters, to permit ease of identification,
-            and is shown so in the boxes below. User extensions use an extended type; in this case,
-            the type field is set to ‘uuid’.
-
-    Boxes with an unrecognized type shall be ignored and skipped.
-
-    Many objects also contain a version number and flags field:
-
-    aligned(8) class FullBox(unsigned int(32) boxtype,
-                             unsigned int(8) v,
-                             bit(24) f) extends Box(boxtype) {
-        unsigned int(8) version = v;
-        bit(24) flags = f;
-    }
-
-    The semantics of these two fields are:
-        `version` is an integer that specifies the version of this format of the box.
-        `flags` is a map of flags
-
-    Boxes with an unrecognized version shall be ignored and skipped.
-
-    简单来说，Box Header 有两个版本的格式:
-
-    pub struct Box {
-        type: BoxType,
-        size: u32,
-        // if size == 0 {
-        //   box extends to end of file
-        // } else if size == 1 {
-        //   largesize = u64
-        // }
-        largesize: Option<u64>,
-        usertype: Option<Vec<u8>> // length 16. if type === 'uuid', usertype is active.
-    }
-
-    pub struct FullBox {
-        type: BoxType,
-        size: u32,
-        // if size == 0 {
-        //   box extends to end of file
-        // } else if size == 1 {
-        //   largesize = u64
-        // }
-        largesize: Option<u64>,
-        // if type === 'uuid', then usertype is active
-        usertype: Option<[u8; 16]>, // length 16.
-
-        version: u8,
-        flags  : [u8; 3],   // 24 Bits
-    }
-**/
 
 #[derive(Debug, Clone)]
 pub struct Header {
@@ -459,6 +385,7 @@ pub enum Atom {
 }
 
 impl Atom {
+    #[allow(dead_code)]
     fn parse_kind(f: &mut Mp4File) -> Result<Kind, &'static str> {
         let kind_bytes: [u8; 4] = [
             f.read_u8().unwrap(),
@@ -558,6 +485,7 @@ impl Atom {
         };
         data
     }
+
     pub fn parse_children(f: &mut Mp4File) -> Vec<Self> {
         let mut atoms: Vec<Self> = Vec::new();
         loop {
