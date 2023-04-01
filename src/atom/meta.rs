@@ -1,3 +1,5 @@
+use crate::let_ok;
+
 use super::{Header, Mp4File};
 /**
 
@@ -37,13 +39,17 @@ impl Meta {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
+
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
+        let Ok(_offset) = f.seek(curr_offset + header.data_size) else {
+            return Err("Unable to see file.")
+        };
         f.offset_inc(header.data_size);
+
         Ok(Self { header })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 }
@@ -59,23 +65,27 @@ impl Xml {
         header.parse_version(f);
         header.parse_flags(f);
 
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
         let mut xml_bytes: Vec<u8> = Vec::new();
         for _ in 0..header.data_size {
-            xml_bytes.push(f.read_u8().unwrap());
+            let Ok(byte) = f.read_u8() else {
+                return Err("Unable to read byte.")
+            };
+            xml_bytes.push(byte);
         }
-        let xml: String = String::from_utf8(xml_bytes).unwrap();
+
+        let Ok(xml) = String::from_utf8(xml_bytes) else {
+            return Err("Unable to parse XML from utf8")
+        };
 
         f.offset_inc(header.data_size);
         Ok(Self { header, xml })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn xml(&self) -> &String {
+    pub const fn xml(&self) -> &String {
         &self.xml
     }
 }
@@ -91,23 +101,21 @@ impl Bxml {
         header.parse_version(f);
         header.parse_flags(f);
 
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
         let mut data: Vec<u8> = Vec::new();
         for _ in 0..header.data_size {
-            data.push(f.read_u8().unwrap());
+            let_ok!(byte, f.read_u8(), "Unable to read byte.");
+            data.push(byte);
         }
-        // let xml: String = String::from_utf8(xml_bytes).unwrap();
 
         f.offset_inc(header.data_size);
         Ok(Self { header, data })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn data(&self) -> &Vec<u8> {
+    pub const fn data(&self) -> &Vec<u8> {
         &self.data
     }
 }

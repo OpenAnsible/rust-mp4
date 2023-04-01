@@ -2,6 +2,8 @@ use std::str;
 use std::str::FromStr;
 use std::string::ToString;
 
+use crate::let_ok;
+
 #[allow(clippy::doc_markdown)]
 /**
 Atom Types:
@@ -415,11 +417,30 @@ impl ToString for Kind {
 }
 
 impl Kind {
-    pub fn from_bytes(bytes: &[u8; 4]) -> Result<Self, &'static str> {
-        let Ok(kind_str) = str::from_utf8(bytes) else {
-                eprintln!("Atom Kind ({bytes:?}) parse error.");
-                return Err("Atom Kind parse error.");
-        };
+    /// Returns the file type based on the bytes supplied.
+    ///
+    /// # Arguments
+    ///
+    /// - `bytes: [u8; 4]` -- a 4-byte array containing the file identifier
+    ///
+    /// # Returns
+    ///
+    ///
+    ///
+    /// # Errors
+    ///
+    ///
+    ///
+    /// # Panics
+    ///
+    ///
+    ///
+    /// # Examples
+    ///
+    ///
+    ///
+    pub fn from_bytes(bytes: [u8; 4]) -> Result<Self, &'static str> {
+        let_ok!(kind_str, str::from_utf8(&bytes), "Atom Kind parse error.");
         Self::from_str(kind_str)
     }
 

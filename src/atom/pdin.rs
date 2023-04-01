@@ -1,3 +1,5 @@
+use crate::let_ok;
+
 use super::{Header, Mp4File};
 
 #[derive(Debug, Clone)]
@@ -9,9 +11,11 @@ pub struct Pdin {
 
 impl Pdin {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
-        let rate = f.read_u32().unwrap();
-        let initial_delay = f.read_u32().unwrap();
+        let_ok!(rate, f.read_u32(), "Unable to read rate.");
+        let_ok!(initial_delay, f.read_u32(), "Unable to read initial delay.");
+
         f.offset_inc(header.data_size);
+
         Ok(Self {
             header,
             rate,
@@ -19,15 +23,15 @@ impl Pdin {
         })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn rate(&self) -> u32 {
+    pub const fn rate(&self) -> u32 {
         self.rate
     }
 
-    pub fn initial_delay(&self) -> u32 {
+    pub const fn initial_delay(&self) -> u32 {
         self.initial_delay
     }
 }

@@ -1,3 +1,5 @@
+use crate::let_ok;
+
 use super::{Atom, Header, Mp4File};
 /*
 meco
@@ -16,11 +18,11 @@ impl Meco {
         Self { header, children }
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn children(&self) -> &Vec<Atom> {
+    pub const fn children(&self) -> &Vec<Atom> {
         &self.children
     }
 }
@@ -38,13 +40,26 @@ impl Mere {
         header.parse_version(f);
         header.parse_flags(f);
 
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
-        let first_metabox_handler_type = f.read_u32().unwrap_or(0);
-        let second_metabox_handler_type = f.read_u32().unwrap_or(0);
-        let metabox_relation = f.read_u8().unwrap_or(1);
+        let_ok!(
+            first_metabox_handler_type,
+            f.read_u32(),
+            "Unable to determine first metabox handler type."
+        );
 
-        f.offset_inc(header.data_size);
+        let_ok!(
+            second_metabox_handler_type,
+            f.read_u32(),
+            "Unable to determine second metabox handler type."
+        );
+
+        let_ok!(
+            metabox_relation,
+            f.read_u8(),
+            "Unable to determine metabox relation."
+        );
+
+        let _offset = f.offset_inc(header.data_size);
+
         Ok(Self {
             header,
             first_metabox_handler_type,
@@ -53,19 +68,19 @@ impl Mere {
         })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn first_metabox_handler_type(&self) -> u32 {
+    pub const fn first_metabox_handler_type(&self) -> u32 {
         self.first_metabox_handler_type
     }
 
-    pub fn second_metabox_handler_type(&self) -> u32 {
+    pub const fn second_metabox_handler_type(&self) -> u32 {
         self.second_metabox_handler_type
     }
 
-    pub fn metabox_relation(&self) -> u8 {
+    pub const fn metabox_relation(&self) -> u8 {
         self.metabox_relation
     }
 }

@@ -1,3 +1,5 @@
+use crate::let_ok;
+
 use super::{Header, Mp4File};
 
 /**
@@ -16,18 +18,17 @@ pub struct Mdat {
 impl Mdat {
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
+        let_ok!(
+            _offset,
+            f.seek(curr_offset + header.data_size),
+            "Unable to seek file."
+        );
+
         f.offset_inc(header.data_size);
         Ok(Self { header })
     }
-    // pub fn read(&self, buf: &mut [u8]) -> Result<usize>{
 
-    // }
-    // pub fn read_to_end(&self, buf: &mut Vec<u8>) -> Result<usize>{
-
-    // }
-
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 }

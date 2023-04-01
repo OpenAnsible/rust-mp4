@@ -1,7 +1,7 @@
 // Metadata container
 
 use super::{Atom, Entry, Header, Mp4File};
-use crate::Matrix;
+use crate::{let_ok, let_some, Matrix};
 
 use std::string::String;
 
@@ -57,16 +57,16 @@ pub struct Moov {
 }
 
 impl Moov {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self { header, children })
+        Self { header, children }
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn children(&self) -> &Vec<Atom> {
+    pub const fn children(&self) -> &Vec<Atom> {
         &self.children
     }
 }
@@ -91,52 +91,68 @@ impl Mvhd {
         header.parse_version(f);
         header.parse_flags(f);
 
+        if header.version.is_none() {
+            return Err("Header version is empty. Unable to continue.");
+        }
+
         let curr_offset = f.offset();
-
-        let mut length = 0u64;
-
+        let mut length = 0;
         let creation_time;
         let modification_time;
         let timescale;
         let duration;
 
-        assert!(header.version.is_some());
+        if header.version.unwrap_or(0) == 1u8 {
+            let_ok!(ct, f.read_u64(), "Unable to read creation time.");
+            creation_time = ct;
 
-        if header.version.unwrap() == 1u8 {
-            creation_time = f.read_u64().unwrap();
-            modification_time = f.read_u64().unwrap();
-            timescale = f.read_u32().unwrap();
-            duration = f.read_u64().unwrap();
+            let_ok!(mt, f.read_u64(), "Unable to read modification time.");
+            modification_time = mt;
+
+            let_ok!(ts, f.read_u32(), "Unable to read timescale.");
+            timescale = ts;
+
+            let_ok!(dur, f.read_u64(), "Unable to read duration.");
+            duration = dur;
+
             length += 28;
         } else {
             // header version == 0
-            creation_time = u64::from(f.read_u32().unwrap());
-            modification_time = u64::from(f.read_u32().unwrap());
-            timescale = f.read_u32().unwrap();
-            duration = u64::from(f.read_u32().unwrap());
+            let_ok!(ct, f.read_u32(), "Unable to read creation time.");
+            creation_time = u64::from(ct);
+
+            let_ok!(mt, f.read_u32(), "Unable to read modification time.");
+            modification_time = u64::from(mt);
+
+            let_ok!(ts, f.read_u32(), "Unable to read timescale.");
+            timescale = ts;
+
+            let_ok!(dur, f.read_u32(), "Unable to read duration.");
+            duration = u64::from(dur);
             length += 16;
         }
         // fixed point 16.16 number
-        let rate = f.read_fixed_point(16, 16).unwrap(); // u32
+        let_ok!(rate, f.read_fixed_point(16, 16), "Unable to read rate.");
         length += 4;
 
         // fixed point 8.8 number
-        let volume = f.read_fixed_point(8, 8).unwrap(); // u16
+        let_ok!(volume, f.read_fixed_point(8, 8), "Unable to read volume.");
         length += 2;
 
         // 10 Bytes reserved
         length += 10;
 
-        let _ = f.seek(curr_offset + length);
+        let _offset = f.seek(curr_offset + length);
+
         // matrix
-        let matrix: Matrix = f.read_matrix().unwrap(); // 36 Bytes
+        let_ok!(matrix, f.read_matrix(), "Unable to read matrix.");
         length += 36;
 
         // 24 Bytes
         length += 24;
-        let _ = f.seek(curr_offset + length);
+        let _offset = f.seek(curr_offset + length);
 
-        let next_track_id = f.read_u32().unwrap();
+        let_ok!(next_track_id, f.read_u32(), "Unable to read next track ID.");
         length += 4;
 
         f.offset_inc(length);
@@ -162,9 +178,9 @@ pub struct Trak {
 }
 
 impl Trak {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self { header, children })
+        Self { header, children }
     }
 }
 
@@ -187,14 +203,14 @@ pub struct Tkhd {
 }
 
 impl Tkhd {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
         header.parse_version(f);
         header.parse_flags(f);
 
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
+        let _offset = f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Self { header })
+        Self { header }
     }
 }
 
@@ -204,11 +220,11 @@ pub struct Tref {
 }
 
 impl Tref {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
+        let _offset = f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Self { header })
+        Self { header }
     }
 }
 
@@ -219,11 +235,11 @@ pub struct Trgr {
 
 impl Trgr {
     #[allow(dead_code)]
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
+        let _offset = f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
-        Ok(Self { header })
+        Self { header }
     }
 }
 
@@ -234,9 +250,9 @@ pub struct Mdia {
 }
 
 impl Mdia {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self { header, children })
+        Self { header, children }
     }
 }
 
@@ -257,38 +273,59 @@ impl Mdhd {
 
         let curr_offset = f.offset();
 
-        let mut length = 0u64;
+        let mut length = 0;
 
         let creation_time;
         let modification_time;
         let timescale;
         let duration;
-        assert!(header.version.is_some());
 
-        if header.version.unwrap() == 1u8 {
-            creation_time = f.read_u64().unwrap();
-            modification_time = f.read_u64().unwrap();
-            timescale = f.read_u32().unwrap();
-            duration = f.read_u64().unwrap();
+        if header.version.is_none() {
+            return Err("Unable to determine header version.");
+        }
+
+        if header.version.unwrap_or(0) == 1u8 {
+            let_ok!(ct, f.read_u64(), "Unable to read creation time.");
+            creation_time = ct;
+
+            let_ok!(mt, f.read_u64(), "Unable to read modification time.");
+            modification_time = mt;
+
+            let_ok!(ts, f.read_u32(), "Unable to read time scale.");
+            timescale = ts;
+
+            let_ok!(du, f.read_u64(), "Unable to read duration.");
+            duration = du;
             length += 28;
         } else {
             // header version == 0
-            creation_time = u64::from(f.read_u32().unwrap());
-            modification_time = u64::from(f.read_u32().unwrap());
-            timescale = f.read_u32().unwrap();
-            duration = u64::from(f.read_u32().unwrap());
+            let_ok!(ct, f.read_u32(), "Unable to read creation time.");
+            creation_time = u64::from(ct);
+
+            let_ok!(mt, f.read_u32(), "Unable to read modification time.");
+            modification_time = u64::from(mt);
+
+            let_ok!(ts, f.read_u32(), "Unable to read time scale.");
+            timescale = ts;
+
+            let_ok!(du, f.read_u32(), "Unable to read duration.");
+            duration = u64::from(du);
             length += 16;
         }
 
         // 16 Bytes
         // pad: 1 Bit
         // language: 15 Bit;
-        let language = f.read_iso639_code().unwrap(); // 2 Bytes, u16
+        let_ok!(
+            language,
+            f.read_iso639_code(),
+            "Unable to read language from ISO639 code."
+        );
         length += 2;
 
         // unsigned int(16) pre_defined = 0;
         length += 2;
-        let _ = f.seek(curr_offset + length);
+        let _offset = f.seek(curr_offset + length);
         f.offset_inc(length);
 
         Ok(Self {
@@ -316,23 +353,35 @@ impl Hdlr {
 
         // u32 = [u8, u8, u8, u8]
         let handler_type_bytes: [u8; 4] = [
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
         ];
-        let handler_type = String::from_utf8(handler_type_bytes.to_vec()).unwrap();
+
+        let_ok!(
+            handler_type,
+            String::from_utf8(handler_type_bytes.to_vec()),
+            "Unable to get the handler type string from bytes."
+        );
+
         // reserved
-        f.read_u32().unwrap();
-        f.read_u32().unwrap();
-        f.read_u32().unwrap();
+        let _throwaway = f.read_u32().unwrap_or_default();
+        let _throwaway = f.read_u32().unwrap_or_default();
+        let _throwaway = f.read_u32().unwrap_or_default();
 
         let name_length = header.data_size - 20;
         let mut name_bytes = Vec::new();
-        for _ in 0..name_length {
-            name_bytes.push(f.read_u8().unwrap());
+        for _bytes in 0..name_length {
+            let_ok!(byte, f.read_u8(), "Unable to read name bytes");
+            name_bytes.push(byte);
         }
-        let name = String::from_utf8(name_bytes).unwrap();
+
+        let_ok!(
+            name,
+            String::from_utf8(name_bytes),
+            "Unable to convert bytes to name."
+        );
 
         f.offset_inc(header.data_size);
         Ok(Self {
@@ -350,9 +399,9 @@ pub struct Minf {
 }
 
 impl Minf {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self { header, children })
+        Self { header, children }
     }
 }
 
@@ -368,13 +417,13 @@ impl Vmhd {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let graphicsmode = f.read_u16().unwrap();
+        let_ok!(graphicsmode, f.read_u16(), "Unable to read graphics mode.");
 
-        // red, greenm blue
+        // red, green, blue
         let opcolor: [u16; 3] = [
-            f.read_u16().unwrap(),
-            f.read_u16().unwrap(),
-            f.read_u16().unwrap(),
+            f.read_u16().unwrap_or_default(),
+            f.read_u16().unwrap_or_default(),
+            f.read_u16().unwrap_or_default(),
         ];
 
         f.offset_inc(8);
@@ -398,9 +447,10 @@ impl Smhd {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let balance = f.read_fixed_point(8, 8).unwrap(); // 2 Bytes
-                                                         // reserved
-        f.read_u16().unwrap();
+        let_ok!(balance, f.read_fixed_point(8, 8), "Unable to read balance.");
+
+        // reserved
+        let _throwaway = f.read_u16().unwrap_or_default();
 
         f.offset_inc(4);
 
@@ -422,12 +472,17 @@ impl Hmhd {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let max_pdu_size = f.read_u16().unwrap();
-        let avg_pdu_size = f.read_u16().unwrap();
-        let max_bitrate = f.read_u32().unwrap();
-        let avg_bitrate = f.read_u32().unwrap();
+        let_ok!(max_pdu_size, f.read_u16(), "Unable to read max PDU size.");
+        let_ok!(
+            avg_pdu_size,
+            f.read_u16(),
+            "Unable to read average PDU size."
+        );
+        let_ok!(max_bitrate, f.read_u32(), "Unable to read max bitrate.");
+        let_ok!(avg_bitrate, f.read_u32(), "Unable to read average bitrate.");
+
         // reserved
-        f.read_u32().unwrap();
+        let _throwaway = f.read_u32().unwrap_or_default();
 
         f.offset_inc(16);
 
@@ -447,11 +502,11 @@ pub struct Nmhd {
 }
 
 impl Nmhd {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
         header.parse_version(f);
         header.parse_flags(f);
 
-        Ok(Self { header })
+        Self { header }
     }
 }
 
@@ -462,9 +517,9 @@ pub struct Stbl {
 }
 
 impl Stbl {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self { header, children })
+        Self { header, children }
     }
 }
 
@@ -481,19 +536,19 @@ impl Stsz {
         header.parse_version(f);
         header.parse_flags(f);
 
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
-        let sample_size: u32 = f.read_u32().unwrap();
-        let sample_count: u32 = f.read_u32().unwrap();
-        let mut entry_size = None;
+        let_ok!(sample_size, f.read_u32(), "Unable to read sample size.");
+        let_ok!(sample_count, f.read_u32(), "Unable to read sample count.");
 
-        if sample_size == 0u32 {
-            let mut _entry_size: Vec<u32> = Vec::new();
-            for _ in 0..sample_count {
-                _entry_size.push(f.read_u32().unwrap());
+        let entry_size = if sample_size == 0u32 {
+            let mut es: Vec<u32> = Vec::new();
+            for _sample in 0..sample_count {
+                let_ok!(s, f.read_u32(), "Unable to read samples.");
+                es.push(s);
             }
-            entry_size = Some(_entry_size);
-        }
+            Some(es)
+        } else {
+            None
+        };
 
         f.offset_inc(header.data_size);
 
@@ -518,34 +573,54 @@ impl Stz2 {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
-        let _ = f.read_u32().unwrap();
-        let field_size = f.read_u8().unwrap();
-        let sample_count = f.read_u32().unwrap();
-        // value 4, 8 or 16.
-        assert!(field_size == 4u8 || field_size == 8u8 || field_size == 16u8);
+
+        let_ok!(
+            _throwaway,
+            f.read_u32(),
+            "Unable to read first 4 bytes of file."
+        );
+        let_ok!(field_size, f.read_u8(), "Unable to read field size.");
+        let_ok!(sample_count, f.read_u32(), "Unable to read sample count.");
+
+        if field_size != 4u8 && field_size != 8u8 && field_size != 16u8 {
+            return Err("Wrong field size detected. Should be 4, 8 or 16.");
+        }
 
         let mut entry_size: Vec<u32> = Vec::new();
-
         let mut next_val: Option<u32> = None;
 
         for _ in 0..sample_count {
             if field_size == 4u8 {
                 if next_val.is_some() {
-                    entry_size.push(next_val.unwrap());
+                    let_some!(nv, next_val, "Unable to read next value.");
+                    entry_size.push(nv);
                     next_val = None;
                 } else {
-                    let bits = format!("{:08b}", f.read_u8().unwrap());
-                    entry_size.push(u32::from_str_radix(&bits[0..4], 2).unwrap());
-                    next_val = Some(u32::from_str_radix(&bits[4..8], 2).unwrap());
+                    let_ok!(byte, f.read_u8(), "Unable to read bits.");
+                    let bits = format!("{byte:08b}");
+
+                    let_ok!(
+                        es,
+                        u32::from_str_radix(&bits[0..4], 2),
+                        "Unable to read entry size."
+                    );
+                    entry_size.push(es);
+
+                    let_ok!(
+                        nv,
+                        u32::from_str_radix(&bits[4..8], 2),
+                        "Unable to read next value."
+                    );
+                    next_val = Some(nv);
                 }
             } else if field_size == 8u8 {
-                entry_size.push(u32::from(f.read_u8().unwrap()));
+                let_ok!(es, f.read_u8(), "Unable to read entry size.");
+                entry_size.push(u32::from(es));
             } else if field_size == 16u8 {
-                entry_size.push(u32::from(f.read_u16().unwrap()));
+                let_ok!(es, f.read_u16(), "Unable to read entry size.");
+                entry_size.push(u32::from(es));
             } else {
-                panic!("STZ2 parse error.");
+                return Err("STZ2 parse error.");
             }
         }
 
@@ -573,13 +648,25 @@ impl Stsc {
         // let curr_offset = f.offset();
         // f.seek(curr_offset+header.data_size);
 
-        let entry_count = f.read_u32().unwrap();
+        let_ok!(entry_count, f.read_u32(), "Unable to read entry count.");
         let mut entries: Vec<Entry> = Vec::new();
-        for _ in 0..entry_count {
+        for _entry in 0..entry_count {
+            let_ok!(first_chunk, f.read_u32(), "Unable to read first chunk.");
+            let_ok!(
+                samples_per_chunk,
+                f.read_u32(),
+                "Unable to read samples per chunk."
+            );
+            let_ok!(
+                sample_description_index,
+                f.read_u32(),
+                "Unable to read sample description index."
+            );
+
             let entry = Entry {
-                first_chunk: f.read_u32().unwrap(),
-                samples_per_chunk: f.read_u32().unwrap(),
-                sample_description_index: f.read_u32().unwrap(),
+                first_chunk,
+                samples_per_chunk,
+                sample_description_index,
             };
             entries.push(entry);
         }
@@ -604,14 +691,13 @@ impl Stco {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
 
-        let entry_count = f.read_u32().unwrap();
+        let_ok!(entry_count, f.read_u32(), "Unable to read entry count.");
         let mut chunks: Vec<u32> = Vec::new();
 
-        for _ in 0..entry_count {
-            chunks.push(f.read_u32().unwrap());
+        for _entry in 0..entry_count {
+            let_ok!(chunk, f.read_u32(), "Unable to read chunk.");
+            chunks.push(chunk);
         }
 
         f.offset_inc(header.data_size);
@@ -634,17 +720,16 @@ impl Co64 {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
 
-        let entry_count = f.read_u32().unwrap();
+        let_ok!(entry_count, f.read_u32(), "Unable to read entry count.");
         let mut chunks: Vec<u64> = Vec::new();
 
-        for _ in 0..entry_count {
-            chunks.push(f.read_u64().unwrap());
+        for _entry in 0..entry_count {
+            let_ok!(chunk, f.read_u64(), "Unable to read chunk.");
+            chunks.push(chunk);
         }
 
-        f.offset_inc(header.data_size);
+        let _offset = f.offset_inc(header.data_size);
         Ok(Self {
             header,
             entry_count,
@@ -665,16 +750,11 @@ impl Padb {
         header.parse_flags(f);
         let curr_offset = f.offset();
 
-        let sample_count = f.read_u32().unwrap();
-        // f.offset_inc(4);
-        // for i in 0..((sample_count+1)/2) {
-        //     let bits = format!("{:08b}", f.read_u8().unwrap());
-        //     let pad1 = u32::from_str_radix(&bits[1..4], 2).unwrap();
-        //     let pad2 = u32::from_str_radix(&bits[5..8], 2).unwrap();
-        // }
+        let_ok!(sample_count, f.read_u32(), "Unable to read sample count.");
 
-        let _ = f.seek(curr_offset + header.data_size);
-        f.offset_inc(header.data_size);
+        let _seek_res = f.seek(curr_offset + header.data_size);
+        let _offset = f.offset_inc(header.data_size);
+
         Ok(Self {
             header,
             sample_count,
@@ -688,13 +768,15 @@ pub struct Stsd {
 }
 
 impl Stsd {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
         header.parse_version(f);
         header.parse_flags(f);
+
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Self { header })
+        let _seek_res = f.seek(curr_offset + header.data_size);
+        let _offset = f.offset_inc(header.data_size);
+
+        Self { header }
     }
 }
 
@@ -704,19 +786,17 @@ pub struct Stdp {
 }
 
 impl Stdp {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
         header.parse_version(f);
         header.parse_flags(f);
+
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Self { header })
+        let _seek_res = f.seek(curr_offset + header.data_size);
+        let _offset = f.offset_inc(header.data_size);
+
+        Self { header }
     }
 }
-
-/**
-
-**/
 
 #[derive(Debug, Clone)]
 pub struct SttsEntry {
@@ -735,14 +815,13 @@ impl Stts {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
-        let entry_count = f.read_u32().unwrap();
+
+        let_ok!(entry_count, f.read_u32(), "Unable to read entry count.");
         let mut entries = Vec::new();
 
-        for _ in 0..entry_count {
-            let sample_count: u32 = f.read_u32().unwrap();
-            let sample_delta: u32 = f.read_u32().unwrap();
+        for _entry in 0..entry_count {
+            let_ok!(sample_count, f.read_u32(), "Unable to read sample count.");
+            let_ok!(sample_delta, f.read_u32(), "Unable to read sample delta.");
             entries.push(SttsEntry {
                 sample_count,
                 sample_delta,
@@ -772,23 +851,24 @@ pub struct Ctts {
 }
 
 impl Ctts {
+    #[allow(clippy::cast_possible_wrap)]
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
 
-        let version: u8 = header.version.unwrap();
+        let_some!(version, header.version, "No header version found.");
 
-        let entry_count = f.read_u32().unwrap();
+        let_ok!(entry_count, f.read_u32(), "Unable to read entry count.");
         let mut entries = Vec::new();
 
         for _ in 0..entry_count {
-            let sample_count = f.read_u32().unwrap();
+            let_ok!(sample_count, f.read_u32(), "Unable to read sample count.");
             let sample_offset = if version == 0u8 {
-                f.read_u32().unwrap() as i32
+                let_ok!(so, f.read_u32(), "Unable to read sample offset (u32).");
+                so as i32
             } else {
-                f.read_i32().unwrap()
+                let_ok!(so, f.read_i32(), "Unable to read sample offset (i32).");
+                so
             };
 
             entries.push(CttsEntryOffset {
@@ -812,13 +892,15 @@ pub struct Cslg {
 }
 
 impl Cslg {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
         header.parse_version(f);
         header.parse_flags(f);
+
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Self { header })
+        let _seek_res = f.seek(curr_offset + header.data_size);
+        let _offset = f.offset_inc(header.data_size);
+
+        Self { header }
     }
 }
 
@@ -828,13 +910,15 @@ pub struct Stss {
 }
 
 impl Stss {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
         header.parse_version(f);
         header.parse_flags(f);
+
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Self { header })
+        let _seek_res = f.seek(curr_offset + header.data_size);
+        let _offset = f.offset_inc(header.data_size);
+
+        Self { header }
     }
 }
 
@@ -844,13 +928,15 @@ pub struct Stsh {
 }
 
 impl Stsh {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
         header.parse_version(f);
         header.parse_flags(f);
+
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Self { header })
+        let _seek_res = f.seek(curr_offset + header.data_size);
+        let _offset = f.offset_inc(header.data_size);
+
+        Self { header }
     }
 }
 
@@ -860,13 +946,15 @@ pub struct Sdtp {
 }
 
 impl Sdtp {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
         header.parse_version(f);
         header.parse_flags(f);
+
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Self { header })
+        let _seek_res = f.seek(curr_offset + header.data_size);
+        let _offset = f.offset_inc(header.data_size);
+
+        Self { header }
     }
 }
 
@@ -877,9 +965,9 @@ pub struct Mvex {
 }
 
 impl Mvex {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self { header, children })
+        Self { header, children }
     }
 }
 
@@ -896,10 +984,13 @@ impl Mehd {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let fragment_duration: u64 = if header.version.unwrap() == 1u8 {
-            f.read_u64().unwrap()
+        let_some!(version, header.version, "No header version set.");
+        let fragment_duration: u64 = if version == 1u8 {
+            let_ok!(fd, f.read_u64(), "Unable to read fragment duration (u64).");
+            fd
         } else {
-            u64::from(f.read_u32().unwrap())
+            let_ok!(fd, f.read_u32(), "Unable to read fragment duration (u32).");
+            u64::from(fd)
         };
 
         // f.seek(curr_offset+header.data_size);
@@ -917,12 +1008,14 @@ pub struct Trex {
 }
 
 impl Trex {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
         header.parse_version(f);
         header.parse_flags(f);
+
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Self { header })
+        let _seek_res = f.seek(curr_offset + header.data_size);
+        let _offset = f.offset_inc(header.data_size);
+
+        Self { header }
     }
 }

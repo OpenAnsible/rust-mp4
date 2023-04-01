@@ -6,14 +6,16 @@ pub struct Unrecognized {
 }
 
 impl Unrecognized {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Self { header })
+
+        let _seek_res = f.seek(curr_offset + header.data_size);
+        let _offset = f.offset_inc(header.data_size);
+
+        Self { header }
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 }

@@ -7,6 +7,7 @@
 
 // box types: http://mp4ra.org/atoms.html
 
+use std::cmp::Ordering;
 /**
     Box Struct:
 
@@ -143,6 +144,8 @@ Media Segments
 **/
 use std::str;
 
+use crate::let_ok;
+
 pub use super::Mp4File;
 // use byteorder::ReadBytesExt;
 
@@ -214,21 +217,47 @@ pub struct Header {
 }
 
 impl Header {
+    /// Parses a file and reads the header information
+    ///
+    /// # Arguments
+    ///
+    /// `f: &mut Mp4File` -- The MP4 file to be read.
+    ///
+    /// # Returns
+    ///
+    ///
+    ///
+    /// # Errors
+    ///
+    ///
+    ///
+    /// # Panics
+    ///
+    ///
+    ///
+    /// # Examples
+    ///
+    ///
+    ///
     pub fn parse(f: &mut Mp4File) -> Result<Self, &'static str> {
         let curr_offset = f.offset();
-        let size: u32 = f.read_u32().unwrap();
+        let_ok!(size, f.read_u32(), "Unable to read size.");
 
         let kind_bytes: [u8; 4] = [
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
         ];
-        let kind = Kind::from_bytes(&kind_bytes).unwrap();
+
+        let_ok!(
+            kind,
+            Kind::from_bytes(kind_bytes),
+            "Unable to read file kind."
+        );
 
         let header_size = 8u64;
         let atom_size = u64::from(size);
-        // let data_size = atom_size - header_size;
         let data_size = 0u64;
 
         f.offset_inc(header_size);
@@ -247,20 +276,42 @@ impl Header {
             data_size,           // atom data size , not include header size.
             offset: curr_offset, // file offset.
         };
-        if size == 1u32 {
-            header.parse_largesize(f);
-        } else if size < 1u32 {
-            return Err("can not parse this mp4 file.");
-        } else {
-            header.data_size = atom_size - header_size;
+
+        match size.cmp(&1u32) {
+            Ordering::Equal => header.parse_largesize(f),
+            Ordering::Greater => header.data_size = atom_size - header_size,
+            Ordering::Less => return Err("Cannot parse this mp4 file."),
         }
+
         Ok(header)
     }
 
+    /// Parses the largesize part of the MP4 file
+    ///
+    /// # Arguments
+    ///
+    /// `f: &mut Mp4File` -- The file to be parsed.
+    ///
+    /// # Returns
+    ///
+    /// Nothing.
+    ///
+    /// # Errors
+    ///
+    /// None.
+    ///
+    /// # Panics
+    ///
+    /// If `self.size != 1`. If unable to read the `largesize`;
+    ///
+    /// # Examples
+    ///
+    ///
+    ///
     pub fn parse_largesize(&mut self, f: &mut Mp4File) {
         assert_eq!(self.size, 1u32);
 
-        let largesize = f.read_u64().unwrap();
+        let largesize = f.read_u64().expect("Unable to read largesize.");
         self.atom_size = largesize;
         self.header_size += 8;
         self.data_size = largesize - self.header_size;
@@ -271,22 +322,22 @@ impl Header {
 
     pub fn parse_usertype(&mut self, f: &mut Mp4File) {
         let usertype: [u8; 16] = [
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
         ];
         self.usertype = Some(usertype);
 
@@ -296,7 +347,7 @@ impl Header {
     }
 
     pub fn parse_version(&mut self, f: &mut Mp4File) {
-        let version = f.read_u8().unwrap();
+        let version = f.read_u8().expect("Unable to read version information.");
         self.version = Some(version);
 
         self.header_size += 1;
@@ -306,9 +357,9 @@ impl Header {
 
     pub fn parse_flags(&mut self, f: &mut Mp4File) {
         let flags: [u8; 3] = [
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
         ];
         self.flags = Some(flags);
 
@@ -388,23 +439,53 @@ impl Atom {
     #[allow(dead_code)]
     fn parse_kind(f: &mut Mp4File) -> Result<Kind, &'static str> {
         let kind_bytes: [u8; 4] = [
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
         ];
-        Kind::from_bytes(&kind_bytes)
+        Kind::from_bytes(kind_bytes)
     }
 
+    /// Parse the `Atom` from a file
+    ///
+    /// # Arguments
+    ///
+    /// `f: &mut Mp4File` -- The file to be parsed
+    ///
+    /// # Returns
+    ///
+    ///
+    ///
+    /// # Errors
+    ///
+    /// If unable to read the Header, we return an error.
+    ///
+    /// # Panics
+    ///
+    /// If any of the detailed parsing fails, it bails.
+    ///
+    /// # Examples
+    ///
+    ///
+    ///
+    // TODO: Return a proper Result here, so we can stop panicing and handle things properly.
+    #[allow(clippy::too_many_lines)]
     pub fn parse(f: &mut Mp4File) -> Result<Self, &'static str> {
-        let header = Header::parse(f).unwrap();
+        let_ok!(header, Header::parse(f), "Unable to read Atom header.");
 
         let data = match header.kind {
-            Kind::Bxml => Ok(Self::Bxml(Bxml::parse(f, header).unwrap())),
-            Kind::Co64 => Ok(Self::Co64(Co64::parse(f, header).unwrap())),
-            Kind::Cslg => Ok(Self::Cslg(Cslg::parse(f, header).unwrap())),
+            Kind::Bxml => Ok(Self::Bxml(
+                Bxml::parse(f, header).expect("Unable to parse Bxml"),
+            )),
+            Kind::Co64 => Ok(Self::Co64(
+                Co64::parse(f, header).expect("Unable to parse Kind::Co64"),
+            )),
+            Kind::Cslg => Ok(Self::Cslg(Cslg::parse(f, header))),
             // Kind::cprt => ,
-            Kind::Ctts => Ok(Self::Ctts(Ctts::parse(f, header).unwrap())),
+            Kind::Ctts => Ok(Self::Ctts(
+                Ctts::parse(f, header).expect("Unable to parse Kind::Ctts"),
+            )),
             // Kind::dinf => ,
             // Kind::dref => ,
             // Kind::edts => ,
@@ -414,74 +495,122 @@ impl Atom {
             // Kind::fpar => ,
             Kind::Free => Ok(Self::Free(Free::parse(f, header))),
             // Kind::frma => ,
-            Kind::Ftyp => Ok(Self::Ftyp(Ftyp::parse(f, header).unwrap())),
-            Kind::Hdlr => Ok(Self::Hdlr(Hdlr::parse(f, header).unwrap())),
-            Kind::Hmhd => Ok(Self::Hmhd(Hmhd::parse(f, header).unwrap())),
+            Kind::Ftyp => Ok(Self::Ftyp(
+                Ftyp::parse(f, header).expect("Unable to parse Kind::Ftyp"),
+            )),
+            Kind::Hdlr => Ok(Self::Hdlr(
+                Hdlr::parse(f, header).expect("Unable to parse Kind::Hdlr"),
+            )),
+            Kind::Hmhd => Ok(Self::Hmhd(
+                Hmhd::parse(f, header).expect("Unable to parse Kind::Hmhd"),
+            )),
             // Kind::iinf => ,
             // Kind::iloc => ,
             // Kind::imif => ,
             // Kind::ipmc => ,
             // Kind::ipro => ,
             // Kind::itn  => ,
-            Kind::Mdat => Ok(Self::Mdat(Mdat::parse(f, header).unwrap())),
-            Kind::Mdhd => Ok(Self::Mdhd(Mdhd::parse(f, header).unwrap())),
-            Kind::Mdia => Ok(Self::Mdia(Mdia::parse(f, header).unwrap())),
+            Kind::Mdat => Ok(Self::Mdat(
+                Mdat::parse(f, header).expect("Unable to parse Kind::Mdat"),
+            )),
+            Kind::Mdhd => Ok(Self::Mdhd(
+                Mdhd::parse(f, header).expect("Unable to parse Kind::Mdhd"),
+            )),
+            Kind::Mdia => Ok(Self::Mdia(Mdia::parse(f, header))),
             Kind::Meco => Ok(Self::Meco(Meco::parse(f, header))),
-            Kind::Mehd => Ok(Self::Mehd(Mehd::parse(f, header).unwrap())),
-            Kind::Mere => Ok(Self::Mere(Mere::parse(f, header).unwrap())),
-            Kind::Meta => Ok(Self::Meta(Meta::parse(f, header).unwrap())),
-            Kind::Mfhd => Ok(Self::Mfhd(Mfhd::parse(f, header).unwrap())),
-            Kind::Mfra => Ok(Self::Mfra(Mfra::parse(f, header).unwrap())),
-            Kind::Mfro => Ok(Self::Mfro(Mfro::parse(f, header).unwrap())),
-            Kind::Minf => Ok(Self::Minf(Minf::parse(f, header).unwrap())),
-            Kind::Moof => Ok(Self::Moof(Moof::parse(f, header).unwrap())),
-            Kind::Moov => Ok(Self::Moov(Moov::parse(f, header).unwrap())),
-            Kind::Mvex => Ok(Self::Mvex(Mvex::parse(f, header).unwrap())),
-            Kind::Mvhd => Ok(Self::Mvhd(Mvhd::parse(f, header).unwrap())),
-            Kind::Mmhd => Ok(Self::Mmhd(Nmhd::parse(f, header).unwrap())),
-            Kind::Padb => Ok(Self::Padb(Padb::parse(f, header).unwrap())),
+            Kind::Mehd => Ok(Self::Mehd(
+                Mehd::parse(f, header).expect("Unable to parse Kind::Mehd"),
+            )),
+            Kind::Mere => Ok(Self::Mere(
+                Mere::parse(f, header).expect("Unable to parse Kind::Mere"),
+            )),
+            Kind::Meta => Ok(Self::Meta(
+                Meta::parse(f, header).expect("Unable to parse Kind::Meta"),
+            )),
+            Kind::Mfhd => Ok(Self::Mfhd(
+                Mfhd::parse(f, header).expect("Unable to parse Kind::Mfhd"),
+            )),
+            Kind::Mfra => Ok(Self::Mfra(Mfra::parse(f, header))),
+            Kind::Mfro => Ok(Self::Mfro(
+                Mfro::parse(f, header).expect("Unable to parse Kind::Mfro"),
+            )),
+            Kind::Minf => Ok(Self::Minf(Minf::parse(f, header))),
+            Kind::Moof => Ok(Self::Moof(Moof::parse(f, header))),
+            Kind::Moov => Ok(Self::Moov(Moov::parse(f, header))),
+            Kind::Mvex => Ok(Self::Mvex(Mvex::parse(f, header))),
+            Kind::Mvhd => Ok(Self::Mvhd(
+                Mvhd::parse(f, header).expect("Unable to parse Kind::Mvhd"),
+            )),
+            Kind::Mmhd => Ok(Self::Mmhd(Nmhd::parse(f, header))),
+            Kind::Padb => Ok(Self::Padb(
+                Padb::parse(f, header).expect("Unable to parse Kind::Padb"),
+            )),
             // Kind::paen => ,
-            Kind::Pdin => Ok(Self::Pdin(Pdin::parse(f, header).unwrap())),
+            Kind::Pdin => Ok(Self::Pdin(
+                Pdin::parse(f, header).expect("Unable to parse Kind::Pdin"),
+            )),
             // Kind::pitm => ,
             // Kind::sbgp => ,
             // Kind::schi => ,
             // Kind::schm => ,
-            Kind::Sdtp => Ok(Self::Sdtp(Sdtp::parse(f, header).unwrap())),
+            Kind::Sdtp => Ok(Self::Sdtp(Sdtp::parse(f, header))),
             // Kind::sgpd => ,
             // Kind::sinf => ,
             Kind::Skip => Ok(Self::Skip(Skip::parse(f, header))),
-            Kind::Smhd => Ok(Self::Smhd(Smhd::parse(f, header).unwrap())),
-            Kind::Stbl => Ok(Self::Stbl(Stbl::parse(f, header).unwrap())),
-            Kind::Stco => Ok(Self::Stco(Stco::parse(f, header).unwrap())),
-            Kind::Stdp => Ok(Self::Stdp(Stdp::parse(f, header).unwrap())),
-            Kind::Stsc => Ok(Self::Stsc(Stsc::parse(f, header).unwrap())),
-            Kind::Stsd => Ok(Self::Stsd(Stsd::parse(f, header).unwrap())),
-            Kind::Stsh => Ok(Self::Stsh(Stsh::parse(f, header).unwrap())),
-            Kind::Stss => Ok(Self::Stss(Stss::parse(f, header).unwrap())),
-            Kind::Stsz => Ok(Self::Stsz(Stsz::parse(f, header).unwrap())),
-            Kind::Stts => Ok(Self::Stts(Stts::parse(f, header).unwrap())),
-            Kind::Stz2 => Ok(Self::Stz2(Stz2::parse(f, header).unwrap())),
+            Kind::Smhd => Ok(Self::Smhd(
+                Smhd::parse(f, header).expect("Unable to parse Kind::Smhd"),
+            )),
+            Kind::Stbl => Ok(Self::Stbl(Stbl::parse(f, header))),
+            Kind::Stco => Ok(Self::Stco(
+                Stco::parse(f, header).expect("Unable to parse Kind::Stco"),
+            )),
+            Kind::Stdp => Ok(Self::Stdp(Stdp::parse(f, header))),
+            Kind::Stsc => Ok(Self::Stsc(
+                Stsc::parse(f, header).expect("Unable to parse Kind::Stsc"),
+            )),
+            Kind::Stsd => Ok(Self::Stsd(Stsd::parse(f, header))),
+            Kind::Stsh => Ok(Self::Stsh(Stsh::parse(f, header))),
+            Kind::Stss => Ok(Self::Stss(Stss::parse(f, header))),
+            Kind::Stsz => Ok(Self::Stsz(
+                Stsz::parse(f, header).expect("Unable to parse Kind::Stsz"),
+            )),
+            Kind::Stts => Ok(Self::Stts(
+                Stts::parse(f, header).expect("Unable to parse Kind::Stts"),
+            )),
+            Kind::Stz2 => Ok(Self::Stz2(
+                Stz2::parse(f, header).expect("Unable to parse Kind::Stz2"),
+            )),
             // Kind::subs => ,
-            Kind::Tfhd => Ok(Self::Tfhd(Tfhd::parse(f, header).unwrap())),
-            Kind::Tfra => Ok(Self::Tfra(Tfra::parse(f, header).unwrap())),
-            Kind::Tkhd => Ok(Self::Tkhd(Tkhd::parse(f, header).unwrap())),
-            Kind::Traf => Ok(Self::Traf(Traf::parse(f, header).unwrap())),
-            Kind::Trak => Ok(Self::Trak(Trak::parse(f, header).unwrap())),
-            Kind::Tref => Ok(Self::Tref(Tref::parse(f, header).unwrap())),
-            Kind::Trex => Ok(Self::Trex(Trex::parse(f, header).unwrap())),
-            Kind::Trun => Ok(Self::Trun(Trun::parse(f, header).unwrap())),
+            Kind::Tfhd => Ok(Self::Tfhd(
+                Tfhd::parse(f, header).expect("Unable to parse Kind::Tfhd"),
+            )),
+            Kind::Tfra => Ok(Self::Tfra(
+                Tfra::parse(f, header).expect("Unable to parse Kind::Tfra"),
+            )),
+            Kind::Tkhd => Ok(Self::Tkhd(Tkhd::parse(f, header))),
+            Kind::Traf => Ok(Self::Traf(Traf::parse(f, header))),
+            Kind::Trak => Ok(Self::Trak(Trak::parse(f, header))),
+            Kind::Tref => Ok(Self::Tref(Tref::parse(f, header))),
+            Kind::Trex => Ok(Self::Trex(Trex::parse(f, header))),
+            Kind::Trun => Ok(Self::Trun(
+                Trun::parse(f, header).expect("Unable to parse Kind::Trun"),
+            )),
             // Kind::tsel => ,
             // Kind::udta => ,
-            Kind::Uuid => Ok(Self::Uuid(Uuid::parse(f, header).unwrap())),
-            Kind::Vmhd => Ok(Self::Vmhd(Vmhd::parse(f, header).unwrap())),
-            Kind::Xml => Ok(Self::Xml(Xml::parse(f, header).unwrap())),
+            Kind::Uuid => Ok(Self::Uuid(Uuid::parse(f, header))),
+            Kind::Vmhd => Ok(Self::Vmhd(
+                Vmhd::parse(f, header).expect("Unable to parse Kind::Vmhd"),
+            )),
+            Kind::Xml => Ok(Self::Xml(
+                Xml::parse(f, header).expect("Unable to parse Kind::Xml"),
+            )),
             // Kind::strk => ,
             // Kind::stri => ,
             // Kind::strd =>
-            Kind::Unrecognized(_) => {
-                Ok(Self::Unrecognized(Unrecognized::parse(f, header).unwrap()))
-            }
-            _ => Ok(Self::Ignore(Ignore::parse(f, header).unwrap())),
+            Kind::Unrecognized(_) => Ok(Self::Unrecognized(Unrecognized::parse(f, header))),
+            _ => Ok(Self::Ignore(
+                Ignore::parse(f, header).expect("Unable to parse Kind::Ignore"),
+            )),
         };
         data
     }

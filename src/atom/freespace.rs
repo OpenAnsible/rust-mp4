@@ -22,12 +22,12 @@ pub struct Skip {
 impl Skip {
     pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
+        let _throwaway = f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
         Self { header }
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 }
@@ -40,12 +40,12 @@ pub struct Free {
 impl Free {
     pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let curr_offset = f.offset();
-        let _ = f.seek(curr_offset + header.data_size);
+        let _throwaway = f.seek(curr_offset + header.data_size);
         f.offset_inc(header.data_size);
         Self { header }
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 }

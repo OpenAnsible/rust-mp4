@@ -11,6 +11,7 @@ moof
 
 **/
 use super::{Atom, Header, Mp4File, Sample};
+use crate::{let_ok, let_some};
 
 #[derive(Debug, Clone)]
 pub struct Moof {
@@ -19,16 +20,16 @@ pub struct Moof {
 }
 
 impl Moof {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self { header, children })
+        Self { header, children }
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn children(&self) -> &Vec<Atom> {
+    pub const fn children(&self) -> &Vec<Atom> {
         &self.children
     }
 }
@@ -44,8 +45,12 @@ impl Mfhd {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let sequence_number: u32 = f.read_u32().unwrap();
-        f.offset_inc(header.data_size);
+        let_ok!(
+            sequence_number,
+            f.read_u32(),
+            "Unable to read sequence number."
+        );
+        let _offset = f.offset_inc(header.data_size);
 
         Ok(Self {
             header,
@@ -53,11 +58,11 @@ impl Mfhd {
         })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn sequence_number(&self) -> u32 {
+    pub const fn sequence_number(&self) -> u32 {
         self.sequence_number
     }
 }
@@ -69,16 +74,16 @@ pub struct Traf {
 }
 
 impl Traf {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self { header, children })
+        Self { header, children }
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn children(&self) -> &Vec<Atom> {
+    pub const fn children(&self) -> &Vec<Atom> {
         &self.children
     }
 }
@@ -106,34 +111,40 @@ impl Tfhd {
                                                                         // let duration_is_empty: [u8; 3] = [0x01, 0x00, 0x00]; // 0x010000
                                                                         // let default_base_is_moof: [u8; 3] = [0x20, 0x00, 0x00]; //0x020000
 
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
-        let track_id: u32 = f.read_u32().unwrap();
+        let_ok!(track_id, f.read_u32(), "Unable to read track ID");
 
-        let mut base_data_offset: Option<u64> = None;
-        let mut sample_description_index: Option<u32> = None;
-        let mut default_sample_duration: Option<u32> = None;
-        let mut default_sample_size: Option<u32> = None;
-        let mut default_sample_flags: Option<u32> = None;
+        let mut base_data_offset = None;
+        let mut sample_description_index = None;
+        let mut default_sample_duration = None;
+        let mut default_sample_size = None;
+        let mut default_sample_flags = None;
 
         if header.flags.is_some() {
-            let flags = header.flags.unwrap();
+            let_some!(flags, header.flags, "Flags have no value set.");
+
             if flags == base_data_offset_present {
-                base_data_offset = Some(f.read_u64().unwrap());
+                let_ok!(bdo, f.read_u64(), "Unable to read base data offset.");
+                base_data_offset = Some(bdo);
             } else if flags == sample_description_index_present {
-                sample_description_index = Some(f.read_u32().unwrap());
+                let_ok!(
+                    sdi,
+                    f.read_u32(),
+                    "Unable to read sample description index."
+                );
+                sample_description_index = Some(sdi);
             } else if flags == default_sample_duration_present {
-                default_sample_duration = Some(f.read_u32().unwrap());
+                let_ok!(dsd, f.read_u32(), "Unable to read default sample duration.");
+                default_sample_duration = Some(dsd);
             } else if flags == default_sample_size_present {
-                default_sample_size = Some(f.read_u32().unwrap());
+                let_ok!(
+                    dssp,
+                    f.read_u32(),
+                    "Unable to read default sample size present."
+                );
+                default_sample_size = Some(dssp);
             } else if flags == default_sample_flags_present {
-                default_sample_flags = Some(f.read_u32().unwrap());
-                // } else if flags == duration_is_empty {
-                //     // Do nothing
-                // } else if flags == default_base_is_moof {
-                //     // Do nothing
-                // } else {
-                //     // unknowm
+                let_ok!(dsf, f.read_u32(), "Unable to read default sample flags.");
+                default_sample_flags = Some(dsf);
             }
         }
         f.offset_inc(header.data_size);
@@ -151,19 +162,19 @@ impl Tfhd {
         })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn track_id(&self) -> u32 {
+    pub const fn track_id(&self) -> u32 {
         self.track_id
     }
 
-    pub fn base_data_offset(&self) -> Option<u64> {
+    pub const fn base_data_offset(&self) -> Option<u64> {
         self.base_data_offset
     }
 
-    pub fn sample(&self) -> &Sample {
+    pub const fn sample(&self) -> &Sample {
         &self.sample
     }
 }
@@ -180,10 +191,14 @@ pub struct Trun {
 }
 
 impl Trun {
+    #[allow(clippy::cast_possible_wrap)]
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
-        // let curr_offset = f.offset();
+
+        if header.flags.is_none() {
+            return Err("No header flags have been set.");
+        }
 
         let data_offset_present: [u8; 3] = [0x00, 0x00, 0x01]; // 0x000001
         let first_sample_flags_present: [u8; 3] = [0x00, 0x00, 0x04]; // 0x000004
@@ -191,39 +206,53 @@ impl Trun {
         let sample_flags_present: [u8; 3] = [0x00, 0x04, 0x00]; // 0x000400
         let sample_composition_time_offsets_present: [u8; 3] = [0x00, 0x08, 0x00]; // 0x000800
 
-        let sample_count: u32 = f.read_u32().unwrap();
+        let_ok!(sample_count, f.read_u32(), "Unable to read sample count");
+
         let mut data_offset: Option<i32> = None;
-        let mut first_sample_flags: Option<u32> = None;
+        let mut first_sample_flags = None;
         let mut samples: Vec<Sample> = Vec::with_capacity(sample_count as usize);
 
-        assert!(header.flags.is_some());
+        let_some!(flags, header.flags, "Header flags not set.");
 
-        let flags = header.flags.unwrap();
         if flags == data_offset_present {
-            data_offset = Some(f.read_i32().unwrap());
+            let_ok!(doffs, f.read_i32(), "Unable to read data offset.");
+            data_offset = Some(doffs);
         } else if flags == first_sample_flags_present {
-            first_sample_flags = Some(f.read_u32().unwrap());
+            let_ok!(fsf, f.read_u32(), "Unable to read first sample flags.");
+            first_sample_flags = Some(fsf);
         }
         // parse samples
         for _ in 0..sample_count {
             let sample_duration = if flags == sample_duration_present {
-                Some(f.read_u32().unwrap())
+                let_ok!(sd, f.read_u32(), "Unable to read sample duration.");
+                Some(sd)
             } else {
                 None
             };
 
             let sample_flags = if flags == sample_flags_present {
-                Some(f.read_u32().unwrap())
+                let_ok!(sf, f.read_u32(), "Unable to read sample flags.");
+                Some(sf)
             } else {
                 None
             };
 
             let sample_composition_time_offset = if flags == sample_composition_time_offsets_present
             {
-                if header.version.unwrap() == 0u8 {
-                    Some(f.read_u32().unwrap() as i32)
+                if header.version.unwrap_or(u8::MAX) == 0u8 {
+                    let_ok!(
+                        scto,
+                        f.read_u32(),
+                        "Unable to read sample composition time offset (u32)."
+                    );
+                    Some(scto as i32)
                 } else {
-                    Some(f.read_i32().unwrap())
+                    let_ok!(
+                        scto,
+                        f.read_i32(),
+                        "Unable to read sample composition time offset (i32)."
+                    );
+                    Some(scto)
                 }
             } else {
                 None
@@ -251,23 +280,23 @@ impl Trun {
         })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn sample_count(&self) -> u32 {
+    pub const fn sample_count(&self) -> u32 {
         self.sample_count
     }
 
-    pub fn data_offset(&self) -> Option<i32> {
+    pub const fn data_offset(&self) -> Option<i32> {
         self.data_offset
     }
 
-    pub fn first_sample_flags(&self) -> Option<u32> {
+    pub const fn first_sample_flags(&self) -> Option<u32> {
         self.first_sample_flags
     }
 
-    pub fn samples(&self) -> &Vec<Sample> {
+    pub const fn samples(&self) -> &Vec<Sample> {
         &self.samples
     }
 }

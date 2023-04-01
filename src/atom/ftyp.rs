@@ -34,6 +34,8 @@ use std::str;
 use std::str::FromStr;
 use std::string::ToString;
 
+use crate::let_ok;
+
 use super::{Header, Mp4File};
 
 #[allow(clippy::upper_case_acronyms)]
@@ -116,11 +118,8 @@ impl ToString for FileType {
 }
 
 impl FileType {
-    pub fn from_bytes(bytes: &[u8; 4]) -> Result<Self, &'static str> {
-        let Ok(s) = str::from_utf8(bytes) else {
-                println!("ftyp ({bytes:?}) parse error.");
-                return Err("ftyp parse error.");
-        };
+    pub fn from_bytes(bytes: [u8; 4]) -> Result<Self, &'static str> {
+        let_ok!(s, str::from_utf8(&bytes), "ftyp parse error.");
         Self::from_str(s)
     }
 
@@ -141,22 +140,32 @@ pub struct Ftyp {
 impl Ftyp {
     fn parse_filetype(f: &mut Mp4File) -> Result<FileType, &'static str> {
         let ft_bytes: [u8; 4] = [
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
-            f.read_u8().unwrap(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
+            f.read_u8().unwrap_or_default(),
         ];
-        FileType::from_bytes(&ft_bytes)
+        FileType::from_bytes(ft_bytes)
     }
 
     pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
-        let major_brand = Self::parse_filetype(f).unwrap();
-        let minor_version = f.read_u32().unwrap();
+        let_ok!(
+            major_brand,
+            Self::parse_filetype(f),
+            "Unable to determine the file type."
+        );
+        let_ok!(
+            minor_version,
+            f.read_u32(),
+            "Unable read the minor version."
+        );
+
         let mut compatible_brands: Vec<FileType> = Vec::new();
 
         let mut idx = (header.data_size - 8) / 4;
         while idx > 0 {
-            compatible_brands.push(Self::parse_filetype(f).unwrap());
+            let_ok!(ft, Self::parse_filetype(f), "Unable to parse filetype.");
+            compatible_brands.push(ft);
             idx -= 1;
         }
 
@@ -170,19 +179,19 @@ impl Ftyp {
         })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn major_brand(&self) -> &FileType {
+    pub const fn major_brand(&self) -> &FileType {
         &self.major_brand
     }
 
-    pub fn minor_version(&self) -> u32 {
+    pub const fn minor_version(&self) -> u32 {
         self.minor_version
     }
 
-    pub fn compatible_brands(&self) -> &Vec<FileType> {
+    pub const fn compatible_brands(&self) -> &Vec<FileType> {
         &self.compatible_brands
     }
 }

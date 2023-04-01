@@ -1,3 +1,5 @@
+use crate::let_ok;
+
 /**
 
 mfra
@@ -14,16 +16,16 @@ pub struct Mfra {
 }
 
 impl Mfra {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
-        Ok(Self { header, children })
+        Self { header, children }
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn children(&self) -> &Vec<Atom> {
+    pub const fn children(&self) -> &Vec<Atom> {
         &self.children
     }
 }
@@ -39,7 +41,12 @@ impl Tfra {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let sequence_number: u32 = f.read_u32().unwrap();
+        let_ok!(
+            sequence_number,
+            f.read_u32(),
+            "Unable to read sequence number"
+        );
+
         f.offset_inc(header.data_size);
         Ok(Self {
             header,
@@ -47,11 +54,11 @@ impl Tfra {
         })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn sequence_number(&self) -> u32 {
+    pub const fn sequence_number(&self) -> u32 {
         self.sequence_number
     }
 }
@@ -66,18 +73,18 @@ impl Mfro {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
-        // let curr_offset = f.offset();
-        // f.seek(curr_offset+header.data_size);
-        let size: u32 = f.read_u32().unwrap();
+
+        let_ok!(size, f.read_u32(), "Unable to read size.");
+
         f.offset_inc(header.data_size);
         Ok(Self { header, size })
     }
 
-    pub fn header(&self) -> &Header {
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
-    pub fn size(&self) -> u32 {
+    pub const fn size(&self) -> u32 {
         self.size
     }
 }
