@@ -1,33 +1,5 @@
-use crate::let_ok;
-
 use super::{Header, Mp4File};
-/**
-
-meta
-    hdlr
-    dinf
-        dref
-    ipmc
-    iloc
-    ipro
-        sinf
-            frma
-            imif
-            schm
-            schi
-    iinf
-    xml
-    bxml
-    pitm
-    fiin
-        paen
-            fpar
-            fecr
-        segr
-        gitn
-        tsel
-
-**/
+use crate::{let_ok, retref};
 use std::string::String;
 
 #[derive(Debug, Clone)]
@@ -49,9 +21,7 @@ impl Meta {
         Ok(Self { header })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
+    retref!(header, Header);
 }
 
 #[derive(Debug, Clone)]
@@ -81,13 +51,8 @@ impl Xml {
         Ok(Self { header, xml })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn xml(&self) -> &String {
-        &self.xml
-    }
+    retref!(header, Header);
+    retref!(xml, String);
 }
 
 #[derive(Debug, Clone)]
@@ -111,11 +76,6 @@ impl Bxml {
         Ok(Self { header, data })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn data(&self) -> &Vec<u8> {
-        &self.data
-    }
+    retref!(header, Header);
+    retref!(data, Vec<u8>);
 }

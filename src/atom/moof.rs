@@ -1,17 +1,5 @@
-/**
-
-moof
-    mfhd
-    traf
-        tfhd
-        trun
-        sdtp
-        sbgp
-        subs
-
-**/
 use super::{Atom, Header, Mp4File, Sample};
-use crate::{let_ok, let_some};
+use crate::{let_ok, let_some, retref, retval};
 
 #[derive(Debug, Clone)]
 pub struct Moof {
@@ -25,13 +13,8 @@ impl Moof {
         Self { header, children }
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn children(&self) -> &Vec<Atom> {
-        &self.children
-    }
+    retref!(header, Header);
+    retref!(children, Vec<Atom>);
 }
 
 #[derive(Debug, Clone)]
@@ -58,13 +41,8 @@ impl Mfhd {
         })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn sequence_number(&self) -> u32 {
-        self.sequence_number
-    }
+    retref!(header, Header);
+    retval!(sequence_number, u32);
 }
 
 #[derive(Debug, Clone)]
@@ -79,13 +57,8 @@ impl Traf {
         Self { header, children }
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn children(&self) -> &Vec<Atom> {
-        &self.children
-    }
+    retref!(header, Header);
+    retref!(children, Vec<Atom>);
 }
 
 #[derive(Debug, Clone)]
@@ -162,21 +135,10 @@ impl Tfhd {
         })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn track_id(&self) -> u32 {
-        self.track_id
-    }
-
-    pub const fn base_data_offset(&self) -> Option<u64> {
-        self.base_data_offset
-    }
-
-    pub const fn sample(&self) -> &Sample {
-        &self.sample
-    }
+    retref!(header, Header);
+    retval!(track_id, u32);
+    retval!(base_data_offset, Option<u64>);
+    retref!(sample, Sample);
 }
 
 #[derive(Debug, Clone)]
@@ -280,23 +242,9 @@ impl Trun {
         })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn sample_count(&self) -> u32 {
-        self.sample_count
-    }
-
-    pub const fn data_offset(&self) -> Option<i32> {
-        self.data_offset
-    }
-
-    pub const fn first_sample_flags(&self) -> Option<u32> {
-        self.first_sample_flags
-    }
-
-    pub const fn samples(&self) -> &Vec<Sample> {
-        &self.samples
-    }
+    retref!(header, Header);
+    retval!(sample_count, u32);
+    retval!(data_offset, Option<i32>);
+    retval!(first_sample_flags, Option<u32>);
+    retref!(samples, Vec<Sample>);
 }

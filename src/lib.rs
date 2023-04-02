@@ -11,6 +11,28 @@ use std::io::{Error, Seek, SeekFrom};
 pub mod atom;
 
 /// Set a value from an expression that returns a `Result`, return an error message if not `Ok`.
+///
+/// # Arguments
+///
+/// - `$var:ident` -- The variable we wish to extract the value from the function into.
+/// - `$fun:expr` -- The function to run. This function _must_ return a `Result`.
+/// - `$msg:literal` -- The clear-text error message to return if the `$fun` returns an error.
+///
+/// # Examples
+///
+/// ```
+/// fn meaning_of_life(guess: u8) -> Result<u8, Error> {
+///     if guess == 42 {
+///         Ok(guess)
+///     } else {
+///         Err("Wrong!".into())
+///     }
+/// }
+///
+/// let_ok!(mol, meaning_of_life(42), "Meaning of life not found.")
+///
+/// assert_eq!(mol, 42);
+/// ```
 #[macro_export]
 macro_rules! let_ok {
     ($var:ident, $fun:expr, $msg:literal) => {
@@ -30,11 +52,23 @@ macro_rules! let_some {
     };
 }
 
-macro_rules! mtx {
-    ($id:ident) => {
+/// Creates a `pub const fn` that returns a value from `self`.
+#[macro_export]
+macro_rules! retval {
+    ($id:ident, $typ:ty) => {
         #[must_use]
-        pub const fn $id(&self) -> f64 {
+        pub const fn $id(&self) -> $typ {
             self.$id
+        }
+    };
+}
+
+/// Creates a `pub const fn` that returns a reference to a value from `self`.
+#[macro_export]
+macro_rules! retref {
+    ($id:ident, $typ:ty) => {
+        pub const fn $id(&self) -> &$typ {
+            &self.$id
         }
     };
 }
@@ -91,25 +125,17 @@ impl Mp4File {
         &self.file
     }
 
-    #[must_use]
-    pub const fn file_size(&self) -> u64 {
-        self.file_size
-    }
-    #[must_use]
-    pub const fn offset(&self) -> u64 {
-        self.offset
-    }
+    retval!(file_size, u64);
+    retval!(offset, u64);
+
     pub fn offset_inc(&mut self, num: u64) -> u64 {
         self.offset += num;
         self.offset
     }
+
     #[must_use]
-    pub const fn atoms_as_ref(&self) -> &Vec<atom::Atom> {
+    pub const fn atoms(&self) -> &Vec<atom::Atom> {
         &self.atoms
-    }
-    #[must_use]
-    pub fn atoms(&self) -> Vec<atom::Atom> {
-        self.atoms.clone()
     }
 
     // TODO: This should return a Result.
@@ -527,8 +553,7 @@ pub fn parse_file(filename: &str) -> Result<Mp4File, &'static str> {
 
 /// Converts the timestamp from the epoch used in the MPEG4 specification (seconds since 1904-01-01 00:00:00)
 /// to the UNIX epoch time (seconds since 1970-01-01 00:00:00). This is done by subtracting 2,082,844,800 seconds from
-/// the given time to return the new time.
-/// There are 2,082,844,800 seconds from 1904-01-01 00:00:00 to 1970-01-01 00:00:00.
+/// the given time to return the new time as there are 2,082,844,800 seconds from 1904-01-01 00:00:00 to 1970-01-01 00:00:00.
 #[must_use]
 pub const fn mp4time_to_unix_time(time: u64) -> u64 {
     time - 2_082_844_800
@@ -548,13 +573,13 @@ pub struct Matrix {
 }
 
 impl Matrix {
-    mtx!(a);
-    mtx!(b);
-    mtx!(u);
-    mtx!(c);
-    mtx!(d);
-    mtx!(v);
-    mtx!(x);
-    mtx!(y);
-    mtx!(w);
+    retval!(a, f64);
+    retval!(b, f64);
+    retval!(u, f64);
+    retval!(c, f64);
+    retval!(d, f64);
+    retval!(v, f64);
+    retval!(x, f64);
+    retval!(y, f64);
+    retval!(w, f64);
 }

@@ -1,3 +1,5 @@
+use crate::retref;
+
 use super::{Header, Mp4File};
 
 #[derive(Debug, Clone)]
@@ -15,7 +17,5 @@ impl Unrecognized {
         Self { header }
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
+    retref!(header, Header);
 }

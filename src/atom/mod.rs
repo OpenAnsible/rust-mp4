@@ -1,12 +1,3 @@
-// https://wiki.multimedia.cx/index.php/QuickTime_container
-// http://developer.apple.com/documentation/QuickTime/QTFF/index.html
-// http://www.adobe.com/devnet/video/articles/mp4_movie_atom.html
-// http://mpeg.chiariglione.org/standards/mpeg-4/mpeg-4.htm
-
-// http://www.adobe.com/devnet/f4v.html
-
-// box types: http://mp4ra.org/atoms.html
-
 use std::cmp::Ordering;
 use std::str;
 
@@ -180,6 +171,24 @@ impl Header {
         f.offset_inc(8);
     }
 
+    /// Parses the usertype part of the MP4 file
+    ///
+    /// # Arguments
+    ///
+    /// `f: &mut Mp4File` -- A mutable MP4 file that will be traversed.
+    ///
+    /// # Returns
+    ///
+    /// Nothing.
+    ///
+    /// # Errors
+    ///
+    /// None.
+    ///
+    /// # Panics
+    ///
+    /// None.
+    ///
     pub fn parse_usertype(&mut self, f: &mut Mp4File) {
         let usertype: [u8; 16] = [
             f.read_u8().unwrap_or_default(),
@@ -204,18 +213,20 @@ impl Header {
         self.header_size += 16;
         self.data_size = self.atom_size - self.header_size;
 
-        f.offset_inc(16);
+        let _offset = f.offset_inc(16);
     }
 
+    /// Parses the version information from the file.
     pub fn parse_version(&mut self, f: &mut Mp4File) {
         let version = f.read_u8().expect("Unable to read version information.");
         self.version = Some(version);
 
         self.header_size += 1;
         self.data_size = self.atom_size - self.header_size;
-        f.offset_inc(1);
+        let _offset = f.offset_inc(1);
     }
 
+    /// Parses the flags from the file.
     pub fn parse_flags(&mut self, f: &mut Mp4File) {
         let flags: [u8; 3] = [
             f.read_u8().unwrap_or_default(),
@@ -226,7 +237,7 @@ impl Header {
 
         self.header_size += 3;
         self.data_size = self.atom_size - self.header_size;
-        f.offset_inc(3);
+        let _offset = f.offset_inc(3);
     }
 }
 
@@ -335,7 +346,7 @@ impl Atom {
     pub fn parse(f: &mut Mp4File) -> Result<Self, &'static str> {
         let_ok!(header, Header::parse(f), "Unable to read Atom header.");
 
-        let data = match header.kind {
+        match header.kind {
             Kind::Bxml => Ok(Self::Bxml(
                 Bxml::parse(f, header).expect("Unable to parse Bxml"),
             )),
@@ -472,8 +483,7 @@ impl Atom {
             _ => Ok(Self::Ignore(
                 Ignore::parse(f, header).expect("Unable to parse Kind::Ignore"),
             )),
-        };
-        data
+        }
     }
 
     pub fn parse_children(f: &mut Mp4File) -> Vec<Self> {

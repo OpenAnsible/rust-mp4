@@ -9,7 +9,7 @@ use std::str;
 use std::str::FromStr;
 use std::string::ToString;
 
-use crate::let_ok;
+use crate::{let_ok, retref, retval};
 
 use super::{Header, Mp4File};
 
@@ -158,19 +158,8 @@ impl Ftyp {
         })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn major_brand(&self) -> &FileType {
-        &self.major_brand
-    }
-
-    pub const fn minor_version(&self) -> u32 {
-        self.minor_version
-    }
-
-    pub const fn compatible_brands(&self) -> &Vec<FileType> {
-        &self.compatible_brands
-    }
+    retref!(header, Header);
+    retref!(major_brand, FileType);
+    retval!(minor_version, u32);
+    retref!(compatible_brands, Vec<FileType>);
 }

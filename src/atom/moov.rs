@@ -1,7 +1,7 @@
 // Metadata container
 
 use super::{Atom, Entry, Header, Mp4File};
-use crate::{let_ok, let_some, Matrix};
+use crate::{let_ok, let_some, retref, Matrix};
 
 use std::string::String;
 
@@ -62,13 +62,8 @@ impl Moov {
         Self { header, children }
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn children(&self) -> &Vec<Atom> {
-        &self.children
-    }
+    retref!(header, Header);
+    retref!(children, Vec<Atom>);
 }
 
 // See mvhd.md for notes

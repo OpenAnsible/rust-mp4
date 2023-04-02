@@ -1,4 +1,4 @@
-use crate::let_ok;
+use crate::{let_ok, retref, retval};
 
 use super::{Atom, Header, Mp4File};
 /*
@@ -18,13 +18,8 @@ impl Meco {
         Self { header, children }
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn children(&self) -> &Vec<Atom> {
-        &self.children
-    }
+    retref!(header, Header);
+    retref!(children, Vec<Atom>);
 }
 
 #[derive(Debug, Clone)]
@@ -68,19 +63,8 @@ impl Mere {
         })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn first_metabox_handler_type(&self) -> u32 {
-        self.first_metabox_handler_type
-    }
-
-    pub const fn second_metabox_handler_type(&self) -> u32 {
-        self.second_metabox_handler_type
-    }
-
-    pub const fn metabox_relation(&self) -> u8 {
-        self.metabox_relation
-    }
+    retref!(header, Header);
+    retval!(first_metabox_handler_type, u32);
+    retval!(second_metabox_handler_type, u32);
+    retval!(metabox_relation, u8);
 }

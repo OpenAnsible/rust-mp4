@@ -8,9 +8,5 @@ authors = ["Luo <gnulinux@126.com>", "Even Solberg (even.solberg@gmail.com)"]
 name = "mp4"
 path = "src/lib.rs"
 
-# [[bin]]
-# name = "mp4"
-# path = "src/main.rs"
-
 [dependencies]
 byteorder = "1.4.3"

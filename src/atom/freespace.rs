@@ -1,3 +1,5 @@
+use crate::retref;
+
 use super::{Header, Mp4File};
 
 #[derive(Debug, Clone)]
@@ -13,9 +15,7 @@ impl Skip {
         Self { header }
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
+    retref!(header, Header);
 }
 
 #[derive(Debug, Clone)]
@@ -31,7 +31,5 @@ impl Free {
         Self { header }
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
+    retref!(header, Header);
 }

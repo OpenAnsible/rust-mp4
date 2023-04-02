@@ -1,6 +1,5 @@
-use crate::let_ok;
-
 use super::{Header, Mp4File};
+use crate::{let_ok, retref, retval};
 
 #[derive(Debug, Clone)]
 pub struct Pdin {
@@ -23,15 +22,7 @@ impl Pdin {
         })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn rate(&self) -> u32 {
-        self.rate
-    }
-
-    pub const fn initial_delay(&self) -> u32 {
-        self.initial_delay
-    }
+    retref!(header, Header);
+    retval!(rate, u32);
+    retval!(initial_delay, u32);
 }

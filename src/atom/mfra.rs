@@ -1,13 +1,5 @@
-use crate::let_ok;
-
-/**
-
-mfra
-    tfra
-    mfro
-
-**/
 use super::{Atom, Header, Mp4File};
+use crate::{let_ok, retref, retval};
 
 #[derive(Debug, Clone)]
 pub struct Mfra {
@@ -21,13 +13,8 @@ impl Mfra {
         Self { header, children }
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn children(&self) -> &Vec<Atom> {
-        &self.children
-    }
+    retref!(header, Header);
+    retref!(children, Vec<Atom>);
 }
 
 #[derive(Debug, Clone)]
@@ -54,13 +41,8 @@ impl Tfra {
         })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn sequence_number(&self) -> u32 {
-        self.sequence_number
-    }
+    retref!(header, Header);
+    retval!(sequence_number, u32);
 }
 
 #[derive(Debug, Clone)]
@@ -80,11 +62,6 @@ impl Mfro {
         Ok(Self { header, size })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
-
-    pub const fn size(&self) -> u32 {
-        self.size
-    }
+    retref!(header, Header);
+    retval!(size, u32);
 }

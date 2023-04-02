@@ -1,4 +1,4 @@
-use crate::let_ok;
+use crate::{let_ok, retref};
 
 use super::{Header, Mp4File};
 
@@ -21,7 +21,5 @@ impl Ignore {
         Ok(Self { header })
     }
 
-    pub const fn header(&self) -> &Header {
-        &self.header
-    }
+    retref!(header, Header);
 }
