@@ -29,7 +29,7 @@ pub mod atom;
 ///     }
 /// }
 ///
-/// let_ok!(mol, meaning_of_life(42), "Meaning of life not found.")
+/// let_ok!(mol, meaning_of_life(42), "Meaning of life not found.");
 ///
 /// assert_eq!(mol, 42);
 /// ```
