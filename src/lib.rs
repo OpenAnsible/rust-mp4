@@ -29,6 +29,7 @@ pub mod atom;
 ///     }
 /// }
 ///
+/// // Take the return value of `meaning_of_life` and put it into `mol`. Return the message if unsuccessful.
 /// let_ok!(mol, meaning_of_life(42), "Meaning of life not found.");
 ///
 /// assert_eq!(mol, 42);

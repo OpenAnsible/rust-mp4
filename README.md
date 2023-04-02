@@ -2,6 +2,8 @@
 
 A Rust implementation of the MPEG-4 (MP4) container format. My fork cleans up some of the code (work in progress) and adds functionality to make data acccess easier.
 
+Much work remains in documenting this and making it more robust.
+
 ## Example
 
 ```bash
