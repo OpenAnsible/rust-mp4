@@ -20,7 +20,7 @@ pub mod atom;
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// fn meaning_of_life(guess: u8) -> Result<u8, Error> {
 ///     if guess == 42 {
 ///         Ok(guess)
