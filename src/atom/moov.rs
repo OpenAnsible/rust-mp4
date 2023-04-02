@@ -351,13 +351,11 @@ impl Hdlr {
         header.parse_version(f);
         header.parse_flags(f);
 
-        // u32 = [u8, u8, u8, u8]
-        let handler_type_bytes: [u8; 4] = [
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-        ];
+        let_ok!(b1, f.read_u8(), "Unable to read handler type byte 1");
+        let_ok!(b2, f.read_u8(), "Unable to read handler type byte 2");
+        let_ok!(b3, f.read_u8(), "Unable to read handler type byte 3");
+        let_ok!(b4, f.read_u8(), "Unable to read handler type byte 4");
+        let handler_type_bytes: [u8; 4] = [b1, b2, b3, b4];
 
         let_ok!(
             handler_type,
@@ -417,14 +415,17 @@ impl Vmhd {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let_ok!(graphicsmode, f.read_u16(), "Unable to read graphics mode.");
+        let_ok!(
+            graphicsmode,
+            f.read_u16(),
+            "Vmhd: Unable to read graphics mode."
+        );
 
         // red, green, blue
-        let opcolor: [u16; 3] = [
-            f.read_u16().unwrap_or_default(),
-            f.read_u16().unwrap_or_default(),
-            f.read_u16().unwrap_or_default(),
-        ];
+        let_ok!(r, f.read_u16(), "Vmhd: Unable to read opcolor red");
+        let_ok!(g, f.read_u16(), "Vmhd: Unable to read opcolor green");
+        let_ok!(b, f.read_u16(), "Vmhd: Unable to read opcolor blue");
+        let opcolor: [u16; 3] = [r, g, b];
 
         f.offset_inc(8);
 

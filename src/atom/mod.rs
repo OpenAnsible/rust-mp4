@@ -8,152 +8,16 @@
 // box types: http://mp4ra.org/atoms.html
 
 use std::cmp::Ordering;
-/**
-    Box Struct:
-
-        size(u32), type(u32), largesize(u64),
-        data
-
-Among them, `size` specifies the size of the entire `box`, including the `header` part.
-If the `box` size exceeds the maximum value of `u32`, `size` is set to `1`,
-And use the next `8-bit` u64 to store the size.
-
-Atoms:
-
-ftyp
-pdin
-moov
-    mvhd
-    trak
-        tkhd
-        mdia
-            mdhd
-            hdlr
-            minf
-                stbl
-                    stsd
-                    stts
-                    stsc
-                    stsz
-                    stz2
-                    stss
-                    stco
-                    co64
-
-                    ctts
-                    stsh
-                    padb
-                    stdp
-                    sdtp
-                    sbgp
-                    sgpd
-                    subs
-                dinf
-                    dref
-                nmhd
-                hmhd
-                smhd
-                vmhd
-        tref
-        edts
-            elst
-    mvex
-        mehd
-        trex
-    ipmc
-moof
-    mfhd
-    traf
-        tfhd
-        trun
-        sdtp
-        sbgp
-        subs
-mfra
-    tfra
-    mfro
-mdat
-free
-skip
-    udta
-        cprt
-        tsel
-        strk
-            stri
-            strd
-meta
-    hdlr
-    dinf
-        dref
-    ipmc
-    iloc
-    ipro
-        sinf
-            frma
-            imif
-            schm
-            schi
-    iinf
-    xml
-    bxml
-    pitm
-    fiin
-        paen
-            fpar
-            fecr
-        segr
-        gitn
-        tsel
-meco
-    mere
-
-
-Top level Atoms:
-
-ftyp
-pdin
-moov
-mfra
-mdat
-free
-skip
-meta
-meco
-
-Fragment
-
-Initialization Segments
-    ftyp
-    moov
-    moof
-    mdat
-
-Media Segments
-
-    moof
-        mfhd
-        traf
-            tfhd
-            trun
-            sdtp
-        traf
-            tfhd
-            trun
-            sdtp
-    mdat
-**/
 use std::str;
 
 use crate::let_ok;
 
 pub use super::Mp4File;
-// use byteorder::ReadBytesExt;
-
-mod kind;
 
 mod freespace;
 mod ftyp;
 mod ignore;
+mod kind;
 mod mdat;
 mod meco;
 mod meta;
@@ -225,30 +89,26 @@ impl Header {
     ///
     /// # Returns
     ///
-    ///
+    /// `Result<Self, &'static str>` -- a `Header` struct if successful, and error message otherwise.
     ///
     /// # Errors
     ///
-    ///
+    /// If unable to read file kind. If unable to parse the file.
     ///
     /// # Panics
     ///
-    ///
-    ///
-    /// # Examples
-    ///
-    ///
+    /// None.
     ///
     pub fn parse(f: &mut Mp4File) -> Result<Self, &'static str> {
         let curr_offset = f.offset();
         let_ok!(size, f.read_u32(), "Unable to read size.");
 
-        let kind_bytes: [u8; 4] = [
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-        ];
+        let_ok!(b1, f.read_u8(), "Unable to read header byte 1.");
+        let_ok!(b2, f.read_u8(), "Unable to read header byte 2.");
+        let_ok!(b3, f.read_u8(), "Unable to read header byte 3.");
+        let_ok!(b4, f.read_u8(), "Unable to read header byte 4.");
+
+        let kind_bytes: [u8; 4] = [b1, b2, b3, b4];
 
         let_ok!(
             kind,
@@ -339,10 +199,11 @@ impl Header {
             f.read_u8().unwrap_or_default(),
             f.read_u8().unwrap_or_default(),
         ];
-        self.usertype = Some(usertype);
 
+        self.usertype = Some(usertype);
         self.header_size += 16;
         self.data_size = self.atom_size - self.header_size;
+
         f.offset_inc(16);
     }
 
@@ -621,12 +482,13 @@ impl Atom {
             if f.offset() == f.file_size() {
                 break;
             }
+
             match Self::parse(f) {
                 Ok(atom) => {
                     atoms.push(atom);
                 }
                 Err(e) => {
-                    println!("[ERROR] ATOM parse error ({e:?})");
+                    eprintln!("[ERROR] ATOM parse error ({e:?})");
                     break;
                 }
             }
