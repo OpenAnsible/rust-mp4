@@ -1,9 +1,13 @@
+//! Defines the `Kind` enum, which represents the different types of atoms that can be in an MP4 file.
+
 use std::str;
 use std::str::FromStr;
 use std::string::ToString;
 
 use crate::let_ok;
 
+/// Represents the different types of atoms that can be in an MP4 file.
+/// This is used to determine which atom to parse.
 #[allow(clippy::doc_markdown)]
 #[derive(Debug, Clone)]
 pub enum Kind {
@@ -90,6 +94,17 @@ pub enum Kind {
 
 impl FromStr for Kind {
     type Err = &'static str;
+
+    /// Converts a string to an `Kind` enum.
+    ///
+    /// # Arguments
+    ///
+    /// * `s: &str` - The string to convert.
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Self, Self::Err>` - The result of the conversion.
+    ///
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "bxml" => Ok(Self::Bxml),
@@ -175,89 +190,92 @@ impl FromStr for Kind {
     }
 }
 
-impl ToString for Kind {
-    fn to_string(&self) -> String {
-        match *self {
-            Self::Bxml => "bxml".to_owned(),
-            Self::Co64 => "co64".to_owned(),
-            Self::Cprt => "cprt".to_owned(),
-            Self::Ctts => "ctts".to_owned(),
-            Self::Cslg => "cslg".to_owned(),
-            Self::Dinf => "dinf".to_owned(),
-            Self::Dref => "dref".to_owned(),
-            Self::Edts => "edts".to_owned(),
-            Self::Elst => "elst".to_owned(),
-            Self::Fecr => "fecr".to_owned(),
-            Self::Fiin => "fiin".to_owned(),
-            Self::Fpar => "fpar".to_owned(),
-            Self::Free => "free".to_owned(),
-            Self::Frma => "frma".to_owned(),
-            Self::Ftyp => "ftyp".to_owned(),
-            Self::Hdlr => "hdlr".to_owned(),
-            Self::Hmhd => "hmhd".to_owned(),
-            Self::Iinf => "iinf".to_owned(),
-            Self::Iloc => "iloc".to_owned(),
-            Self::Imif => "imif".to_owned(),
-            Self::Ipmc => "ipmc".to_owned(),
-            Self::Ipro => "ipro".to_owned(),
-            Self::Itn => "itn\u{0}".to_owned(),
-            Self::Mdat => "mdat".to_owned(),
-            Self::Mdhd => "mdhd".to_owned(),
-            Self::Mdia => "mdia".to_owned(),
-            Self::Meco => "meco".to_owned(),
-            Self::Mehd => "mehd".to_owned(),
-            Self::Mere => "mere".to_owned(),
-            Self::Meta => "meta".to_owned(),
-            Self::Mfhd => "mfhd".to_owned(),
-            Self::Mfra => "mfra".to_owned(),
-            Self::Mfro => "mfro".to_owned(),
-            Self::Minf => "minf".to_owned(),
-            Self::Moof => "moof".to_owned(),
-            Self::Moov => "moov".to_owned(),
-            Self::Mvex => "mvex".to_owned(),
-            Self::Mvhd => "mvhd".to_owned(),
-            Self::Mmhd => "nmhd".to_owned(),
-            Self::Padb => "padb".to_owned(),
-            Self::Paen => "paen".to_owned(),
-            Self::Pdin => "pdin".to_owned(),
-            Self::Pitm => "pitm".to_owned(),
-            Self::Sbgp => "sbgp".to_owned(),
-            Self::Schi => "schi".to_owned(),
-            Self::Schm => "schm".to_owned(),
-            Self::Sdtp => "sdtp".to_owned(),
-            Self::Sgpd => "sgpd".to_owned(),
-            Self::Sinf => "sinf".to_owned(),
-            Self::Skip => "skip".to_owned(),
-            Self::Smhd => "smhd".to_owned(),
-            Self::Stbl => "stbl".to_owned(),
-            Self::Stco => "stco".to_owned(),
-            Self::Stdp => "stdp".to_owned(),
-            Self::Stsc => "stsc".to_owned(),
-            Self::Stsd => "stsd".to_owned(),
-            Self::Stsh => "stsh".to_owned(),
-            Self::Stss => "stss".to_owned(),
-            Self::Stsz => "stsz".to_owned(),
-            Self::Stts => "stts".to_owned(),
-            Self::Stz2 => "stz2".to_owned(),
-            Self::Subs => "subs".to_owned(),
-            Self::Tfhd => "tfhd".to_owned(),
-            Self::Tfra => "tfra".to_owned(),
-            Self::Tkhd => "tkhd".to_owned(),
-            Self::Traf => "traf".to_owned(),
-            Self::Trak => "trak".to_owned(),
-            Self::Tref => "tref".to_owned(),
-            Self::Trex => "trex".to_owned(),
-            Self::Trun => "trun".to_owned(),
-            Self::Tsel => "tsel".to_owned(),
-            Self::Udta => "udta".to_owned(),
-            Self::Uuid => "uuid".to_owned(),
-            Self::Vmhd => "vmhd".to_owned(),
-            Self::Xml => "xml\u{0}".to_owned(),
-            Self::Strk => "strk".to_owned(),
-            Self::Stri => "stri".to_owned(),
-            Self::Strd => "strd".to_owned(),
-            Self::Unrecognized(ref s) => s.clone(),
-        }
+/// Implements the `Display` trait for the `Kind` enum.
+impl std::fmt::Display for Kind {
+    /// Converts the `Kind` enum to a string for display.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::Bxml => "Bxml",
+            Self::Co64 => "Co64",
+            Self::Cprt => "Cprt",
+            Self::Ctts => "Ctts",
+            Self::Cslg => "Cslg",
+            Self::Dinf => "Dinf",
+            Self::Dref => "Dref",
+            Self::Edts => "Edts",
+            Self::Elst => "Elst",
+            Self::Fecr => "Fecr",
+            Self::Fiin => "Fiin",
+            Self::Fpar => "Fpar",
+            Self::Free => "Free",
+            Self::Frma => "Frma",
+            Self::Ftyp => "Ftyp",
+            Self::Hdlr => "Hdlr",
+            Self::Hmhd => "Hmhd",
+            Self::Iinf => "Iinf",
+            Self::Iloc => "Iloc",
+            Self::Imif => "Imif",
+            Self::Ipmc => "Ipmc",
+            Self::Ipro => "Ipro",
+            Self::Itn => "Itn",
+            Self::Mdat => "Mdat",
+            Self::Mdhd => "Mdhd",
+            Self::Mdia => "Mdia",
+            Self::Meco => "Meco",
+            Self::Mehd => "Mehd",
+            Self::Mere => "Mere",
+            Self::Meta => "Meta",
+            Self::Mfhd => "Mfhd",
+            Self::Mfra => "Mfra",
+            Self::Mfro => "Mfro",
+            Self::Minf => "Minf",
+            Self::Moof => "Moof",
+            Self::Moov => "Moov",
+            Self::Mvex => "Mvex",
+            Self::Mvhd => "Mvhd",
+            Self::Mmhd => "Mmhd",
+            Self::Padb => "Padb",
+            Self::Paen => "Paen",
+            Self::Pdin => "Pdin",
+            Self::Pitm => "Pitm",
+            Self::Sbgp => "Sbgp",
+            Self::Schi => "Schi",
+            Self::Schm => "Schm",
+            Self::Sdtp => "Sdtp",
+            Self::Sgpd => "Sgpd",
+            Self::Sinf => "Sinf",
+            Self::Skip => "Skip",
+            Self::Smhd => "Smhd",
+            Self::Stbl => "Stbl",
+            Self::Stco => "Stco",
+            Self::Stdp => "Stdp",
+            Self::Stsc => "Stsc",
+            Self::Stsd => "Stsd",
+            Self::Stsh => "Stsh",
+            Self::Stss => "Stss",
+            Self::Stsz => "Stsz",
+            Self::Stts => "Stts",
+            Self::Stz2 => "Stz2",
+            Self::Subs => "Subs",
+            Self::Tfhd => "Tfhd",
+            Self::Tfra => "Tfra",
+            Self::Tkhd => "Tkhd",
+            Self::Traf => "Traf",
+            Self::Trak => "Trak",
+            Self::Tref => "Tref",
+            Self::Trex => "Trex",
+            Self::Trun => "Trun",
+            Self::Tsel => "Tsel",
+            Self::Udta => "Udta",
+            Self::Uuid => "Uuid",
+            Self::Vmhd => "Vmhd",
+            Self::Xml => "Xml",
+            Self::Strk => "Strk",
+            Self::Stri => "Stri",
+            Self::Strd => "Strd",
+            Self::Unrecognized(_) => "Unrecognized",
+        };
+        write!(f, "{s}")
     }
 }
 
@@ -270,25 +288,22 @@ impl Kind {
     ///
     /// # Returns
     ///
-    ///
+    /// * `Result<Self, &'static str>` - The result of the conversion.
     ///
     /// # Errors
     ///
-    ///
-    ///
-    /// # Panics
-    ///
-    ///
-    ///
-    /// # Examples
-    ///
-    ///
-    ///
+    /// * `Err(&'static str)` - If the file identifier is not recognized.
     pub fn from_bytes(bytes: [u8; 4]) -> Result<Self, &'static str> {
         let_ok!(kind_str, str::from_utf8(&bytes), "Atom Kind parse error.");
+        log::trace!("Kind::from_bytes -- kind_str = '{kind_str}'");
         Self::from_str(kind_str)
     }
 
+    /// Returns the byte array representation of the Kind enum.
+    ///
+    /// # Returns
+    ///
+    /// * `Vec<u8>` - The byte array representation of the Kind enum.
     #[must_use]
     pub fn into_bytes(&self) -> Vec<u8> {
         self.to_string().into_bytes()

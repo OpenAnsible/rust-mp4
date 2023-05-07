@@ -90,23 +90,25 @@ alias tp := testp
 
 # Documents the project
 @docs: format
-    cargo doc --no-deps
-    cargo depgraph | dot -Tpng > graph.png
-    cargo tree > tree.txt
-    cargo bom > bom.txt
-    cargo nextest list | tee tests.txt
-    tokei | tee tokei.txt
-    cargo outdated
+    -cargo doc --no-deps
+    -cargo depgraph | dot -Tpng > graph.png
+    -cargo tree > tree.txt
+    -cargo bom > bom.txt
+    -cargo nextest list | tee tests.txt
+    -tokei | tee tokei.txt
+    echo "Checking for outdated dependencies."
+    -cargo outdated
 
 # Documents the project and all dependencies
 @doc-all: format
-    cargo doc
-    cargo depgraph | dot -Tpng > graph.png
-    cargo tree > tree.txt
-    cargo bom > bom.txt
-    cargo nextest list | tee tests.txt
-    tokei | tee tokei.txt
-    cargo outdated
+    -cargo doc
+    -cargo depgraph | dot -Tpng > graph.png
+    -cargo tree > tree.txt
+    -cargo bom > bom.txt
+    -cargo nextest list | tee tests.txt
+    -tokei | tee tokei.txt
+    echo "Checking for outdated dependencies."
+    -cargo outdated
 
 # Formats the project source files
 @format:

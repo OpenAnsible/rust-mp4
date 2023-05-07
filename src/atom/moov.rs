@@ -1,62 +1,26 @@
 // Metadata container
 
-use super::{Atom, Entry, Header, Mp4File};
-use crate::{let_ok, let_some, retref, Matrix};
-
+use super::entry::Entry;
+use super::{Atom, Header};
+use crate::matrix::Matrix;
+use crate::mp4file::Mp4File;
+use crate::{let_ok, let_some, retref};
 use std::string::String;
 
-/*
-
-moov
-    mvhd
-    trak
-        tkhd
-        mdia
-            mdhd
-            hdlr
-            minf
-                stbl
-                    stsd
-                    stts
-                    stsc
-                    stsz
-                    stz2
-                    stss
-                    stco
-                    co64
-
-                    ctts
-                    stsh
-                    padb
-                    stdp
-                    sdtp
-                    sbgp
-                    sgpd
-                    subs
-                dinf
-                    dref
-                nmhd
-                hmhd
-                smhd
-                vmhd
-        tref
-        edts
-            elst
-    mvex
-        mehd
-        trex
-    ipmc
-
-    See the moov.md
-*/
-
+// This is the top-level atom for the file. It contains all other atoms. It is a container atom, so it
+// has no data of its own. The atom is defined in ISO/IEC 14496-12:2015 § 8.1.1.
 #[derive(Debug, Clone)]
 pub struct Moov {
+    /// The header of the atom.
     header: Header,
+
+    /// The children of the atom, which are the atoms contained in the moov atom.
     children: Vec<Atom>,
 }
 
 impl Moov {
+    /// Parses a Moov atom from the given file. The header is already parsed and passed in.
+    /// In practice, the function reads the children of the atom and returns them in a vector as part of the Moov struct.
     pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
         Self { header, children }
@@ -66,22 +30,50 @@ impl Moov {
     retref!(children, Vec<Atom>);
 }
 
-// See mvhd.md for notes
+/// Defines overall information which is media-independent, and relevant to the entire presentation considered as a whole.
+///
+/// Represents the `Mvhd` atom, which contains the movie header information, as per ISO/IEC 14496-12:2015 § 8.2.1.
+///
+/// This atom is required to be present in a valid MP4 file. It is a full atom, so it has a version and flags.
+/// The version determines the size of the `creation_time` and `modification_time` fields, which are 32-bit or 64-bit.
+/// The flags are currently unused.
+/// Known children: None
 #[derive(Debug, Clone)]
 pub struct Mvhd {
+    /// The header of the atom.
     pub header: Header,
+
+    /// The creation time of the presentation, in seconds since midnight, Jan. 1, 1904, in UTC time.
     pub creation_time: u64,
+
+    /// The most recent time the presentation was modified, in seconds since midnight, Jan. 1, 1904, in UTC time.
     pub modification_time: u64,
+
+    /// An integer that specifies the time scale for the entire presentation; this is the number of time units that pass in one second.
     pub timescale: u32,
+
+    /// The length of the presentation (in the indicated timescale).
     pub duration: u64,
 
+    /// A fixed-point 16.16 number that indicates the preferred rate to play the presentation; 1.0 (0x00010000) is normal forward playback.
     pub rate: f64,
+
+    /// A fixed-point 8.8 number that indicates the preferred playback volume; 1.0 (0x0100) is full volume.
     pub volume: f64,
+
+    /// A transformation matrix for the video; (u,v,w) are restricted here to (0,0,1).
+    /// The matrix is stored in row-major order.
     pub matrix: Matrix,
+
+    /// An integer that indicates a value to use for the track ID of the next track to be added to this presentation.
     pub next_track_id: u32,
 }
 
 impl Mvhd {
+    /// Parses a `Mvhd` atom from the given file. The header is already parsed and passed in.
+    ///
+    /// The file is advanced to the end of the atom.
+    /// In practice, the function reads the data from the atom and returns it as part of the Mvhd struct.
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
@@ -166,6 +158,10 @@ impl Mvhd {
     }
 }
 
+/// Represents the Trak atom, which contains the track information, as per ISO/IEC 14496-12:2015 § 8.3.1.
+/// This atom is required to be present in a valid MP4 file. It is a container atom, so it has no data of its own.
+/// Known children: Tkhd, Mdia
+/// TODO: Implement the rest of the children: Edts, Tref, Udta, Meta
 #[derive(Debug, Clone)]
 pub struct Trak {
     pub header: Header,
@@ -179,6 +175,9 @@ impl Trak {
     }
 }
 
+/// Represents the Tkhd atom, which contains the track header information, as per ISO/IEC 14496-12:2015 § 8.3.2.
+/// This atom is required to be present in a valid MP4 file. It is a full atom, so it has a version and flags.
+/// The version determines the size of the `creation_time` and `modification_time` fields, which are 32-bit or 64-bit.
 #[derive(Debug, Clone)]
 pub struct Tkhd {
     pub header: Header, // creation_time: u64,
@@ -776,38 +775,36 @@ impl Stsd {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Stdp {
-    pub header: Header,
-}
-
-impl Stdp {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
-        header.parse_version(f);
-        header.parse_flags(f);
-
-        let curr_offset = f.offset();
-        let _seek_res = f.seek(curr_offset + header.data_size);
-        let _offset = f.offset_inc(header.data_size);
-
-        Self { header }
-    }
-}
-
+/// Provides a mapping from the presentation time of a sample to the byte offset into the data stream.
 #[derive(Debug, Clone)]
 pub struct SttsEntry {
+    /// The number of consecutive samples that have the same duration.
     pub sample_count: u32,
+
+    /// The delta of these samples in the track's timescale.
     pub sample_delta: u32,
 }
 
+/// Provides a table of sample counts and durations that can be used to calculate the total number of frames in the track.
 #[derive(Debug, Clone)]
 pub struct Stts {
+    /// The header of the atom.
     pub header: Header,
+
+    /// The number of entries in the table.
     pub entry_count: u32,
+
+    /// The table of entries.
     pub entries: Vec<SttsEntry>,
 }
 
 impl Stts {
+    /// Parses a Stts atom from the given file. The header is already parsed and passed in.
+    /// The file is advanced to the end of the atom.
+    /// In practice, the function reads the data from the atom and returns it as part of the Stts struct.
+    /// The Stts atom is required to be present in a valid MP4 file.
+    /// It is a full atom, so it has a version and flags.
+    /// The version determines the size of the `sample_count` and `sample_delta` fields, which are 32-bit or 64-bit.
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
@@ -848,6 +845,28 @@ pub struct Ctts {
 
 impl Ctts {
     #[allow(clippy::cast_possible_wrap)]
+    /// Parses a `Ctts` atom from the given file. The header is already parsed and passed in.
+    /// The file is advanced to the end of the atom.
+    ///
+    /// In practice, the function reads the data from the atom and returns it as part of the `Ctts` struct.
+    /// The `Ctts` atom is required to be present in a valid MP4 file.
+    /// It is a full atom, so it has a version and flags.
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - The file to read from.
+    /// * `header` - The header of the atom.
+    ///
+    /// # Returns
+    ///
+    /// * A `Result` containing either the `Ctts` struct or an error message.
+    ///
+    /// # Errors
+    ///
+    /// * If the version isn't found, an error is returned.
+    /// * If the entry count isn't found, an error is returned.
+    /// * If the sample count isn't found, an error is returned.
+    /// * If the sample offset isn't found, an error is returned.
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);
@@ -924,86 +943,6 @@ pub struct Stsh {
 }
 
 impl Stsh {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
-        header.parse_version(f);
-        header.parse_flags(f);
-
-        let curr_offset = f.offset();
-        let _seek_res = f.seek(curr_offset + header.data_size);
-        let _offset = f.offset_inc(header.data_size);
-
-        Self { header }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Sdtp {
-    pub header: Header,
-}
-
-impl Sdtp {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
-        header.parse_version(f);
-        header.parse_flags(f);
-
-        let curr_offset = f.offset();
-        let _seek_res = f.seek(curr_offset + header.data_size);
-        let _offset = f.offset_inc(header.data_size);
-
-        Self { header }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Mvex {
-    pub header: Header,
-    pub children: Vec<Atom>,
-}
-
-impl Mvex {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
-        let children: Vec<Atom> = Atom::parse_children(f);
-        Self { header, children }
-    }
-}
-
-/// The Movie Extends Header is optional, and provides the overall duration, including fragments, of a fragmented movie.
-/// If this box is not present, the overall duration must be computed by examining each fragment.
-#[derive(Debug, Clone)]
-pub struct Mehd {
-    pub header: Header,
-    pub fragment_duration: u64,
-}
-
-impl Mehd {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
-        header.parse_version(f);
-        header.parse_flags(f);
-
-        let_some!(version, header.version, "No header version set.");
-        let fragment_duration: u64 = if version == 1u8 {
-            let_ok!(fd, f.read_u64(), "Unable to read fragment duration (u64).");
-            fd
-        } else {
-            let_ok!(fd, f.read_u32(), "Unable to read fragment duration (u32).");
-            u64::from(fd)
-        };
-
-        // f.seek(curr_offset+header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Self {
-            header,
-            fragment_duration,
-        })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Trex {
-    pub header: Header,
-}
-
-impl Trex {
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
         header.parse_version(f);
         header.parse_flags(f);

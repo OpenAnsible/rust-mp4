@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Documentation update
 - Let_ok example update
 - Ignore macro example in tests
+- Changelog update
 
 ### Documentation
 

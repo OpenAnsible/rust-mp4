@@ -1,246 +1,76 @@
-use std::cmp::Ordering;
+//! Defines the `Atom` type, which is the main type for parsing MP4 files.
+
 use std::str;
 
 use crate::let_ok;
+use crate::mp4file::Mp4File;
 
-pub use super::Mp4File;
+mod entry;
+mod sample;
 
-mod freespace;
-mod ftyp;
-mod ignore;
-mod kind;
-mod mdat;
-mod meco;
-mod meta;
-mod mfra;
-mod moof;
-mod moov;
-mod pdin;
-mod unrecognized;
-mod uuid;
+pub mod bxml;
+pub mod freespace;
+pub mod ftyp;
+pub mod header;
+pub mod ignore;
+pub mod kind;
+pub mod mdat;
+pub mod meco;
+pub mod mehd;
+pub mod mere;
+pub mod meta;
+pub mod mfhd;
+pub mod mfra;
+pub mod mfro;
+pub mod moof;
+pub mod moov;
+pub mod mvex;
+pub mod pdin;
+pub mod sdtp;
+pub mod stdp;
+pub mod tfhd;
+pub mod tfra;
+pub mod traf;
+pub mod trex;
+pub mod trun;
+pub mod unrecognized;
+pub mod uuid;
+pub mod xml;
 
-pub use self::kind::Kind;
-
+// These are all used in the Atom enum below.
+use self::bxml::Bxml;
 use self::freespace::{Free, Skip};
 use self::ftyp::Ftyp;
-use self::mdat::Mdat;
-use self::pdin::Pdin;
-use self::uuid::Uuid;
-
+use self::header::Header;
 use self::ignore::Ignore;
-use self::meco::{Meco, Mere};
-use self::meta::{Bxml, Meta, Xml};
-use self::mfra::{Mfra, Mfro, Tfra};
-use self::moof::{Mfhd, Moof, Tfhd, Traf, Trun};
+use self::kind::Kind;
+use self::mdat::Mdat;
+use self::meco::Meco;
+use self::mehd::Mehd;
+use self::mere::Mere;
+use self::meta::Meta;
+use self::mfhd::Mfhd;
+use self::mfra::Mfra;
+use self::mfro::Mfro;
+use self::moof::Moof;
 use self::moov::{
-    Co64, Cslg, Ctts, Hdlr, Hmhd, Mdhd, Mdia, Mehd, Minf, Moov, Mvex, Mvhd, Nmhd, Padb, Sdtp, Smhd,
-    Stbl, Stco, Stdp, Stsc, Stsd, Stsh, Stss, Stsz, Stts, Stz2, Tkhd, Trak, Tref, Trex, Vmhd,
+    Co64, Cslg, Ctts, Hdlr, Hmhd, Mdhd, Mdia, Minf, Moov, Mvhd, Nmhd, Padb, Smhd, Stbl, Stco, Stsc,
+    Stsd, Stsh, Stss, Stsz, Stts, Stz2, Tkhd, Trak, Tref, Vmhd,
 };
+use self::mvex::Mvex;
+use self::pdin::Pdin;
+use self::sdtp::Sdtp;
+use self::stdp::Stdp;
+use self::tfhd::Tfhd;
+use self::tfra::Tfra;
+use self::traf::Traf;
+use self::trex::Trex;
+use self::trun::Trun;
 use self::unrecognized::Unrecognized;
+use self::uuid::Uuid;
+use self::xml::Xml;
 
-#[derive(Debug, Clone)]
-pub struct Entry {
-    pub first_chunk: u32,
-    pub samples_per_chunk: u32,
-    pub sample_description_index: u32,
-}
-
-#[derive(Debug, Clone)]
-pub struct Sample {
-    pub duration: Option<u32>,
-    pub size: Option<u32>,
-    pub flags: Option<u32>,
-    pub composition_time_offset: Option<i32>,
-    pub description_index: Option<u32>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Header {
-    pub size: u32,
-    pub kind: Kind, // atom type
-
-    // Optional
-    pub largesize: Option<u64>,
-    pub usertype: Option<[u8; 16]>,
-    pub version: Option<u8>,
-    pub flags: Option<[u8; 3]>, // 24 Bits
-    // custom abstraction
-    pub atom_size: u64,   // atom size , include header and data.
-    pub header_size: u64, // atom header size, not include data size.
-    pub data_size: u64,   // atom data size , not include header size.
-    pub offset: u64,      // file offset.
-}
-
-impl Header {
-    /// Parses a file and reads the header information
-    ///
-    /// # Arguments
-    ///
-    /// `f: &mut Mp4File` -- The MP4 file to be read.
-    ///
-    /// # Returns
-    ///
-    /// `Result<Self, &'static str>` -- a `Header` struct if successful, and error message otherwise.
-    ///
-    /// # Errors
-    ///
-    /// If unable to read file kind. If unable to parse the file.
-    ///
-    /// # Panics
-    ///
-    /// None.
-    ///
-    pub fn parse(f: &mut Mp4File) -> Result<Self, &'static str> {
-        let curr_offset = f.offset();
-        let_ok!(size, f.read_u32(), "Unable to read size.");
-
-        let_ok!(b1, f.read_u8(), "Unable to read header byte 1.");
-        let_ok!(b2, f.read_u8(), "Unable to read header byte 2.");
-        let_ok!(b3, f.read_u8(), "Unable to read header byte 3.");
-        let_ok!(b4, f.read_u8(), "Unable to read header byte 4.");
-
-        let kind_bytes: [u8; 4] = [b1, b2, b3, b4];
-
-        let_ok!(
-            kind,
-            Kind::from_bytes(kind_bytes),
-            "Unable to read file kind."
-        );
-
-        let header_size = 8u64;
-        let atom_size = u64::from(size);
-        let data_size = 0u64;
-
-        f.offset_inc(header_size);
-
-        let mut header = Self {
-            size,
-            kind,
-
-            largesize: None,
-            usertype: None,
-            version: None,
-            flags: None,
-
-            atom_size,           // atom size , include header and data.
-            header_size,         // atom header size, not include data size.
-            data_size,           // atom data size , not include header size.
-            offset: curr_offset, // file offset.
-        };
-
-        match size.cmp(&1u32) {
-            Ordering::Equal => header.parse_largesize(f),
-            Ordering::Greater => header.data_size = atom_size - header_size,
-            Ordering::Less => return Err("Cannot parse this mp4 file."),
-        }
-
-        Ok(header)
-    }
-
-    /// Parses the largesize part of the MP4 file
-    ///
-    /// # Arguments
-    ///
-    /// `f: &mut Mp4File` -- The file to be parsed.
-    ///
-    /// # Returns
-    ///
-    /// Nothing.
-    ///
-    /// # Errors
-    ///
-    /// None.
-    ///
-    /// # Panics
-    ///
-    /// If `self.size != 1`. If unable to read the `largesize`;
-    ///
-    /// # Examples
-    ///
-    ///
-    ///
-    pub fn parse_largesize(&mut self, f: &mut Mp4File) {
-        assert_eq!(self.size, 1u32);
-
-        let largesize = f.read_u64().expect("Unable to read largesize.");
-        self.atom_size = largesize;
-        self.header_size += 8;
-        self.data_size = largesize - self.header_size;
-
-        self.largesize = Some(largesize);
-        f.offset_inc(8);
-    }
-
-    /// Parses the usertype part of the MP4 file
-    ///
-    /// # Arguments
-    ///
-    /// `f: &mut Mp4File` -- A mutable MP4 file that will be traversed.
-    ///
-    /// # Returns
-    ///
-    /// Nothing.
-    ///
-    /// # Errors
-    ///
-    /// None.
-    ///
-    /// # Panics
-    ///
-    /// None.
-    ///
-    pub fn parse_usertype(&mut self, f: &mut Mp4File) {
-        let usertype: [u8; 16] = [
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-        ];
-
-        self.usertype = Some(usertype);
-        self.header_size += 16;
-        self.data_size = self.atom_size - self.header_size;
-
-        let _offset = f.offset_inc(16);
-    }
-
-    /// Parses the version information from the file.
-    pub fn parse_version(&mut self, f: &mut Mp4File) {
-        let version = f.read_u8().expect("Unable to read version information.");
-        self.version = Some(version);
-
-        self.header_size += 1;
-        self.data_size = self.atom_size - self.header_size;
-        let _offset = f.offset_inc(1);
-    }
-
-    /// Parses the flags from the file.
-    pub fn parse_flags(&mut self, f: &mut Mp4File) {
-        let flags: [u8; 3] = [
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-            f.read_u8().unwrap_or_default(),
-        ];
-        self.flags = Some(flags);
-
-        self.header_size += 3;
-        self.data_size = self.atom_size - self.header_size;
-        let _offset = f.offset_inc(3);
-    }
-}
-
+/// An atom is a container for data in an MP4 file.
 #[derive(Debug, Clone)]
 pub enum Atom {
     Ftyp(Ftyp),
@@ -486,6 +316,24 @@ impl Atom {
         }
     }
 
+    /// Parse the children of an atom.
+    /// This will parse all of the children of the atom, until the end of the file.
+    ///
+    /// # Arguments
+    ///
+    /// `f: &mut Mp4File` -- The file to be parsed.
+    ///
+    /// # Returns
+    ///
+    /// A vector of `Atom`s that are the children of the atom.
+    ///
+    /// # Errors
+    ///
+    /// None.
+    ///
+    /// # Panics
+    ///
+    /// None.
     pub fn parse_children(f: &mut Mp4File) -> Vec<Self> {
         let mut atoms: Vec<Self> = Vec::new();
         loop {
@@ -498,7 +346,7 @@ impl Atom {
                     atoms.push(atom);
                 }
                 Err(e) => {
-                    eprintln!("[ERROR] ATOM parse error ({e:?})");
+                    log::trace!("Atom::parse_children - parse error: ({e:?}), file: {f:?}");
                     break;
                 }
             }

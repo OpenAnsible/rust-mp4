@@ -1,6 +1,6 @@
 # Rust MP4 Codec Implementation -- My Fork
 
-A Rust implementation of the MPEG-4 (MP4) container format. My fork cleans up some of the code (work in progress) and adds functionality to make data acccess easier.
+A Rust implementation of the MPEG-4 (MP4) container format. My fork cleans up some of the code (work in progress) and adds functionality to make data acccess easier. Note that this crate only contains the metadata information, and not the actual media.
 
 Much work remains in documenting this and making it more robust.
 

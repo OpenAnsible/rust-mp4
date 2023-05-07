@@ -1,70 +1,61 @@
-use crate::{let_ok, retref, retval};
+//! Media Engine Container Object (`Meco`) atom and its children.
 
 use super::{Atom, Header, Mp4File};
-/*
-meco
-    mere
-*/
+use crate::retref;
 
+/// Media Engine Container Object (`Meco`) atom.
+///
+/// The additional metadata container box includes one or more meta boxes.
+/// It can be carried at the top level of the file,
+/// in the Movie Box (`Moov`), or in the Track Box (`Trak`) and shall
+/// only be present if it is accompanied by a meta box in the same container.
+/// A meta box that is not contained in the additional metadata container box
+/// is the preferred (primary) meta box. Meta boxes in the additional metadata
+/// container box complement or give alternative metadata information.
+/// The usage of multiple meta boxes may be desirable when,
+/// e.g., a single handler is not capable of processing all metadata.
+/// All meta boxes at a certain level, including the preferred one and those
+/// contained in the additional metadata container box, must have different handler types.
+///
+/// A meta box contained in an additional metadata container box shall contain a primary
+/// Item box or the primary data box required by the handler (e.g., an XML Box).
+/// It shall not include boxes or syntax elements concerning items other
+/// than the primary item indicated by the present primary item box or XML box.
+/// URLs in a meta box contained in an additional metadata container box
+/// are relative to the context of the preferred meta box.
+///
+/// - Box Type: `Meco`
+/// - Container: File, Movie Box (`Moov`), or Track Box (`Trak`)
+/// - Mandatory: No
+/// - Quantity: Zero or one
 #[derive(Debug, Clone)]
 pub struct Meco {
+    /// Header of the `Meco` atom.
     header: Header,
+
+    /// Children of the `Meco` atom; zero or more `Mere` atoms.
     children: Vec<Atom>,
 }
 
 impl Meco {
+    /// Parses the `Meco` atom, returning `Self`.
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - `Mp4File` to read from.
+    /// * `header` - `Header` of the `Meco` atom.
+    ///
+    /// # Returns
+    ///
+    /// * `Self` - The parsed `Meco` atom.
     pub fn parse(f: &mut Mp4File, header: Header) -> Self {
         let children: Vec<Atom> = Atom::parse_children(f);
+
+        log::trace!("Meco::parse() -- children = {children:?}");
+
         Self { header, children }
     }
 
     retref!(header, Header);
     retref!(children, Vec<Atom>);
-}
-
-#[derive(Debug, Clone)]
-pub struct Mere {
-    header: Header,
-    first_metabox_handler_type: u32,
-    second_metabox_handler_type: u32,
-    metabox_relation: u8,
-}
-
-impl Mere {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
-        header.parse_version(f);
-        header.parse_flags(f);
-
-        let_ok!(
-            first_metabox_handler_type,
-            f.read_u32(),
-            "Unable to determine first metabox handler type."
-        );
-
-        let_ok!(
-            second_metabox_handler_type,
-            f.read_u32(),
-            "Unable to determine second metabox handler type."
-        );
-
-        let_ok!(
-            metabox_relation,
-            f.read_u8(),
-            "Unable to determine metabox relation."
-        );
-
-        let _offset = f.offset_inc(header.data_size);
-
-        Ok(Self {
-            header,
-            first_metabox_handler_type,
-            second_metabox_handler_type,
-            metabox_relation,
-        })
-    }
-
-    retref!(header, Header);
-    retval!(first_metabox_handler_type, u32);
-    retval!(second_metabox_handler_type, u32);
-    retval!(metabox_relation, u8);
 }
