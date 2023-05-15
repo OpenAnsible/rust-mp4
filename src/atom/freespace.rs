@@ -11,7 +11,8 @@
 //!
 //! -- ISO/IEC 14496-12:2015 § 8.1.2
 
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::retref;
 
 /// Creates a generic function for parsing a 'free space' atom (i.e., `Skip` or `Free`).

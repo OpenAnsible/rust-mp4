@@ -1,7 +1,8 @@
 //! Mehd atom definition and parsing.
 
-use super::Header;
-use crate::{let_ok, let_some, mp4file::Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
+use crate::{let_ok, let_some};
 
 /// The Movie Extends Header is optional, and provides the overall duration, including fragments, of a fragmented movie.
 /// If this box is not present, the overall duration must be computed by examining each fragment.

@@ -1,4 +1,7 @@
-use super::{Header, Mp4File};
+//!
+
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::{let_ok, retref, retval};
 
 /// Pdin atom (Progressive Download Information) as defined in ISO/IEC 14496-12:2015 § 8.7.4.

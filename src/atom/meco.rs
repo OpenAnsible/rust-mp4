@@ -1,7 +1,9 @@
 //! Media Engine Container Object (`Meco`) atom and its children.
 
-use super::{Atom, Header, Mp4File};
-use crate::retref;
+use crate::atom::atom::Atom;
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
+use crate::{generic_parse_children, retref};
 
 /// Media Engine Container Object (`Meco`) atom.
 ///
@@ -38,24 +40,7 @@ pub struct Meco {
 }
 
 impl Meco {
-    /// Parses the `Meco` atom, returning `Self`.
-    ///
-    /// # Arguments
-    ///
-    /// * `f` - `Mp4File` to read from.
-    /// * `header` - `Header` of the `Meco` atom.
-    ///
-    /// # Returns
-    ///
-    /// * `Self` - The parsed `Meco` atom.
-    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
-        let children: Vec<Atom> = Atom::parse_children(f);
-
-        log::trace!("Meco::parse() -- children = {children:?}");
-
-        Self { header, children }
-    }
-
+    generic_parse_children!(Meco);
     retref!(header, Header);
     retref!(children, Vec<Atom>);
 }

@@ -1,15 +1,22 @@
 //! Track Fragment Header atom definition
 
 use super::sample::Sample;
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::{let_ok, let_some, retref, retval};
 
 #[derive(Debug, Clone)]
 pub struct Tfhd {
+    /// The atom header
     header: Header,
+
+    /// Track ID
     track_id: u32,
     // all the following are optional fields
+    /// Base data offset
     base_data_offset: Option<u64>,
+
+    /// Sample
     sample: Sample,
 }
 

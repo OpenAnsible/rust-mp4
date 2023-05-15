@@ -1,6 +1,7 @@
 //! Metabox Relation (`Mere`) atom.
 
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::{let_ok, retref, retval};
 
 /// The metabox relation box indicates a relation between two meta boxes at the same level,

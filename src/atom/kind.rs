@@ -9,7 +9,7 @@ use crate::let_ok;
 /// Represents the different types of atoms that can be in an MP4 file.
 /// This is used to determine which atom to parse.
 #[allow(clippy::doc_markdown)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Kind {
     Bxml,
     Co64,
@@ -80,6 +80,7 @@ pub enum Kind {
     Trak,
     Tref,
     Trex,
+    Trgr,
     Trun,
     Tsel,
     Udta,
@@ -175,6 +176,7 @@ impl FromStr for Kind {
             "traf" => Ok(Self::Traf),
             "trak" => Ok(Self::Trak),
             "tref" => Ok(Self::Tref),
+            "trgr" => Ok(Self::Trgr),
             "trex" => Ok(Self::Trex),
             "trun" => Ok(Self::Trun),
             "tsel" => Ok(Self::Tsel),
@@ -264,6 +266,7 @@ impl std::fmt::Display for Kind {
             Self::Trak => "Trak",
             Self::Tref => "Tref",
             Self::Trex => "Trex",
+            Self::Trgr => "Trgr",
             Self::Trun => "Trun",
             Self::Tsel => "Tsel",
             Self::Udta => "Udta",

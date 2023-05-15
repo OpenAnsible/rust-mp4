@@ -1,12 +1,78 @@
-//! Defines the header type for atoms.
-
+//! Defines the header type for atoms. This header type collects standard information about the atom.
+//!
+//! It mirrors the `Box` class as defined in the ISO/IEC 14496-12 standard (see § 4.2). It is a full atom, so it has a version and flags.
+//!
+//! Boxes start with a header which gives both size and type. The header permits compact or extended size
+//! (32 or 64 bits) and compact or extended types (32 bits or full Universal Unique IDentifiers, i.e. UUIDs).
+//! The standard boxes all use compact types (32‐bit) and most boxes will use the compact (32‐bit) size.
+//! Typically only the Media Data Box(es) need the 64‐bit size.
+//!
+//! The size is the entire size of the box, including the size and type header, fields, and all contained boxes.
+//! This facilitates general parsing of the file.
+//!
+//! The definitions of boxes are given in the syntax description language (SDL) defined in MPEG‐4 (see
+//! reference in Clause 2). Comments in the code fragments in this specification indicate informative
+//! material.
+//!
+//! The fields in the objects are stored with the most significant byte first, commonly known as network
+//! byte order or big‐endian format. When fields smaller than a byte are defined, or fields span a byte
+//! boundary, the bits are assigned from the most significant bits in each byte to the least significant. For
+//! example, a field of two bits followed by a field of six bits has the two bits in the high order bits of the
+//! byte.
+//!
+//! ```sdl
+//! aligned(8) class Box (unsigned int(32) boxtype,
+//!      optional unsigned int(8)[16] extended_type) {
+//!   unsigned int(32) size;
+//!   unsigned int(32) type = boxtype;
+//!
+//!   if (size==1) {
+//!      unsigned int(64) largesize;
+//!   } else if (size==0) {
+//!      // box extends to end of file
+//!   }
+//!
+//!   if (boxtype==‘uuid’) {
+//!      unsigned int(8)[16] usertype = extended_type;
+//!   }
+//! }
+//! ```
+//!
+//! The semantics of these two fields are:
+//!
+//! - `size` is an integer that specifies the number of bytes in this box, including all its fields and
+//! contained boxes; if size is 1 then the actual size is in the field largesize; if size is 0, then this
+//! box is the last one in the file, and its contents extend to the end of the file (normally only used
+//! for a Media Data Box)
+//! - `type` identifies the box type; standard boxes use a compact type, which is normally four printable
+//! characters, to permit ease of identification, and is shown so in the boxes below. User extensions
+//! use an extended type; in this case, the type field is set to ‘uuid’.
+//!
+//! Boxes with an unrecognized type shall be ignored and skipped.
+//!
+//! Many objects also contain a version number and flags field:
+//!
+//! ```sdl
+//! aligned(8) class FullBox(unsigned int(32) boxtype, unsigned int(8) v, bit(24) f)
+//!     extends Box(boxtype) {
+//!   unsigned int(8) version = v;
+//!   bit(24)         flags = f;
+//! }
+//! ```
+//!
+//! The semantics of these two fields are:
+//!
+//! - `version` is an integer that specifies the version of this format of the box.
+//! - `flags` is a map of flags
+//!
+//! Boxes with an unrecognized version shall be ignored and skipped
 use std::cmp::Ordering;
 
 use super::kind::Kind;
-use crate::let_ok;
 use crate::mp4file::Mp4File;
+use crate::{let_ok, retref, retval};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Header {
     /// The size in bytes of the atom, including the header and the data.
     pub size: u32,
@@ -18,7 +84,7 @@ pub struct Header {
     /// The size in bytes of the atom, including the header and the data.
     pub largesize: Option<u64>,
 
-    /// The user type of the atom. This is used for custom atoms. Example: `uuid`.
+    /// The user type of the atom. This is used for custom atoms, specifically [uuid](crate::atom::uuid))
     pub usertype: Option<[u8; 16]>, // 128 Bits
 
     /// The version of the atom. This is used to determine how to parse the atom. Example: `0`, which is the default.
@@ -208,5 +274,40 @@ impl Header {
         self.header_size += 3;
         self.data_size = self.atom_size - self.header_size;
         let _offset = f.offset_inc(3);
+    }
+
+    /// Returns a new, empty `Header` struct by calling `Header::default()`.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    retval!(size, u32);
+    retref!(kind, Kind);
+    retval!(largesize, Option<u64>);
+    retval!(usertype, Option<[u8; 16]>);
+    retval!(version, Option<u8>);
+    retval!(flags, Option<[u8; 3]>);
+    retval!(atom_size, u64);
+    retval!(header_size, u64);
+    retval!(data_size, u64);
+    retval!(offset, u64);
+}
+
+impl std::default::Default for Header {
+    /// Returns a new, empty `Header` struct.
+    fn default() -> Self {
+        Self {
+            size: 0,
+            kind: Kind::Skip,
+            largesize: None,
+            usertype: None,
+            version: None,
+            flags: None,
+            atom_size: 0,
+            header_size: 0,
+            data_size: 0,
+            offset: 0,
+        }
     }
 }

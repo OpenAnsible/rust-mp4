@@ -1,7 +1,9 @@
 //! Media Fragment Random Access (`Mfra`) atom.
 
-use super::{Atom, Header, Mp4File};
-use crate::retref;
+use crate::atom::atom::Atom;
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
+use crate::{generic_parse_children, retref};
 
 /// Represents a Media Fragment Random Access (`Mfra`) atom in an MP4 file.
 /// This atom is used to store information about the location of media fragments in the file.
@@ -27,8 +29,6 @@ use crate::retref;
 /// - Container: File
 /// - Mandatory: No
 /// - Quantity: Zero or one
-///
-///
 #[derive(Debug, Clone)]
 pub struct Mfra {
     /// Header of the `Mfra` atom.
@@ -39,23 +39,7 @@ pub struct Mfra {
 }
 
 impl Mfra {
-    /// Parses the `Mfra` atom, returning `Self`. In practice, this function just parses the children of the atom.
-    ///
-    /// # Arguments
-    ///
-    /// * `f` - `Mp4File` to read from.
-    /// * `header` - `Header` of the `Mfra` atom.
-    ///
-    /// # Returns
-    ///
-    /// * `Self` - The parsed `Mfra` atom.
-    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
-        let children: Vec<Atom> = Atom::parse_children(f);
-
-        log::trace!("Mfro::parse() -- header = {header:?}, children = {children:?}");
-
-        Self { header, children }
-    }
+    generic_parse_children!(Mfra);
 
     retref!(header, Header);
     retref!(children, Vec<Atom>);

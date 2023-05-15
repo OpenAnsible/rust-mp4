@@ -1,4 +1,0 @@
-mp4 v0.2.0 (/Users/evensolberg/Documents/Source/Rust/_crates/rust-mp4)
-├── byteorder v1.4.3
-└── log v0.4.17
-    └── cfg-if v1.0.0

@@ -1,6 +1,7 @@
 //! Describes the Track Fragment Random Access Box (`Tfra`).
 
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::{let_ok, retref, retval};
 
 /// The `Tfra` box contains a table that allows random access to the tracks in a file.

@@ -1,6 +1,7 @@
 //! Defines the `Mfro` atom and its parsing logic.
 
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::{let_ok, retref, retval};
 
 /// `Mfro` is a movie fragment random access offset atom. It is used to specify the offset between

@@ -12,7 +12,8 @@ use std::str;
 use std::str::FromStr;
 use std::string::ToString;
 
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::{let_ok, retref, retval};
 
 /// The FileType enum represents the file type of the MP4 file. This is the
@@ -42,7 +43,7 @@ use crate::{let_ok, retref, retval};
 /// | `MMP4`      | 3GPP/GSM | `.3gp`           | video/3gpp     | H.264  |
 ///
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileType {
     // ISO
     AVC1,
@@ -295,7 +296,7 @@ impl Ftyp {
     }
 
     retref!(header, Header);
-    retref!(major_brand, FileType);
+    retval!(major_brand, FileType);
     retval!(minor_version, u32);
     retref!(compatible_brands, Vec<FileType>);
 }

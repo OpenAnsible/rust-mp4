@@ -3,7 +3,8 @@
 //! This is identical to the `Skip` and `Free` atoms for all intents and purposes.
 //! The `Free` and `Skip` atoms are defined in the spec (ISO/IEC 14496-12:2015 § 8.1.2),
 //! but the `Ignore` atom is not.
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::{let_ok, retref};
 
 /// Ignore is a free space atom that is used to skip over data that is not needed, similar to `Free` and `Skip`.

@@ -1,6 +1,7 @@
 //! Contains descriptive or annotative metadata.
 
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::retref;
 
 /// `Meta` contains descriptive or annotative metadata. It is used to provide information about

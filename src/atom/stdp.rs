@@ -1,6 +1,8 @@
 //!
 
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
+use crate::{generic_parse, retref};
 
 #[derive(Debug, Clone)]
 pub struct Stdp {
@@ -8,14 +10,6 @@ pub struct Stdp {
 }
 
 impl Stdp {
-    pub fn parse(f: &mut Mp4File, mut header: Header) -> Self {
-        header.parse_version(f);
-        header.parse_flags(f);
-
-        let curr_offset = f.offset();
-        let _seek_res = f.seek(curr_offset + header.data_size);
-        let _offset = f.offset_inc(header.data_size);
-
-        Self { header }
-    }
+    generic_parse!(Stdp);
+    retref!(header, Header);
 }

@@ -1,6 +1,7 @@
-//! Contains the `Xml` atom, which is used to store XML data.
+//! XML (`Xml`) stores XML data. Ref. [Bxml](crate::atom::bxml).
 
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::{let_ok, retref};
 
 #[derive(Debug, Clone)]
@@ -10,6 +11,23 @@ pub struct Xml {
 }
 
 impl Xml {
+    /// Parse an `Xml` atom from the file. This will read the data from the file and store it in a
+    /// `String`, which is a UTF-8 string. It is up to the user to interpret the data from there.
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - The file to read from.
+    /// * `header` - The header of the atom.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<Self, &'static str>` - The parsed atom with the data stored in a `String`.
+    ///
+    /// # Errors
+    ///
+    /// - `Err` - If the file cannot be seeked.
+    /// - `Err` - If the data cannot be read from the file.
+    /// - `Err` - If the data cannot be parsed from utf8.
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);
         header.parse_flags(f);

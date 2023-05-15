@@ -1,7 +1,8 @@
 //! Track Fragment Run Box `Trun` atom definition
 
 use super::sample::Sample;
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::{let_ok, let_some, retref, retval};
 
 /// Track Fragment Run Box `Trun` atom definition
@@ -9,7 +10,7 @@ use crate::{let_ok, let_some, retref, retval};
 /// ISO/IEC 14496-12:2015 § 8.8.8
 ///
 /// Within the Track Fragment Box, there are zero or more Track Run Boxes.
-/// If the duration‐is‐empty flag is set in the tf_flags, there are no track runs.
+/// If the duration‐is‐empty flag is set in the `tf_flags`, there are no track runs.
 /// A track run documents a contiguous set of samples for a track.
 ///
 /// The number of optional fields is determined from the number of bits set in the
@@ -29,8 +30,8 @@ use crate::{let_ok, let_some, retref, retval};
 /// | `0x000004` | first‐sample‐flags‐present; this over‐rides the default flags for the first sample only. This makes it possible to record a group of frames where the first is a key and the rest are difference frames, without supplying explicit flags for every sample. If this flag and field are used, sample‐ flags shall not be present. |
 /// | `0x000100` | sample‐duration‐present: indicates that each sample has its own duration, otherwise the default is used.|
 /// | `0x000200` | sample‐size‐present: each sample has its own size, otherwise the default is used.|
-/// | `0x000400` |  sample‐flags‐present; each sample has its own flags, otherwise the default is used.|
-/// | `0x000800` |  sample‐composition‐time‐offsets‐present; each sample has a composition time offset (e.g. as used for I/P/B video in MPEG).
+/// | `0x000400` | sample‐flags‐present; each sample has its own flags, otherwise the default is used.|
+/// | `0x000800` | sample‐composition‐time‐offsets‐present; each sample has a composition time offset (e.g. as used for I/P/B video in MPEG).
 ///
 /// The composition offset values in the composition time‐to‐sample box and in the track run box may be signed or unsigned.
 /// The recommendations given in the composition time‐to‐sample box concerning the use of signed composition offsets also apply here.
@@ -59,9 +60,28 @@ pub struct Trun {
     samples: Vec<Sample>,
 }
 
+/// Implements relevant functionality for the `Trun` atom.
 impl Trun {
-    /// Parses the `Trun` atom, returning `Self`. This will read the data from the file and store it in a
+    /// Parses the `Trun` atom, returning `Self`.
     ///
+    /// # Arguments
+    ///
+    /// - `f` - `Mp4File` to read from.
+    /// - `header` - `Header` of the `Trun` atom.
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Self, &'static str>` - The parsed `Trun` atom.
+    ///
+    /// # Errors
+    ///
+    /// - `Err` - If the sample count cannot be read from the file.
+    /// - `Err` - If the data offset cannot be read from the file.
+    /// - `Err` - If the first sample flags cannot be read from the file.
+    /// - `Err` - If the sample duration cannot be read from the file.
+    /// - `Err` - If the sample flags cannot be read from the file.
+    /// - `Err` - If the sample composition time offset cannot be read from the file.
+    /// - `Err` - If there are no header flags.
     #[allow(clippy::cast_possible_wrap)]
     pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
         header.parse_version(f);

@@ -1,7 +1,13 @@
 //! Defines the top-level `Mp4File` struct, which represents the MP4 file.
+//!
+//! Files are formed as a series of objects, called boxes in this specification. All data is contained in boxes;
+//! there is no other data within the file. This includes any initial signature required by the specific file format.
+//! All object‐structured files conformant to this section of this specification (all Object‐Structured files)
+//! shall contain a File Type Box.
 
+use crate::atom::atom;
 use crate::matrix::Matrix;
-use crate::{atom, let_ok, retref, retval};
+use crate::{let_ok, retref, retval};
 
 use byteorder::{BigEndian, ReadBytesExt};
 use std::fs;
@@ -516,14 +522,4 @@ pub fn parse_file(filename: &str) -> Result<Mp4File, &'static str> {
     mp4.parse();
 
     Ok(mp4)
-}
-
-/// Converts the timestamp from the epoch used in the MPEG4 specification (seconds since 1904-01-01 00:00:00)
-/// to the UNIX epoch time (seconds since 1970-01-01 00:00:00).
-///
-/// This is done by subtracting 2,082,844,800 seconds from the given time to return the new time
-///  as there are 2,082,844,800 seconds from 1904-01-01 00:00:00 to 1970-01-01 00:00:00.
-#[must_use]
-pub const fn mp4time_to_unix_time(time: u64) -> Option<u64> {
-    time.checked_sub(2_082_844_800)
 }

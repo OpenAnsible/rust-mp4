@@ -1,5 +1,9 @@
-use super::{Atom, Header, Mp4File};
-use crate::retref;
+//!
+
+use crate::atom::atom::Atom;
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
+use crate::{generic_parse_children, retref};
 
 #[derive(Debug, Clone)]
 pub struct Moof {
@@ -8,13 +12,7 @@ pub struct Moof {
 }
 
 impl Moof {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
-        let children: Vec<Atom> = Atom::parse_children(f);
-
-        log::trace!("Moof::parse() -- header = {header:?}");
-
-        Self { header, children }
-    }
+    generic_parse_children!(Moof);
 
     retref!(header, Header);
     retref!(children, Vec<Atom>);

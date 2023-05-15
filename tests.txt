@@ -1,2 +1,0 @@
-mp4::test:
-    tests::it_works

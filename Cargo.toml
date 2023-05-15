@@ -1,6 +1,6 @@
 [package]
 name = "mp4"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Luo <gnulinux@126.com>", "Even Solberg (even.solberg@gmail.com)"]
 
@@ -10,4 +10,5 @@ path = "src/lib.rs"
 
 [dependencies]
 byteorder = "1.4.3"
+chrono = { version = "0.4.24", features = ["serde"] }
 log = "0.4.17"

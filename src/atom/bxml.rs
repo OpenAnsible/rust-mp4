@@ -1,11 +1,22 @@
-//! Contains the `Bxml` atom, which is used to store binary XML data.
+//! Binary XML (`Bxml`) stores binary XML data. Ref. [Xml](crate::atom::xml).
+//!
+//! When the primary data is in XML format and it is desired that the XML be stored
+//! directly in the meta‐ box, one of these forms may be used.
+//! The Binary XML Box may only be used when there is a single well‐defined
+//! binarization of the XML for that defined format as identified by the handler.
+//!
+//! This box is defined in ISO/IEC 14496-12:2015 § 8.11.2.
+//!
+//! - BoxType: `xml` or `bxml`
+//! - Container: Meta box ([Meta](crate::atom::meta::Meta))
+//! - Mandatory: No
+//! - Quantity: Zero or one
 
-use super::{Header, Mp4File};
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
 use crate::{let_ok, retref};
 
 /// `Bxml` is used to store binary XML data. This is used in the `Meta` atom.
-///
-/// This box is defined in ISO/IEC 14496-12:2012 § 8.11.2.
 ///
 /// When the primary data is in XML format and it is desired that the XML be stored directly in the meta-box,
 /// one of these forms may be used. The Binary XML Box may only be used when there is a single
@@ -22,10 +33,10 @@ use crate::{let_ok, retref};
 /// - Quantity: Zero or one
 #[derive(Debug, Clone)]
 pub struct Bxml {
-    /// Header of the `Bxml` atom.
+    /// Header of the `Bxml` atom. `version = 0.0`
     header: Header,
 
-    /// The binary XML data.
+    /// The binary XML data. This is stored as a `Vec<u8>`; it is up to the user to interpret the data.
     data: Vec<u8>,
 }
 

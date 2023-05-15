@@ -150,3 +150,98 @@ macro_rules! retref {
         }
     };
 }
+
+/// Creates a generic `parse` function for elements that have children.
+///
+/// This ensures that the function stays the same for all the atoms that have children,
+/// and where the actual, needed parsing hasn't been implemented yet.
+#[macro_export]
+macro_rules! generic_parse_children {
+    ($id:ident) => {
+        /// Parse an atom from the file. This will skip over the data in the file. This is a generic function for now.
+        ///
+        /// # Arguments
+        ///
+        /// * `f` - The file to read from.
+        /// * `header` - The header of the atom.
+        ///
+        /// # Returns
+        ///
+        /// * `Self` - The parsed atom, which in this case basically means we move the offset ahead.
+        pub fn parse(f: &mut Mp4File, header: Header) -> Self {
+            let children: Vec<Atom> = Atom::parse_children(f);
+            log::trace!("$id::parse() -- children = {children:?}");
+            Self { header, children }
+        }
+    };
+}
+
+/// Creates a generic `parse` function for elements that have no children.
+///
+/// This ensures that the function stays the same for all the atoms that have no children,
+/// and where the actual, needed parsing hasn't been implemented yet.
+#[macro_export]
+macro_rules! generic_parse {
+    ($id:ident) => {
+        /// Parse an atom from the file. This will skip over the data in the file. This is a generic function for now.
+        ///
+        /// # Arguments
+        ///
+        /// * `f` - The file to read from.
+        /// * `header` - The header of the atom.
+        ///
+        /// # Returns
+        ///
+        /// * `Result<Self, &'static str>` - The parsed atom, which in this case basically means we move the offset ahead.
+        ///
+        /// # Errors
+        ///
+        /// * `Unable to seek file.` - If the file cannot be seeked.
+        pub fn parse(f: &mut Mp4File, mut header: Header) -> Result<Self, &'static str> {
+            header.parse_version(f);
+            header.parse_flags(f);
+
+            let curr_offset = f.offset();
+            $crate::let_ok!(
+                _offset,
+                f.seek(curr_offset + header.data_size),
+                "Unable to seek file."
+            );
+            f.offset_inc(header.data_size);
+            log::trace!("$id::parse() -- header = {header:?}");
+
+            Ok(Self { header })
+        }
+    };
+}
+
+/// Reads a versioned integer. If the version is 0, it reads an `i32`. If the version is 1, it reads an `i64`.
+///
+/// # Arguments
+///
+/// - `$var:ident` -- The name of the variable to store the value in.
+/// - `$f:ident` -- The file to read from.
+/// - `$header:ident` -- The header of the atom.
+#[macro_export]
+macro_rules! read_version_int {
+    ($var:ident, $f:ident, $header:ident) => {
+        let $var = if $header.version == Some(0) {
+            $f.read_i32().unwrap_or_default() as i64
+        } else {
+            $f.read_i64().unwrap_or_default()
+        };
+    };
+}
+
+/// Returns a vector with the indicated type, and the indicated number of elements.
+#[macro_export]
+macro_rules! vec_with_type {
+    ($t:ty, $mp4:expr) => {
+        let mut v = Vec<$t>::new();
+        for atom in $mp4.atoms() {
+            if let Atom::$t(a) = atom {
+                v.push(a.clone());
+            }
+        }
+    };
+}
