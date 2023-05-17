@@ -7,8 +7,11 @@ use std::str;
 // These are all used in the Atom enum below.
 use super::bxml::Bxml;
 use super::co64::Co64;
+use super::cprt::Cprt;
 use super::cslg::Cslg;
 use super::ctts::Ctts;
+use super::dinf::Dinf;
+use super::dref::Dref;
 use super::freespace::{Free, Skip};
 use super::ftyp::Ftyp;
 use super::hdlr::Hdlr;
@@ -56,8 +59,11 @@ use super::tref::Tref;
 use super::trex::Trex;
 use super::trgr::Trgr;
 use super::trun::Trun;
+use super::tsel::Tsel;
 use super::udta::Udta;
 use super::unrecognized::Unrecognized;
+use super::url::Url;
+use super::urn::Urn;
 use super::uuid::Uuid;
 use super::vmhd::Vmhd;
 use super::xml::Xml;
@@ -128,10 +134,18 @@ pub enum Atom {
 
     // Udta
     Udta(Udta),
+    Cprt(Cprt),
+    Tsel(Tsel),
 
     // Meco
     Meco(Meco),
     Mere(Mere),
+
+    // Minf
+    Dinf(Dinf),
+    Dref(Dref),
+    Url(Url),
+    Urn(Urn),
 
     Ignore(Ignore),
     Unrecognized(Unrecognized),
@@ -186,19 +200,23 @@ impl Atom {
             Kind::Cslg => Ok(Self::Cslg(
                 Cslg::parse(f, header).expect("Unable to parse Kind::Cslg"),
             )),
-            // Kind::cprt => ,
+            Kind::Cprt => Ok(Self::Cprt(
+                Cprt::parse(f, header).expect("Unable to parse Kind::Cprt"),
+            )),
             Kind::Ctts => Ok(Self::Ctts(
                 Ctts::parse(f, header).expect("Unable to parse Kind::Ctts"),
             )),
-            // Kind::dinf => ,
-            // Kind::dref => ,
-            // Kind::edts => ,
-            // Kind::elst => ,
-            // Kind::fecr => ,
-            // Kind::fiin => ,
-            // Kind::fpar => ,
+            Kind::Dinf => Ok(Self::Dinf(Dinf::parse(f, header))),
+            Kind::Dref => Ok(Self::Dref(
+                Dref::parse(f, header).expect("Unable to parse Kind::Dref"),
+            )),
+            // Kind::Edts => ,
+            // Kind::Elst => ,
+            // Kind::Fecr => ,
+            // Kind::Fiin => ,
+            // Kind::Fpar => ,
             Kind::Free => Ok(Self::Free(Free::parse(f, header))),
-            // Kind::frma => ,
+            // Kind::Frma => ,
             Kind::Ftyp => Ok(Self::Ftyp(
                 Ftyp::parse(f, header).expect("Unable to parse Kind::Ftyp"),
             )),
@@ -208,12 +226,12 @@ impl Atom {
             Kind::Hmhd => Ok(Self::Hmhd(
                 Hmhd::parse(f, header).expect("Unable to parse Kind::Hmhd"),
             )),
-            // Kind::iinf => ,
-            // Kind::iloc => ,
-            // Kind::imif => ,
-            // Kind::ipmc => ,
-            // Kind::ipro => ,
-            // Kind::itn  => ,
+            // Kind::Iinf => ,
+            // Kind::Iloc => ,
+            // Kind::Imif => ,
+            // Kind::Ipmc => ,
+            // Kind::Ipro => ,
+            // Kind::Itn  => ,
             Kind::Mdat => Ok(Self::Mdat(
                 Mdat::parse(f, header).expect("Unable to parse Kind::Mdat"),
             )),
@@ -249,21 +267,21 @@ impl Atom {
             Kind::Padb => Ok(Self::Padb(
                 Padb::parse(f, header).expect("Unable to parse Kind::Padb"),
             )),
-            // Kind::paen => ,
+            // Kind::Paen => ,
             Kind::Pdin => Ok(Self::Pdin(
                 Pdin::parse(f, header).expect("Unable to parse Kind::Pdin"),
             )),
-            // Kind::pitm => ,
+            // Kind::Pitm => ,
             Kind::Sbgp => Ok(Self::Sbgp(
                 Sbgp::parse(f, header).expect("Unable to parse Kind::Sbgp"),
             )),
-            // Kind::schi => ,
-            // Kind::schm => ,
+            // Kind::Schi => ,
+            // Kind::Schm => ,
             Kind::Sdtp => Ok(Self::Sdtp(
                 Sdtp::parse(f, header).expect("Unable to parse Kind::Sdtp"),
             )),
-            // Kind::sgpd => ,
-            // Kind::sinf => ,
+            // Kind::Sgpd => ,
+            // Kind::Sinf => ,
             Kind::Skip => Ok(Self::Skip(Skip::parse(f, header))),
             Kind::Smhd => Ok(Self::Smhd(
                 Smhd::parse(f, header).expect("Unable to parse Kind::Smhd"),
@@ -296,7 +314,7 @@ impl Atom {
             Kind::Stz2 => Ok(Self::Stz2(
                 Stz2::parse(f, header).expect("Unable to parse Kind::Stz2"),
             )),
-            // Kind::subs => ,
+            // Kind::Subs => ,
             Kind::Tfhd => Ok(Self::Tfhd(
                 Tfhd::parse(f, header).expect("Unable to parse Kind::Tfhd"),
             )),
@@ -320,7 +338,9 @@ impl Atom {
             Kind::Trun => Ok(Self::Trun(
                 Trun::parse(f, header).expect("Unable to parse Kind::Trun"),
             )),
-            // Kind::tsel => ,
+            Kind::Tsel => Ok(Self::Tsel(
+                Tsel::parse(f, header).expect("Unable to parse Kind::Tsel"),
+            )),
             Kind::Udta => Ok(Self::Udta(Udta::parse(f, header))),
             Kind::Uuid => Ok(Self::Uuid(
                 Uuid::parse(f, header).expect("Unable to parse Kind::Uuid"),
@@ -331,9 +351,15 @@ impl Atom {
             Kind::Xml => Ok(Self::Xml(
                 Xml::parse(f, header).expect("Unable to parse Kind::Xml"),
             )),
-            // Kind::strk => ,
-            // Kind::stri => ,
-            // Kind::strd =>
+            // Kind::Strk => ,
+            // Kind::Stri => ,
+            // Kind::Strd => ,
+            Kind::Url => Ok(Self::Url(
+                Url::parse(f, header).expect("Unable to parse Kind::Url"),
+            )),
+            Kind::Urn => Ok(Self::Urn(
+                Urn::parse(f, header).expect("Unable to parse Kind::Urn"),
+            )),
             Kind::Unrecognized(_) => Ok(Self::Unrecognized(
                 Unrecognized::parse(f, header).expect("Unable to parse Kind::Unrecognized"),
             )),

@@ -28,11 +28,14 @@ pub const fn mp4time_to_unix_time(time: u64) -> Option<u64> {
 }
 
 /// Returns the duration of the presentation in seconds.
+#[must_use]
 pub fn duration_secs(duration: f64, timescale: f64) -> f64 {
     duration / timescale
 }
 
 /// Returns the duration in seconds as an actual duration.
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
 pub fn duration_seconds(duration: f64, timescale: f64) -> chrono::Duration {
     chrono::Duration::seconds(duration_secs(duration, timescale) as i64)
 }

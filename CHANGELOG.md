@@ -15,6 +15,10 @@ All notable changes to this project will be documented in this file.
 
 - README update
 
+### Feat
+
+- Add types, refactor code
+
 ### Refactor
 
 - Fix all warnings

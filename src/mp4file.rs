@@ -404,6 +404,18 @@ impl Mp4File {
         Ok(result)
     }
 
+    /// Reads a zero-terminated string from the file.
+    pub fn read_string(&mut self) -> Result<String, Error> {
+        let mut s = String::new();
+        let mut byte = self.read_u8().unwrap_or(0);
+        while byte != 0 {
+            s.push(byte as char);
+            byte = self.read_u8().unwrap_or(0);
+        }
+
+        Ok(s)
+    }
+
     /// Reads a matrix
     ///
     /// # Arguments

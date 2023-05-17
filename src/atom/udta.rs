@@ -1,4 +1,4 @@
-//! User Data Box (`Udta)
+//! User Data Box (`Udta`)
 //!
 //! - Box Type:  `Udta`
 //! - Container: Movie Box (‘moov’), Track Box (‘trak’), Movie Fragment Box ([Moof](crate::atom::moof::Moof)) or Track Fragment Box ([Traf](crate::atom::traf::Traf))
