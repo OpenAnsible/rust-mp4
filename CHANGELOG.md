@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 ### Feat
 
 - Add types, refactor code
+- Added support for Dref and associated boxes
 
 ### Refactor
 

@@ -1,13 +1,37 @@
-//!
+//! Handler Reference Atom
 
 use crate::atom::header::Header;
 use crate::mp4file::Mp4File;
 use crate::{let_ok, retref};
 
+/// This box within a Media Box declares media type of the track, and thus the process by which the media‐
+/// data in the track is presented. For example, a format for which the decoder delivers video would be
+/// stored in a video track, identified by being handled by a video handler. The documentation of the
+/// storage of a media format identifies the media type which that format uses.
+///
+/// This box when present within a Meta Box, declares the structure or format of the ’meta’ box contents.
+///
+/// There is a general handler for metadata streams of any type; the specific format is identified by the
+/// sample entry, as for video or audio, for example.
+///
+/// Box Type:  ‘hdlr’
+/// Container: Media Box (‘mdia’) or Meta Box (‘meta’)
+/// Mandatory: Yes
+/// Quantity:  Exactly one
 #[derive(Debug, Clone)]
 pub struct Hdlr {
+    /// The header of the atom.
     pub header: Header,
+
+    /// - When present in a media box, contains a value as defined in clause 12, or a value from a derived
+    /// specification, or registration.
+    /// - When present in a meta box, contains an appropriate value to indicate the format of the meta
+    /// box contents. The value ‘null’ can be used in the primary meta box to indicate that it is
+    /// merely being used to hold resources.
     pub handler_type: String,
+
+    /// A null‐terminated string in UTF‐8 characters which gives a human‐readable name for the
+    /// track type (for debugging and inspection purposes).
     pub name: String,
 }
 
@@ -19,38 +43,17 @@ impl Hdlr {
         // Not used - so we just throw it away. Should always be 0.
         let _pre_defined = f.read_u32().unwrap_or(0);
 
-        // Handler type
-        let_ok!(b1, f.read_u8(), "Unable to read handler type byte 1");
-        let_ok!(b2, f.read_u8(), "Unable to read handler type byte 2");
-        let_ok!(b3, f.read_u8(), "Unable to read handler type byte 3");
-        let_ok!(b4, f.read_u8(), "Unable to read handler type byte 4");
-        let handler_type_bytes: [u8; 4] = [b1, b2, b3, b4];
-
-        let_ok!(
-            handler_type,
-            String::from_utf8(handler_type_bytes.to_vec()),
-            "Unable to get the handler type string from bytes."
-        );
+        // Read the handler type.
+        let mut handler_type = String::new();
+        for _ in 0..4 {
+            let_ok!(b, f.read_u8(), "Unable to read handler type byte.");
+            handler_type.push(b as char);
+        }
 
         // Reserved - not used - so we just throw it away. Should always be 0.
         for _ in 0..3 {
             let _reserved = f.read_u32().unwrap_or(0);
         }
-
-        // Name
-        // let name_length = header.data_size - 20;
-        // let mut name_bytes = Vec::with_capacity(name_length as usize);
-
-        // for _ in 0..name_length {
-        //     let_ok!(byte, f.read_u8(), "Unable to read name bytes");
-        //     name_bytes.push(byte);
-        // }
-
-        // let_ok!(
-        //     name,
-        //     String::from_utf8(name_bytes),
-        //     "Unable to convert bytes to name."
-        // );
 
         let_ok!(name, f.read_string(), "Unable to read name.");
 

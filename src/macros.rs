@@ -151,6 +151,17 @@ macro_rules! retref {
     };
 }
 
+/// Creates a function that returns a boolean indicating whether a specified flag is set
+#[macro_export]
+macro_rules! flag {
+    ($flag:ident, $val:expr) => {
+        /// Returns `true` if the indicated flag is set.
+        pub fn $flag(&self) -> bool {
+            self.header().flags_to_u32() & $val == $val
+        }
+    };
+}
+
 /// Creates a generic `parse` function for elements that have children.
 ///
 /// This ensures that the function stays the same for all the atoms that have children,

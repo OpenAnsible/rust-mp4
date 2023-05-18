@@ -132,10 +132,10 @@ impl Header {
         let curr_offset = f.offset();
         let_ok!(size, f.read_u32(), "Unable to read size.");
 
-        let_ok!(b1, f.read_u8(), "Unable to read header byte 1.");
-        let_ok!(b2, f.read_u8(), "Unable to read header byte 2.");
-        let_ok!(b3, f.read_u8(), "Unable to read header byte 3.");
-        let_ok!(b4, f.read_u8(), "Unable to read header byte 4.");
+        let_ok!(b1, f.read_u8(), "Unable to read box type (kind) byte 1.");
+        let_ok!(b2, f.read_u8(), "Unable to read box type (kind) byte 2.");
+        let_ok!(b3, f.read_u8(), "Unable to read box type (kind) byte 3.");
+        let_ok!(b4, f.read_u8(), "Unable to read box type (kind) byte 4.");
 
         let kind_bytes: [u8; 4] = [b1, b2, b3, b4];
 
@@ -292,6 +292,19 @@ impl Header {
     retval!(header_size, u64);
     retval!(data_size, u64);
     retval!(offset, u64);
+
+    /// Converts the header flags to a u32 which can be used to check flags against certain values.
+    /// See [Tkhd](crate::atom::tkhd) for examples of how this is used.
+    pub fn flags_to_u32(&self) -> u32 {
+        let flags: [u8; 3] = self.flags.unwrap_or_default();
+        let mut res: [u8; 4] = [0, 0, 0, 0];
+
+        for i in 0..3 {
+            res[i + 1] = flags[i];
+        }
+
+        u32::from_be_bytes(res)
+    }
 }
 
 impl std::default::Default for Header {

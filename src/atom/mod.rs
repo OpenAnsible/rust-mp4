@@ -9,6 +9,8 @@ pub mod cslg;
 pub mod ctts;
 pub mod dinf;
 pub mod dref;
+pub mod edts;
+pub mod elst;
 pub mod entry;
 pub mod freespace;
 pub mod ftyp;

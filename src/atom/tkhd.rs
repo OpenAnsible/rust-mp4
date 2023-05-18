@@ -21,7 +21,7 @@ use crate::atom::header::Header;
 use crate::matrix::Matrix;
 use crate::mp4file::Mp4File;
 use crate::utils::time_to_utc;
-use crate::{let_ok, retref, retval};
+use crate::{flag, let_ok, retref, retval};
 
 /// Represents the Tkhd atom, which contains the track header information, as per ISO/IEC 14496-12:2015 § 8.3.2.
 /// This atom is required to be present in a valid MP4 file. It is a full atom, so it has a version and flags.
@@ -65,7 +65,7 @@ pub struct Tkhd {
     duration: u64,
 
     /// Not currently used. Should always be 0.
-    reserved2: u32,
+    reserved2: [u32; 2],
 
     /// Specifies the front‐to‐back ordering of video tracks; tracks with lower numbers are closer
     /// to the viewer. 0 is the normal value, and ‐1 would be in front of track 0, and so on.
@@ -85,7 +85,8 @@ pub struct Tkhd {
     /// Header Box volume setting; or more complex audio composition (e.g. MPEG‐4 BIFS) may be used.
     volume: f64, // {if track_is_audio 0x0100 else 0};
 
-    /// Not currently used. Should always be 0.
+    // / Not currently used. Should always be 0.
+    // FIXME - If we implement this field, the width & height fields are all screwed up. If we DON'T, the header size is wrong.
     reserved3: u16,
 
     /// Provides a transformation matrix for the video; (u,v,w) are restricted here to (0,0,1), hex
@@ -127,6 +128,8 @@ impl Tkhd {
 
         if header.version.is_none() {
             return Err("Header version is empty. Unable to continue.");
+        } else {
+            log::debug!("tkhd::version: {}", header.version.unwrap());
         }
 
         let creation_time: u64;
@@ -135,53 +138,61 @@ impl Tkhd {
         let reserved1: u32;
         let duration: u64;
 
-        if header.version.unwrap_or(0) == 0 {
-            let_ok!(ct, f.read_u32(), "Unable to read creation time.");
-            creation_time = u64::from(ct);
-
-            let_ok!(mt, f.read_u32(), "Unable to read modification time.");
-            modification_time = u64::from(mt);
-
-            let_ok!(tid, f.read_u32(), "Unable to read track ID.");
-            track_id = tid;
-
-            let_ok!(r, f.read_u32(), "Unable to read reserved field 1.");
-            reserved1 = r;
-
-            let_ok!(dur, f.read_u32(), "Unable to read duration.");
-            duration = u64::from(dur);
-        } else {
-            // header version == 1
-            let_ok!(ct, f.read_u64(), "Unable to read creation time.");
+        if header.version.unwrap_or(0) == 1 {
+            let_ok!(ct, f.read_u64(), "Unable to read creation time."); // 8 bytes
             creation_time = ct;
 
-            let_ok!(mt, f.read_u64(), "Unable to read modification time.");
+            let_ok!(mt, f.read_u64(), "Unable to read modification time."); // 8 bytes
             modification_time = mt;
 
-            let_ok!(tid, f.read_u32(), "Unable to read track ID.");
+            let_ok!(tid, f.read_u32(), "Unable to read track ID."); // 4 bytes
             track_id = tid;
 
-            let_ok!(r, f.read_u32(), "Unable to read reserved field 1.");
+            let_ok!(r, f.read_u32(), "Unable to read reserved field 1."); // 4 bytes
             reserved1 = r;
 
-            let_ok!(dur, f.read_u64(), "Unable to read duration.");
+            let_ok!(dur, f.read_u64(), "Unable to read duration."); // 8 bytes
             duration = dur;
-        }
+            // 32 bytes
+        } else {
+            // version == 0
+            let_ok!(ct, f.read_u32(), "Unable to read creation time."); // 4 bytes
+            creation_time = u64::from(ct);
 
-        let_ok!(reserved2, f.read_u32(), "Unable to read reserved field 2.");
+            let_ok!(mt, f.read_u32(), "Unable to read modification time."); // 4 bytes
+            modification_time = u64::from(mt);
 
-        let_ok!(layer, f.read_i16(), "Unable to read layer.");
+            let_ok!(tid, f.read_u32(), "Unable to read track ID."); // 4 bytes
+            track_id = tid;
+
+            let_ok!(r, f.read_u32(), "Unable to read reserved field 1."); // 4 bytes
+            reserved1 = r;
+
+            let_ok!(dur, f.read_u32(), "Unable to read duration."); // 4 bytes
+            duration = u64::from(dur);
+        } // 20 bytes
+
+        let_ok!(r21, f.read_u32(), "Unable to read reserved field 2.1"); // 4 bytes (36/24)
+        let_ok!(r22, f.read_u32(), "Unable to read reserved field 2.1"); // 4 bytes (40/28)
+        let reserved2 = [r21, r22]; // Not used - so we just throw it away
+
+        let_ok!(layer, f.read_i16(), "Unable to read layer."); // 2 bytes (42/30)
 
         let_ok!(
             alternate_group,
             f.read_i16(),
             "Unable to read alternate group."
-        );
-        let_ok!(volume, f.read_f64(), "Unable to read volume.");
-        let_ok!(reserved3, f.read_u16(), "Unable to read reserved field 3.");
-        let_ok!(matrix, f.read_matrix(), "Unable to read matrix.");
-        let_ok!(width, f.read_fixed_point(16, 16), "Unable to read width.");
-        let_ok!(height, f.read_fixed_point(16, 16), "Unable to read height.");
+        ); // 2 bytes (44/32)
+
+        let_ok!(volume, f.read_fixed_point(8, 8), "Unable to read volume."); // 8 bytes (46/34)
+
+        let_ok!(reserved3, f.read_u16(), "Unable to read reserved field 3."); // 2 bytes
+
+        let_ok!(matrix, f.read_matrix(), "Unable to read matrix."); // 36 bytes (84/72)
+        let_ok!(width, f.read_fixed_point(16, 16), "Unable to read width."); // 4 bytes (88/76)
+        let_ok!(height, f.read_fixed_point(16, 16), "Unable to read height."); // 4 bytes (92/80)
+
+        // Sum: 80 bytes or 92 bytes, depending on version number (0 or 1)
 
         f.offset_inc(header.data_size);
 
@@ -223,7 +234,7 @@ impl Tkhd {
     retval!(track_id, u32);
     retval!(reserved1, u32);
     retval!(duration, u64);
-    retval!(reserved2, u32);
+    retref!(reserved2, [u32; 2]);
     retval!(layer, i16);
     retval!(alternate_group, i16);
     retval!(volume, f64);
@@ -231,4 +242,32 @@ impl Tkhd {
     retref!(matrix, Matrix);
     retval!(width, f64);
     retval!(height, f64);
+
+    flag!(track_enabled, 0x000001);
+    flag!(track_in_movie, 0x000002);
+    flag!(track_in_preview, 0x000004);
+    flag!(track_size_is_aspect_ratio, 0x000008);
+
+    /// Returns the flags as a string.
+    pub fn flags_str(&self) -> String {
+        let mut flags = String::new();
+
+        if self.track_enabled() {
+            flags.push_str("track_enabled ");
+        }
+
+        if self.track_in_movie() {
+            flags.push_str("track_in_movie ");
+        }
+
+        if self.track_in_preview() {
+            flags.push_str("track_in_preview ");
+        }
+
+        if self.track_size_is_aspect_ratio() {
+            flags.push_str("track_size_is_aspect_ratio ");
+        }
+
+        flags
+    }
 }

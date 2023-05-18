@@ -12,6 +12,8 @@ use super::cslg::Cslg;
 use super::ctts::Ctts;
 use super::dinf::Dinf;
 use super::dref::Dref;
+use super::edts::Edts;
+use super::elst::Elst;
 use super::freespace::{Free, Skip};
 use super::ftyp::Ftyp;
 use super::hdlr::Hdlr;
@@ -96,6 +98,8 @@ pub enum Atom {
     Mehd(Mehd),
     Trex(Trex),
     Trgr(Trgr),
+    Edts(Edts),
+    Elst(Elst),
 
     // STBL
     Stbl(Stbl),
@@ -210,8 +214,10 @@ impl Atom {
             Kind::Dref => Ok(Self::Dref(
                 Dref::parse(f, header).expect("Unable to parse Kind::Dref"),
             )),
-            // Kind::Edts => ,
-            // Kind::Elst => ,
+            Kind::Edts => Ok(Self::Edts(Edts::parse(f, header))),
+            Kind::Elst => Ok(Self::Elst(
+                Elst::parse(f, header).expect("Unable to parse Kind::Elst"),
+            )),
             // Kind::Fecr => ,
             // Kind::Fiin => ,
             // Kind::Fpar => ,
