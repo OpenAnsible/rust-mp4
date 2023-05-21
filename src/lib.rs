@@ -37,5 +37,7 @@ pub use atom::cslg::Cslg;
 pub use atom::ctts::Ctts;
 pub use atom::stts::SttsEntry;
 pub use mp4file::{parse_file, Mp4File};
-pub use utils::{duration_seconds, time_to_utc};
+pub use utils::{
+    duration_seconds, duration_secs, mp4_time_to_datetime_local, mp4time_to_unix_time,
+};
 // pub use version_int::VersionInt;

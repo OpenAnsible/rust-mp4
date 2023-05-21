@@ -1,4 +1,4 @@
-//! Media Engine Container Object (`Meco`) atom and its children.
+//! Media Engine Container Object
 
 use crate::atom::atom::Atom;
 use crate::atom::header::Header;
@@ -33,10 +33,10 @@ use crate::{generic_parse_children, retref};
 #[derive(Debug, Clone)]
 pub struct Meco {
     /// Header of the `Meco` atom.
-    header: Header,
+    pub header: Header,
 
     /// Children of the `Meco` atom; zero or more `Mere` atoms.
-    children: Vec<Atom>,
+    pub children: Vec<Atom>,
 }
 
 impl Meco {

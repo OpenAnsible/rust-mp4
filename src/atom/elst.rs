@@ -2,7 +2,7 @@
 
 use crate::atom::header::Header;
 use crate::mp4file::Mp4File;
-use crate::{let_ok, retref, retval};
+use crate::{let_ok, read_version, retref, retval};
 
 /// This box contains an explicit timeline map. Each entry defines part of the track time‐line: by mapping
 /// part of the media time‐line, or by indicating ‘empty’ time, or by defining a ‘dwell’, where a single time‐
@@ -45,12 +45,13 @@ use crate::{let_ok, retref, retval};
 #[derive(Debug, Clone)]
 pub struct Elst {
     /// The header of the atom.
-    header: Header,
+    pub header: Header,
 
     /// The number of entries in the following table
-    entry_count: u32,
+    pub entry_count: u32,
 
-    entries: Vec<ElstEntry>,
+    /// The entries in the edit list table
+    pub entries: Vec<ElstEntry>,
 }
 
 impl Elst {
@@ -60,44 +61,14 @@ impl Elst {
 
         let entry_count = f.read_u32().unwrap_or(0);
 
-        let mut entries = Vec::new();
-        let mut segment_duration;
-        let mut media_time;
-
+        let mut entries = Vec::with_capacity(entry_count as usize);
         for _ in 0..entry_count {
-            if header.version() == Some(1) {
-                let_ok!(sd, f.read_u64(), "Unable to read segment duration.");
-                segment_duration = sd;
-
-                let_ok!(mt, f.read_i64(), "Unable to read media time.");
-                media_time = mt;
-            } else {
-                // version == 0
-                let_ok!(sd, f.read_u32(), "Unable to read segment duration.");
-                segment_duration = sd as u64;
-
-                let_ok!(mt, f.read_i32(), "Unable to read media time.");
-                media_time = mt as i64;
-            }
-
-            let_ok!(
-                media_rate_integer,
-                f.read_u16(),
-                "Unable to read media rate."
-            );
-            let_ok!(
-                media_rate_fraction,
-                f.read_u16(),
-                "Unable to read media rate."
-            );
-
-            entries.push(ElstEntry {
-                segment_duration,
-                media_time,
-                media_rate_integer,
-                media_rate_fraction,
-            });
+            let entry = ElstEntry::parse(f, &header)?;
+            entries.push(entry);
         }
+
+        // Advance the file offset by the size of the data.
+        f.offset_inc(header.data_size);
 
         Ok(Self {
             header,
@@ -111,26 +82,54 @@ impl Elst {
     retref!(entries, Vec<ElstEntry>);
 }
 
+/// Edit list entry.
+///
+/// The edit list atom contains an explicit timeline map. Each entry defines part of the track time‐line: by mapping
+/// part of the media time‐line, or by indicating ‘empty’ time, or by defining a ‘dwell’, where a single time‐point in
+/// the media is held for a period.
 #[derive(Debug, Clone)]
 pub struct ElstEntry {
     /// The duration of this edit segment in units of the timescale in the Movie Header Box.
     /// If this field is set to 0, it is an empty edit. The last edit in a track shall never be an empty edit.
-    segment_duration: u64,
+    pub segment_duration: u64,
 
     /// The starting time within the media of this edit segment (in media time scale units, in composition time).
     /// If this field is set to –1, it is an empty edit with implicit duration. The last edit in a track shall never be an empty edit.
-    media_time: i64,
+    pub media_time: i64,
 
     /// A time value that indicates the duration of this edit segment (in media time scale units).
     /// If this field is set to 0, it is an empty edit. The last edit in a track shall never be an empty edit.
-    media_rate_integer: u16,
+    pub media_rate_integer: u16,
 
     /// A time value that indicates the duration of this edit segment (in media time scale units).
     /// If this field is set to 0, it is an empty edit. The last edit in a track shall never be an empty edit.
-    media_rate_fraction: u16,
+    pub media_rate_fraction: u16,
 }
 
 impl ElstEntry {
+    fn parse(f: &mut Mp4File, header: &Header) -> Result<Self, &'static str> {
+        read_version!(segment_duration, u64, f.read_u32(), f.read_u64(), header);
+        read_version!(media_time, i64, f.read_i32(), f.read_i64(), header);
+
+        let_ok!(
+            media_rate_integer,
+            f.read_u16(),
+            "Unable to read media rate."
+        );
+        let_ok!(
+            media_rate_fraction,
+            f.read_u16(),
+            "Unable to read media rate."
+        );
+
+        Ok(Self {
+            segment_duration,
+            media_time,
+            media_rate_integer,
+            media_rate_fraction,
+        })
+    }
+
     retval!(segment_duration, u64);
     retval!(media_time, i64);
     retval!(media_rate_integer, u16);

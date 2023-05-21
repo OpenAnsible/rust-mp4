@@ -20,7 +20,7 @@
 use crate::atom::header::Header;
 use crate::matrix::Matrix;
 use crate::mp4file::Mp4File;
-use crate::utils::time_to_utc;
+use crate::utils::mp4_time_to_datetime_local;
 use crate::{flag, let_ok, retref, retval};
 
 /// Represents the Tkhd atom, which contains the track header information, as per ISO/IEC 14496-12:2015 § 8.3.2.
@@ -214,17 +214,17 @@ impl Tkhd {
         })
     }
 
-    /// Returns the creation time as a `chrono::DateTime<chrono::Utc>`.
+    /// Returns the creation time as a `chrono::DateTime<chrono::Local>`.
     #[must_use]
-    pub fn creation_time_utc(&self) -> chrono::DateTime<chrono::Utc> {
-        time_to_utc(self.creation_time)
+    pub fn creation_time_local(&self) -> chrono::DateTime<chrono::Local> {
+        mp4_time_to_datetime_local(self.creation_time)
     }
 
-    /// Returns the modification time as a `chrono::DateTime<chrono::Utc>`.
+    /// Returns the modification time as a `chrono::DateTime<chrono::Local>`.
     /// This is the most recent time the presentation was modified.
     #[must_use]
-    pub fn modification_time_utc(&self) -> chrono::DateTime<chrono::Utc> {
-        time_to_utc(self.modification_time)
+    pub fn modification_time_local(&self) -> chrono::DateTime<chrono::Local> {
+        mp4_time_to_datetime_local(self.modification_time)
     }
 
     // Included for completeness.

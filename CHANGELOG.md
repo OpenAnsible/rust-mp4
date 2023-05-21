@@ -20,6 +20,10 @@ All notable changes to this project will be documented in this file.
 - Add types, refactor code
 - Added support for Dref and associated boxes
 
+### Features
+
+- Added various box types
+
 ### Refactor
 
 - Fix all warnings

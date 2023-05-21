@@ -33,12 +33,12 @@ use crate::{let_ok, retref};
 #[allow(dead_code)]
 pub struct Mdat {
     /// Header of the `Mdat` atom.
-    header: Header,
+    pub header: Header,
 
     /// The actual media data. This is a `Vec` of bytes, and is not parsed. This is the raw data, so
     /// the user is responsible for parsing it into something useful. Right now it is _not_ read,
     /// as this is too time and resource-consuming. But the code is in the parse function if needed.
-    data: Vec<u8>,
+    pub data: Vec<u8>,
 }
 
 impl Mdat {
@@ -76,22 +76,12 @@ impl Mdat {
         f.offset_inc(header.data_size);
         log::trace!("$id::parse() -- header = {header:?}");
 
-        let mut mdat = Self::new();
-
-        mdat.header = header;
-        // mdat.data = data.clone();
-
-        Ok(mdat)
-    }
-
-    /// Creates a new `Mdat` atom.
-    #[must_use]
-    pub fn new() -> Self {
-        Self {
-            header: Header::default(),
+        Ok(Self {
+            header,
             data: Vec::new(),
-        }
+        })
     }
 
     retref!(header, Header);
+    retref!(data, Vec<u8>);
 }

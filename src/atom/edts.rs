@@ -12,19 +12,19 @@ use crate::{generic_parse_children, retref};
 /// time‐lines, and the presentation of a track starts at the beginning of the presentation. An empty edit is
 /// used to offset the start time of a track.
 ///
-/// Box Type:  ‘edts’
-/// Container: Track Box (‘trak’)
-/// Mandatory: No
-/// Quantity:  Zero or one
+/// - Box Type:  ‘edts’
+/// - Container: Track Box (‘trak’)
+/// - Mandatory: No
+/// - Quantity:  Zero or one
 #[derive(Debug, Clone)]
 pub struct Edts {
     /// The header of the atom.
-    header: Header,
+    pub header: Header,
 
     /// A list of atoms contained in this atom. The following atoms may be found within the `Edts` atom:
     ///
     /// - [Elst](crate::atom::elst::Elst)
-    children: Vec<Atom>,
+    pub children: Vec<Atom>,
 }
 
 impl Edts {

@@ -1,4 +1,4 @@
-//! Metabox Relation (`Mere`) atom.
+//! Metabox Relation
 
 use crate::atom::header::Header;
 use crate::mp4file::Mp4File;
@@ -34,19 +34,19 @@ use crate::{let_ok, retref, retval};
 #[derive(Debug, Clone)]
 pub struct Mere {
     /// Header of the `Mere` atom.
-    header: Header,
+    pub header: Header,
 
     /// The first meta box to be related.
-    first_metabox_handler_type: u32,
+    pub first_metabox_handler_type: u32,
 
     /// The second meta box to be related.
-    second_metabox_handler_type: u32,
+    pub second_metabox_handler_type: u32,
 
     /// The relation between the two meta boxes.
-    metabox_relation: u8,
+    pub metabox_relation: u8,
 
     /// The relation between the two meta boxes as an enum. This makes it easier to work with, and less error-prone.
-    metabox_relation_enum: MetaboxRelation,
+    pub metabox_relation_enum: MetaboxRelation,
 }
 
 impl Mere {
@@ -82,10 +82,10 @@ impl Mere {
             "Unable to determine metabox relation."
         );
 
-        let _offset = f.offset_inc(header.data_size);
         let metabox_relation_enum: MetaboxRelation = MetaboxRelation::from(metabox_relation);
 
-        log::trace!("Mere::parse() -- header = {header:?}, first_metabox_handler_type = {first_metabox_handler_type}, second_metabox_handler_type = {second_metabox_handler_type}, metabox_relation = {metabox_relation}, metabox_relation_enum = {}", metabox_relation_enum);
+        // Advance the file offset by the size of the data.
+        let _offset = f.offset_inc(header.data_size);
 
         Ok(Self {
             header,

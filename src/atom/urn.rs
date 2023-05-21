@@ -27,8 +27,16 @@ impl Urn {
 
         let curr_offset = f.offset();
 
-        let_ok!(name, f.read_string(), "Unable to read name.");
-        let_ok!(location, f.read_string(), "Unable to read location.");
+        let_ok!(
+            name,
+            f.read_null_terminated_string(),
+            "Unable to read name."
+        );
+        let_ok!(
+            location,
+            f.read_null_terminated_string(),
+            "Unable to read location."
+        );
 
         let _seek_res = f.seek(curr_offset + header.data_size);
         let _offset = f.offset_inc(header.data_size);

@@ -200,19 +200,19 @@ impl FileType {
 #[derive(Debug, Clone)]
 pub struct Ftyp {
     /// Header of the `Ftyp` atom.
-    header: Header,
+    pub header: Header,
 
     /// The file type. This is the first 4 bytes of the file.
     /// See the `FileType` enum for the possible values.
-    major_brand: FileType,
+    pub major_brand: FileType,
 
     /// The minor version of the file. This is the next 4 bytes of the file.
     /// This is usually 0. If it is not 0, then the file is not compatible with this spec.
-    minor_version: u32,
+    pub minor_version: u32,
 
     /// The compatible brands. This is the rest of the bytes in the file. Each compatible brand
     /// is 4 bytes long. This is a list of all the compatible brands.
-    compatible_brands: Vec<FileType>,
+    pub compatible_brands: Vec<FileType>,
 }
 
 impl Ftyp {

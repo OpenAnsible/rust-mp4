@@ -226,20 +226,32 @@ macro_rules! generic_parse {
     };
 }
 
-/// Reads a versioned integer. If the version is 0, it reads an `i32`. If the version is 1, it reads an `i64`.
+/// Reads a versioned variable. If the version is 0, the _short_ value is used, otherwise the _long_ value is used.
 ///
 /// # Arguments
 ///
-/// - `$var:ident` -- The name of the variable to store the value in.
-/// - `$f:ident` -- The file to read from.
-/// - `$header:ident` -- The header of the atom.
+/// - `$var:ident` -- The name of the variable in which to store the value.
+/// - `$t:ty` -- The type of the variable to be returned, eg. `u64`.
+/// - `$s:expr` -- The function to use to read the short (version == 0) value, eg. `f.read_u32()`.
+/// - `$l:expr` -- The function to use to read the long (version != 0) value, eg. `f.read_u64()`.
+/// - `$header:ident` -- The header of the atom. This is used to get the version information.
+///
+/// **NOTE:** The `$s` and `$l` expressions _must_ return a `Result` or an `Option`.
+/// Also, be mindful of the type into which you are casting, as loss of data or truncation may occur.
+///
+/// # Examples
+///
+/// ```ignore
+/// read_version!(sample_size, u32, f.read_u16(), f.read_u32(), header);
+/// read_version!(offset, i32, f.read_i16(), f.read_u16(), header);
+/// ```
 #[macro_export]
-macro_rules! read_version_int {
-    ($var:ident, $f:ident, $header:ident) => {
+macro_rules! read_version {
+    ($var:ident, $t:ty, $s:expr, $l:expr, $header:ident) => {
         let $var = if $header.version == Some(0) {
-            $f.read_i32().unwrap_or_default() as i64
+            $s.unwrap_or_default() as $t
         } else {
-            $f.read_i64().unwrap_or_default()
+            $l.unwrap_or_default() as $t
         };
     };
 }

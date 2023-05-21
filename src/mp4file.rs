@@ -405,7 +405,7 @@ impl Mp4File {
     }
 
     /// Reads a zero-terminated string from the file.
-    pub fn read_string(&mut self) -> Result<String, Error> {
+    pub fn read_null_terminated_string(&mut self) -> Result<String, Error> {
         let mut s = String::new();
         let mut byte = self.read_u8().unwrap_or(0);
         while byte != 0 {
@@ -498,6 +498,18 @@ impl Mp4File {
         s.push((c1 as u8) as char);
         s.push((c2 as u8) as char);
         s.push((c3 as u8) as char);
+
+        Ok(s)
+    }
+
+    /// Reads a `u32` as a 4-character string.
+    pub fn read_4_char_string(&mut self) -> Result<String, Error> {
+        let mut s = String::new();
+        let n = self.read_u32()?;
+        s.push((n >> 24) as u8 as char);
+        s.push((n >> 16) as u8 as char);
+        s.push((n >> 8) as u8 as char);
+        s.push(n as u8 as char);
 
         Ok(s)
     }

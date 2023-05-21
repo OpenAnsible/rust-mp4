@@ -60,7 +60,7 @@ impl Co64 {
         header.parse_flags(f);
 
         let_ok!(entry_count, f.read_u32(), "Unable to read entry count.");
-        let mut chunks: Vec<u64> = Vec::new();
+        let mut chunks: Vec<u64> = Vec::with_capacity(entry_count as usize);
 
         for _entry in 0..entry_count {
             let_ok!(chunk, f.read_u64(), "Unable to read chunk.");

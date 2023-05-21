@@ -1,20 +1,17 @@
 //! Utility functions that are used across several modules.
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, TimeZone};
 
 /// Converts the timestamp from the epoch used in the MPEG4 specification (seconds since 1904-01-01 00:00:00) to a
 /// `DateTime` object.
 #[allow(clippy::cast_possible_wrap)]
 #[must_use]
-pub fn time_to_utc(time: u64) -> DateTime<Utc> {
-    chrono::DateTime::<chrono::Utc>::from_utc(
-        chrono::NaiveDateTime::from_timestamp_opt(
-            mp4time_to_unix_time(time).unwrap_or_default() as i64,
-            0,
-        )
-        .unwrap_or_default(),
-        chrono::Utc,
-    )
+pub fn mp4_time_to_datetime_local(time: u64) -> DateTime<Local> {
+    let offset_in_sec = Local::now().offset().local_minus_utc() as i64;
+    let unix_time = mp4time_to_unix_time(time).unwrap_or_default() as i64;
+
+    // Return the converted value
+    Local.timestamp_opt(unix_time - offset_in_sec, 0).unwrap()
 }
 
 /// Converts the timestamp from the epoch used in the MPEG4 specification (seconds since 1904-01-01 00:00:00)

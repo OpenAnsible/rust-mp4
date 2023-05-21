@@ -1,4 +1,4 @@
-//! Media Box (`Mdia`) atom and its children.
+//! Media Box
 
 use crate::atom::atom::Atom;
 use crate::atom::header::Header;
@@ -7,12 +7,12 @@ use crate::{generic_parse_children, retref};
 
 /// Media Box (`Mdia`) atom.
 ///
+/// The media declaration container contains all the objects that declare information about the media data within a track.
+///
 /// - Box Type:  `mdia`
 /// - Container: Track Box ([Trak](crate::atom::trak::Trak)))
 /// - Mandatory: Yes
 /// - Quantity:  Exactly one
-///
-/// The media declaration container contains all the objects that declare information about the media data within a track.
 #[derive(Debug, Clone)]
 pub struct Mdia {
     /// The header of the atom.

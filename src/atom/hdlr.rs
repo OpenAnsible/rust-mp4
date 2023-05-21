@@ -55,7 +55,11 @@ impl Hdlr {
             let _reserved = f.read_u32().unwrap_or(0);
         }
 
-        let_ok!(name, f.read_string(), "Unable to read name.");
+        let_ok!(
+            name,
+            f.read_null_terminated_string(),
+            "Unable to read name."
+        );
 
         // Move the file offset by the size of the data.
         f.offset_inc(header.data_size);

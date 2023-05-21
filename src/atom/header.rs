@@ -249,6 +249,7 @@ impl Header {
         self.header_size += 16;
         self.data_size = self.atom_size - self.header_size;
 
+        // Advance the file offset by 16 bytes.
         let _offset = f.offset_inc(16);
     }
 
@@ -259,6 +260,7 @@ impl Header {
 
         self.header_size += 1;
         self.data_size = self.atom_size - self.header_size;
+
         let _offset = f.offset_inc(1);
     }
 
@@ -273,6 +275,7 @@ impl Header {
 
         self.header_size += 3;
         self.data_size = self.atom_size - self.header_size;
+
         let _offset = f.offset_inc(3);
     }
 

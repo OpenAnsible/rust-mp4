@@ -13,46 +13,18 @@
 
 use crate::atom::header::Header;
 use crate::mp4file::Mp4File;
-use crate::retref;
-
-/// Creates a generic function for parsing a 'free space' atom (i.e., `Skip` or `Free`).
-/// This is a macro because it is used by both `Skip` and `Free` in exactly the same way.
-///
-/// # Arguments
-///
-/// * `$id` - The name of the struct that is being parsed. This is only used in the log message.
-macro_rules! parse {
-    ($id:ident) => {
-        /// Parse an atom from the file. This will skip over the data in the file.
-        ///
-        /// # Arguments
-        ///
-        /// * `f` - The file to read from.
-        /// * `header` - The header of the atom.
-        ///
-        /// # Returns
-        ///
-        /// * `Self` - The parsed atom, which in this case basically means we move the offset ahead.
-        pub fn parse(f: &mut Mp4File, header: Header) -> Self {
-            let curr_offset = f.offset();
-            let _throwaway = f.seek(curr_offset + header.data_size);
-            let _offset = f.offset_inc(header.data_size);
-            log::trace!("$id::parse() -- header = {header:?}");
-            Self { header }
-        }
-    };
-}
+use crate::{generic_parse, retref};
 
 /// `Skip` is a free space atom that is used to skip over data that is not needed.
 /// It is identical to the `Free` atom for all intents and purposes.
 #[derive(Debug, Clone)]
 pub struct Skip {
     /// The header of the atom.
-    header: Header,
+    pub header: Header,
 }
 
 impl Skip {
-    parse!(Skip);
+    generic_parse!(Skip);
     retref!(header, Header);
 }
 
@@ -61,10 +33,10 @@ impl Skip {
 #[derive(Debug, Clone)]
 pub struct Free {
     /// The header of the atom.
-    header: Header,
+    pub header: Header,
 }
 
 impl Free {
-    parse!(Free);
+    generic_parse!(Free);
     retref!(header, Header);
 }

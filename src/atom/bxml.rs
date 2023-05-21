@@ -34,10 +34,10 @@ use crate::{let_ok, retref};
 #[derive(Debug, Clone)]
 pub struct Bxml {
     /// Header of the `Bxml` atom. `version = 0.0`
-    header: Header,
+    pub header: Header,
 
     /// The binary XML data. This is stored as a `Vec<u8>`; it is up to the user to interpret the data.
-    data: Vec<u8>,
+    pub data: Vec<u8>,
 }
 
 impl Bxml {
@@ -61,19 +61,19 @@ impl Bxml {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let mut data: Vec<u8> = Vec::new();
+        let mut data: Vec<u8> = Vec::with_capacity(header.data_size() as usize);
         for _ in 0..header.data_size {
             let_ok!(byte, f.read_u8(), "Unable to read byte.");
             data.push(byte);
         }
 
+        // Advance the file offset by the size of the data.
         f.offset_inc(header.data_size);
-
-        log::trace!("Bxml::parse() -- header = {header:?}, data = {data:?}");
 
         Ok(Self { header, data })
     }
 
+    // Provided for consistency with other atoms.
     retref!(header, Header);
     retref!(data, Vec<u8>);
 }

@@ -14,12 +14,21 @@ use super::dinf::Dinf;
 use super::dref::Dref;
 use super::edts::Edts;
 use super::elst::Elst;
+use super::fdel::Fdel;
+use super::fecr::Fecr;
+use super::fiin::Fiin;
+use super::fpar::Fpar;
 use super::freespace::{Free, Skip};
+use super::frma::Frma;
 use super::ftyp::Ftyp;
 use super::hdlr::Hdlr;
 use super::header::Header;
 use super::hmhd::Hmhd;
 use super::ignore::Ignore;
+use super::iinf::Iinf;
+use super::iloc::Iloc;
+use super::infe::Infe;
+use super::ipro::Ipro;
 use super::kind::Kind;
 use super::mdat::Mdat;
 use super::mdhd::Mdhd;
@@ -39,8 +48,12 @@ use super::mvhd::Mvhd;
 use super::nmhd::Nmhd;
 use super::padb::Padb;
 use super::pdin::Pdin;
+use super::pitm::Pitm;
 use super::sbgp::Sbgp;
+use super::schi::Schi;
+use super::schm::Schm;
 use super::sdtp::Sdtp;
+use super::sinf::Sinf;
 use super::smhd::Smhd;
 use super::stbl::Stbl;
 use super::stco::Stco;
@@ -73,91 +86,87 @@ use super::xml::Xml;
 /// An atom is a container for data in an MP4 file.
 #[derive(Debug, Clone)]
 pub enum Atom {
-    Ftyp(Ftyp),
+    Bxml(Bxml), // Meta
+    Co64(Co64), // Stbl
+    Cprt(Cprt), // Udta
+    Cslg(Cslg), // Stbl
+    Ctts(Ctts), // Stbl
+    Dinf(Dinf), // Minf
+    Dref(Dref), // Minf
+    Edts(Edts), // Moov
+    Elst(Elst), // Moov
+    Fdel(Fdel), // Iinf
+    Fecr(Fecr), // Fiin
+    Fiin(Fiin), // Iinf
+    Fpar(Fpar), // Meta
     Free(Free),
-    Skip(Skip),
-    Mdat(Mdat),
-    Pdin(Pdin),
-    Uuid(Uuid),
-
-    // MOOV
-    Moov(Moov),
-    Mvhd(Mvhd),
-    Trak(Trak),
-    Tkhd(Tkhd),
-    Tref(Tref),
-    Mdia(Mdia),
-    Mdhd(Mdhd),
-    Hdlr(Hdlr),
-    Minf(Minf),
-    Vmhd(Vmhd),
-    Smhd(Smhd),
-    Hmhd(Hmhd),
-    Mmhd(Nmhd),
-    Mvex(Mvex),
-    Mehd(Mehd),
-    Trex(Trex),
-    Trgr(Trgr),
-    Edts(Edts),
-    Elst(Elst),
-
-    // STBL
-    Stbl(Stbl),
-    Stsc(Stsc),
-    Stsz(Stsz),
-    Stz2(Stz2),
-    Stco(Stco),
-    Co64(Co64),
-    Stsd(Stsd),
-    Stdp(Stdp),
-    Stts(Stts),
-    Ctts(Ctts),
-    Cslg(Cslg),
-    Sbgp(Sbgp),
-    Stss(Stss),
-    Stsh(Stsh),
-    Sdtp(Sdtp),
-    Padb(Padb),
-
-    // MOOF
-    Moof(Moof),
-    Mfhd(Mfhd),
-    Traf(Traf),
-    Tfhd(Tfhd),
-    Trun(Trun),
-
-    // MFRA
-    Mfra(Mfra),
-    Tfra(Tfra),
-    Mfro(Mfro),
-
-    // Meta
-    Meta(Meta),
-    Xml(Xml),
-    Bxml(Bxml),
-
-    // Udta
-    Udta(Udta),
-    Cprt(Cprt),
-    Tsel(Tsel),
-
-    // Meco
-    Meco(Meco),
-    Mere(Mere),
-
-    // Minf
-    Dinf(Dinf),
-    Dref(Dref),
-    Url(Url),
-    Urn(Urn),
-
+    Frma(Frma), // Sinf, Rinf, Cinf
+    Ftyp(Ftyp),
+    Hdlr(Hdlr), // Moov
+    Hmhd(Hmhd), // Moov
     Ignore(Ignore),
+    Iinf(Iinf), // Meta
+    Iloc(Iloc), // Meta
+    Infe(Infe), // Meta
+    Ipro(Ipro), // Meta
+    Mdat(Mdat),
+    Mdhd(Mdhd), // Moov
+    Mdia(Mdia), // Moov
+    Meco(Meco), // Meco
+    Mehd(Mehd), // Moov
+    Mere(Mere), // Meco
+    Meta(Meta), // Meta
+    Mfhd(Mfhd), // Moof
+    Mfra(Mfra), // Mfra
+    Mfro(Mfro), // Mfra
+    Minf(Minf), // Moov
+    Mmhd(Nmhd), // Moov
+    Moof(Moof), // Moof
+    Moov(Moov), // Moov
+    Mvex(Mvex), // Moov
+    Mvhd(Mvhd), // Moov
+    Padb(Padb), // Stbl
+    Pdin(Pdin),
+    Pitm(Pitm), // Meta
+    Sbgp(Sbgp), // Stbl
+    Schi(Schi), // Meta
+    Schm(Schm), // Meta
+    Sdtp(Sdtp), // Stbl
+    Sinf(Sinf), // Meta
+    Skip(Skip),
+    Smhd(Smhd), // Moov
+    Stbl(Stbl), // Stbl
+    Stco(Stco), // Stbl
+    Stdp(Stdp), // Stbl
+    Stsc(Stsc), // Stbl
+    Stsd(Stsd), // Stbl
+    Stsh(Stsh), // Stbl
+    Stss(Stss), // Stbl
+    Stsz(Stsz), // Stbl
+    Stts(Stts), // Stbl
+    Stz2(Stz2), // Stbl
+    Tfhd(Tfhd), // Moof
+    Tfra(Tfra), // Mfra
+    Tkhd(Tkhd), // Moov
+    Traf(Traf), // Moof
+    Trak(Trak), // Moov
+    Tref(Tref), // Moov
+    Trex(Trex), // Moov
+    Trgr(Trgr), // Moov
+    Trun(Trun), // Moof
+    Tsel(Tsel), // Udta
+    Udta(Udta), // Udta
     Unrecognized(Unrecognized),
+    Url(Url), // Minf
+    Urn(Urn), // Minf
+    Uuid(Uuid),
+    Vmhd(Vmhd), // Moov
+    Xml(Xml),   // Meta
 }
 
 impl Atom {
     #[allow(dead_code)]
-    fn parse_kind(f: &mut Mp4File) -> Result<Kind, &'static str> {
+    pub fn parse_kind(f: &mut Mp4File) -> Result<Kind, &'static str> {
         let kind_bytes: [u8; 4] = [
             f.read_u8().unwrap_or_default(),
             f.read_u8().unwrap_or_default(),
@@ -218,11 +227,24 @@ impl Atom {
             Kind::Elst => Ok(Self::Elst(
                 Elst::parse(f, header).expect("Unable to parse Kind::Elst"),
             )),
-            // Kind::Fecr => ,
-            // Kind::Fiin => ,
-            // Kind::Fpar => ,
-            Kind::Free => Ok(Self::Free(Free::parse(f, header))),
-            // Kind::Frma => ,
+            Kind::Fdel => Ok(Self::Fdel(
+                Fdel::parse(f, header).expect("Unable to parse Kind::Fdel"),
+            )),
+            Kind::Fecr => Ok(Self::Fecr(
+                Fecr::parse(f, header).expect("Unable to parse Kind::Fecr"),
+            )),
+            Kind::Fiin => Ok(Self::Fiin(
+                Fiin::parse(f, header).expect("Unable to parse Kind::Fiin"),
+            )),
+            Kind::Fpar => Ok(Self::Fpar(
+                Fpar::parse(f, header).expect("Unable to parse Kind::Fpar"),
+            )),
+            Kind::Free => Ok(Self::Free(
+                Free::parse(f, header).expect("Unable to parse Kind::Free"),
+            )),
+            Kind::Frma => Ok(Self::Frma(
+                Frma::parse(f, header).expect("Unable to parse Kind::Frma"),
+            )),
             Kind::Ftyp => Ok(Self::Ftyp(
                 Ftyp::parse(f, header).expect("Unable to parse Kind::Ftyp"),
             )),
@@ -232,11 +254,17 @@ impl Atom {
             Kind::Hmhd => Ok(Self::Hmhd(
                 Hmhd::parse(f, header).expect("Unable to parse Kind::Hmhd"),
             )),
-            // Kind::Iinf => ,
-            // Kind::Iloc => ,
+            Kind::Iinf => Ok(Self::Iinf(
+                Iinf::parse(f, header).expect("Unable to parse Kind::Iinf"),
+            )),
+            Kind::Iloc => Ok(Self::Iloc(
+                Iloc::parse(f, header).expect("Unable to parse Kind::Iloc"),
+            )),
             // Kind::Imif => ,
             // Kind::Ipmc => ,
-            // Kind::Ipro => ,
+            Kind::Ipro => Ok(Self::Ipro(
+                Ipro::parse(f, header).expect("Unable to parse Kind::Ipro"),
+            )),
             // Kind::Itn  => ,
             Kind::Mdat => Ok(Self::Mdat(
                 Mdat::parse(f, header).expect("Unable to parse Kind::Mdat"),
@@ -277,18 +305,24 @@ impl Atom {
             Kind::Pdin => Ok(Self::Pdin(
                 Pdin::parse(f, header).expect("Unable to parse Kind::Pdin"),
             )),
-            // Kind::Pitm => ,
+            Kind::Pitm => Ok(Self::Pitm(
+                Pitm::parse(f, header).expect("Unable to parse Kind::Pitm"),
+            )),
             Kind::Sbgp => Ok(Self::Sbgp(
                 Sbgp::parse(f, header).expect("Unable to parse Kind::Sbgp"),
             )),
-            // Kind::Schi => ,
-            // Kind::Schm => ,
+            Kind::Schi => Ok(Self::Schi(Schi::parse(f, header))),
+            Kind::Schm => Ok(Self::Schm(
+                Schm::parse(f, header).expect("Unable to parse Kind::Schm"),
+            )),
             Kind::Sdtp => Ok(Self::Sdtp(
                 Sdtp::parse(f, header).expect("Unable to parse Kind::Sdtp"),
             )),
             // Kind::Sgpd => ,
-            // Kind::Sinf => ,
-            Kind::Skip => Ok(Self::Skip(Skip::parse(f, header))),
+            Kind::Sinf => Ok(Self::Sinf(Sinf::parse(f, header))),
+            Kind::Skip => Ok(Self::Skip(
+                Skip::parse(f, header).expect("Unable to parse Kind::Skip"),
+            )),
             Kind::Smhd => Ok(Self::Smhd(
                 Smhd::parse(f, header).expect("Unable to parse Kind::Smhd"),
             )),

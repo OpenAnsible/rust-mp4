@@ -69,8 +69,6 @@ alias tp := testp
 @release: format changelog
     cargo lbuild --release  --color 'always'
     -cp {{invocation_directory()}}/target/release/my_application /usr/local/bin/
-    -cp {{invocation_directory()}}/target/release/id3show /usr/local/bin/
-    -{{invocation_directory()}}/target/release/id3cli-gen
     echo "Moving Fig and man files."
     -mv {{invocation_directory()}}/my_application.1 /usr/local/share/man/man1/
     -mv {{invocation_directory()}}/my_application.js ~/.fig/autocomplete/
@@ -81,12 +79,15 @@ alias tp := testp
     cargo lbuild --release  --color 'always' --target aarch64-apple-darwin
     cargo strip --target aarch64-apple-darwin
     cp {{invocation_directory()}}/target/aarch64-apple-darwin/release/my_application /usr/local/bin/
-    cp {{invocation_directory()}}/target/aarch64-apple-darwin/release/id3show /usr/local/bin/
     cargo clean
 
 # Build the documentation
 @doc:
     cargo doc --no-deps
+
+# Build the documentation, then open it in the browser
+@doco:
+    cargo doc --no-deps --open
 
 # Documents the project
 @docs: format
