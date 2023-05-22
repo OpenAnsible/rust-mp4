@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 
 - Add types, refactor code
 - Added support for Dref and associated boxes
+- Add molto atoms
 
 ### Features
 

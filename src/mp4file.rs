@@ -115,7 +115,7 @@ impl Mp4File {
     // TODO: This should return a Result.
     pub fn parse(&mut self) {
         if !self.parsed {
-            self.atoms = atom::Atom::parse_children(self);
+            self.atoms = atom::Atom::parse_children(self).unwrap_or_default();
             self.parsed = true;
         }
     }

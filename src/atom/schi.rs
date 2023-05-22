@@ -38,13 +38,13 @@ impl Schi {
     /// # Returns
     ///
     /// * `Self` - The parsed atom, which in this case basically means we move the offset ahead.
-    pub fn parse(f: &mut Mp4File, header: Header) -> Self {
-        let scheme_specific_data: Vec<Atom> = Atom::parse_children(f);
+    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+        let scheme_specific_data: Vec<Atom> = Atom::parse_children(f).unwrap_or_default();
         log::trace!("Schi::parse() -- scheme_specific_data = {scheme_specific_data:?}");
-        Self {
+        Ok(Self {
             header,
             scheme_specific_data,
-        }
+        })
     }
 
     retref!(header, Header);

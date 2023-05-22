@@ -65,7 +65,6 @@ impl Gitn {
     retref!(group_entries, Vec<GroupEntry>);
 }
 
-
 #[derive(Debug, Clone)]
 pub struct GroupEntry {
     /// The file group ID

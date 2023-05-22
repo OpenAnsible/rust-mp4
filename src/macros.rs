@@ -179,10 +179,11 @@ macro_rules! generic_parse_children {
         /// # Returns
         ///
         /// * `Self` - The parsed atom, which in this case basically means we move the offset ahead.
-        pub fn parse(f: &mut Mp4File, header: Header) -> Self {
-            let children: Vec<Atom> = Atom::parse_children(f);
+        pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str> {
+            let children: Vec<Atom> = Atom::parse_children(f).unwrap_or_default();
             log::trace!("$id::parse() -- children = {children:?}");
-            Self { header, children }
+
+            Ok(Self { header, children })
         }
     };
 }
