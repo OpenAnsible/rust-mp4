@@ -1,0 +1,102 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'mp4'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=mp4"
+                ],
+                "filter": {
+                    "name": "mp4",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'parse'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=parse",
+                    "--package=mp4"
+                ],
+                "filter": {
+                    "name": "parse",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'parse'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=parse",
+                    "--package=mp4"
+                ],
+                "filter": {
+                    "name": "parse",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'test'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=test",
+                    "--package=mp4"
+                ],
+                "filter": {
+                    "name": "test",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'bench'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=bench",
+                    "--package=mp4"
+                ],
+                "filter": {
+                    "name": "bench",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

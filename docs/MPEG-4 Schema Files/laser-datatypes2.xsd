@@ -1,0 +1,1032 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns:typ="urn:mpeg:mpeg4:LASeR:types:2005"
+        targetNamespace="urn:mpeg:mpeg4:LASeR:types:2005"
+        elementFormDefault="qualified">
+
+    <annotation>
+        <documentation>
+            These are the datatypes used in the schemas of 14496-20/AMD1
+        </documentation>
+    </annotation>
+
+    <simpleType name="AttributeNameType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="AttributeNameListType">
+        <list itemType="typ:AttributeNameType"/>
+    </simpleType>
+
+    <simpleType name="paintType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="colorType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="fontFamilyType">
+        <union memberTypes="typ:fontFaceType">
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="inherit"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="attrExtensionType">
+        <restriction base="string"/>
+        <!-- the codec for type extensions -->
+    </simpleType>
+
+    <simpleType name="typeCodecType">
+        <restriction base="string"/>
+        <!-- the pseudo type for complex type codecs -->
+    </simpleType>
+
+    <simpleType name="colorExType">
+        <restriction base="typ:attrExtensionType"/>
+    </simpleType>
+
+    <simpleType name="color">
+        <restriction base="typ:typeCodecType"/>
+    </simpleType>
+
+    <simpleType name="ZeroToOneFloat">
+        <restriction base="float">
+            <minInclusive value="0"/>
+            <maxInclusive value="1"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="opacityType">
+        <restriction base="typ:ZeroToOneFloat"/>
+    </simpleType>
+
+    <simpleType name="audioLevelType">
+        <restriction base="typ:ZeroToOneFloat"/>
+    </simpleType>
+
+    <simpleType name="offsetType">
+        <restriction base="typ:ZeroToOneFloat"/>
+    </simpleType>
+
+    <simpleType name="fontFaceType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="fontStyleType">
+        <restriction base="string">
+            <enumeration value="normal"/>
+            <enumeration value="italic"/>
+            <enumeration value="oblique"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="textDecorationType">
+        <restriction base="string">
+            <enumeration value="none"/>
+            <enumeration value="underline"/>
+            <enumeration value="inherit"/>
+            <enumeration value="LASeR_OUTLINE"/>
+            <enumeration value="LASeR_EMBOSS"/>
+            <enumeration value="LASeR_ENGRAVE"/>
+            <enumeration value="LASeR_LEFTDROPSHADOW"/>
+            <enumeration value="LASeR_RIGHTDROPSHADOW"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="calcModeType">
+        <restriction base="string">
+            <enumeration value="discrete"/>
+            <enumeration value="linear"/>
+            <enumeration value="paced"/>
+            <enumeration value="spline"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="visibilityType">
+        <restriction base="string">
+            <enumeration value="visible"/>
+            <enumeration value="hidden"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="overflowType">
+        <restriction base="string">
+            <enumeration value="visible"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="displayType">
+        <restriction base="string">
+            <enumeration value="inline"/>
+            <enumeration value="none"/>
+            <enumeration value="inherit"/>
+            <enumeration value="block"/>
+            <enumeration value="list-item"/>
+            <enumeration value="run-in"/>
+            <enumeration value="compact"/>
+            <enumeration value="marker"/>
+            <enumeration value="table"/>
+            <enumeration value="inline-table"/>
+            <enumeration value="table-row-group"/>
+            <enumeration value="table-header-group"/>
+            <enumeration value="table-footer-group"/>
+            <enumeration value="table-row"/>
+            <enumeration value="table-column-group"/>
+            <enumeration value="table-column"/>
+            <enumeration value="table-cell"/>
+            <enumeration value="table-caption"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="textAnchorType">
+        <restriction base="string">
+            <enumeration value="start"/>
+            <enumeration value="middle"/>
+            <enumeration value="end"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="eventType">
+        <union memberTypes="string"> <!-- string added for private events/extensions -->
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="focusin"/>
+                    <enumeration value="focusout"/>
+                    <enumeration value="activate"/>
+                    <enumeration value="mousedown"/>
+                    <enumeration value="mouseup"/>
+                    <enumeration value="click"/>
+                    <enumeration value="beginEvent"/>
+                    <enumeration value="endEvent"/>
+                    <enumeration value="repeatEvent"/>
+                    <enumeration value="zoom"/>
+                    <enumeration value="scroll"/>
+                    <enumeration value="resize"/>
+                    <enumeration value="error"/>
+                    <enumeration value="abort"/>
+                    <enumeration value="load"/>
+                    <enumeration value="unload"/>
+                    <enumeration value="keydown"/>
+                    <enumeration value="keyup"/>
+                    <enumeration value="accessKey"/>
+                    <enumeration value="longAccessKey"/>
+                    <enumeration value="textinput"/>
+                    <enumeration value="mouseover"/>
+                    <enumeration value="mouseout"/>
+                    <enumeration value="mousemove"/>
+                    <enumeration value="pause"/>
+                    <enumeration value="resume"/>
+                    <enumeration value="pausedEvent"/>
+                    <enumeration value="resumedEvent"/>
+                    <enumeration value="activatedEvent"/>
+                    <enumeration value="deactivatedEvent"/>
+                    <enumeration value="LASeRConnecting"/> <!-- AMD1 -->
+                    <enumeration value="LASeRBuffering"/> <!-- AMD1 -->
+                    <enumeration value="LASeREndStream"/> <!-- AMD1 -->
+                    <enumeration value="LASeRPlayable"/> <!-- AMD1 -->
+                    <enumeration value="executionTime"/> <!-- this value is not an event, but may appear
+                    in the same place as an event in time expressions replaced or inserted into begin
+                    and end attributes of timed elements -->
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="fill-ruleType">
+        <restriction base="string">
+            <enumeration value="evenodd"/>
+            <enumeration value="nonzero"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="pointType">
+        <restriction>
+            <simpleType>
+                <list itemType="typ:fixed16_8Type"/>
+            </simpleType>
+            <length value="2"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="viewBoxType">
+        <restriction>
+            <simpleType>
+                <list itemType="typ:fixed16_8Type"/>
+            </simpleType>
+            <length value="4"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="transformType">
+        <union memberTypes="typ:matrix typ:matrixExType typ:pointType"/>
+    </simpleType>
+
+    <simpleType name="matrix">
+        <restriction>
+            <simpleType>
+                <list itemType="float"/>
+            </simpleType>
+            <length value="6"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="matrixExType">
+        <restriction base="typ:attrExtensionType"/>
+    </simpleType>
+
+    <simpleType name="animatable">
+        <restriction base="string">
+            <enumeration value="opacity"/>
+            <enumeration value="choice"/>
+            <enumeration value="color-rendering"/>
+            <enumeration value="display"/>
+            <enumeration value="font-style"/>
+            <enumeration value="preserveAspectRatio"/>
+            <enumeration value="visibility"/>
+            <enumeration value="editable"/>
+            <enumeration value="d"/>
+            <enumeration value="fill"/>
+            <enumeration value="fill-opacity"/>
+            <enumeration value="font-family"/>
+            <enumeration value="font-size"/>
+            <enumeration value="height"/>
+            <enumeration value="xlink:href"/>
+            <enumeration value="points"/>
+            <enumeration value="stroke"/>
+            <enumeration value="stroke-opacity"/>
+            <enumeration value="stroke-width"/>
+            <enumeration value="viewBox"/>
+            <enumeration value="width"/>
+            <enumeration value="x1"/>
+            <enumeration value="y1"/>
+            <enumeration value="x2"/>
+            <enumeration value="y2"/>
+            <enumeration value="cx"/>
+            <enumeration value="cy"/>
+            <enumeration value="x"/>
+            <enumeration value="y"/>
+            <enumeration value="rx"/>
+            <enumeration value="ry"/>
+            <enumeration value="r"/>
+            <enumeration value="transform"/>
+            <enumeration value="size"/>
+            <enumeration value="display-align"/>
+            <enumeration value="color"/>
+            <enumeration value="audio-level"/>
+            <enumeration value="fill-rule"/>
+            <enumeration value="font-style"/>
+            <enumeration value="font-weight"/>
+            <enumeration value="image-rendering"/>
+            <enumeration value="line-increment"/>
+            <enumeration value="pointer-events"/>
+            <enumeration value="shape-rendering"/>
+            <enumeration value="stop-color"/>
+            <enumeration value="stop-opacity"/>
+            <enumeration value="solid-color"/>
+            <enumeration value="solid-opacity"/>
+            <enumeration value="stroke-dasharray"/>
+            <enumeration value="stroke-dashoffset"/>
+            <enumeration value="stroke-linecap"/>
+            <enumeration value="stroke-linejoin"/>
+            <enumeration value="stroke-miterlimit"/>
+            <enumeration value="text-anchor"/>
+            <enumeration value="vector-effect"/>
+            <enumeration value="viewport-fill"/>
+            <enumeration value="viewport-fill-opacity"/>
+            <enumeration value="nav-right"/>
+            <enumeration value="nav-next"/>
+            <enumeration value="nav-up"/>
+            <enumeration value="nav-up-right"/>
+            <enumeration value="nav-up-left"/>
+            <enumeration value="nav-prev"/>
+            <enumeration value="nav-down"/>
+            <enumeration value="nav-down-right"/>
+            <enumeration value="nav-down-left"/>
+            <enumeration value="nav-left"/>
+            <enumeration value="focusable"/>
+            <enumeration value="gradientUnits"/>
+            <enumeration value="pathLength"/>
+            <enumeration value="rotate"/>
+            <enumeration value="target"/>
+            <enumeration value="type"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="rotateType">
+        <union memberTypes="typ:fixed16_8Type">
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="auto"/>
+                    <enumeration value="auto-reverse"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="restartType">
+        <restriction base="string">
+            <enumeration value="always"/>
+            <enumeration value="whenNotActive"/>
+            <enumeration value="never"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="rotscatra">
+        <restriction base="string">
+            <enumeration value="translate"/>
+            <enumeration value="scale"/>
+            <enumeration value="rotate"/>
+            <enumeration value="skewX"/>
+            <enumeration value="skewY"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="choiceType">
+        <union>
+            <simpleType>
+                <restriction base="unsignedInt">
+                    <maxInclusive value="255"/>
+                </restriction>
+            </simpleType>
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="none"/>
+                    <enumeration value="all"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="simpleEncodingType">
+        <restriction base="unsignedInt">
+            <maxInclusive value="3"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="resolutionType">
+        <restriction base="int">
+            <minInclusive value="-7"/>
+            <maxInclusive value="8"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="u5b">
+        <restriction base="unsignedInt">
+            <maxInclusive value="31"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="pathType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="timeType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="smilTimesType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="syncToleranceType">
+        <union memberTypes="float">           <!-- should not be int but float -->
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="default"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="syncToleranceDefaultType">
+        <union memberTypes="float">               <!-- should not be int but float -->
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="inherit"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="indexType">
+        <restriction base="int">
+            <minInclusive value="-1"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="pointListType">
+        <list itemType="float"/>
+    </simpleType>
+
+    <simpleType name="coordinateListType">
+        <list itemType="float"/>
+    </simpleType>
+
+    <simpleType name="beginEndType">
+        <restriction base="string">
+            <enumeration value="begin"/>
+            <enumeration value="end"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="animFillType">
+        <restriction base="string">
+            <enumeration value="freeze"/>
+            <enumeration value="remove"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="repeatCountType">
+        <union memberTypes="typ:fixed16_8Type">
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="indefinite"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="repeatDurType">
+        <union memberTypes="float">       <!-- should be float rather than unsigned int -->
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="indefinite"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="stroke-dasharrayType">
+        <restriction base="typ:floatListType"/>
+    </simpleType>
+
+    <simpleType name="stroke-linecapType">
+        <restriction base="string">
+            <enumeration value="butt"/>
+            <enumeration value="round"/>
+            <enumeration value="square"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="stroke-linejoinType">
+        <restriction base="string">
+            <enumeration value="miter"/>
+            <enumeration value="round"/>
+            <enumeration value="bevel"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="pointer-eventsType">
+        <restriction base="string">
+            <enumeration value="visiblePainted"/>
+            <enumeration value="visibleFill"/>
+            <enumeration value="visibleStroke"/>
+            <enumeration value="visible"/>
+            <enumeration value="painted"/>
+            <enumeration value="fill"/>
+            <enumeration value="stroke"/>
+            <enumeration value="all"/>
+            <enumeration value="none"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="font-weightType">
+        <restriction base="string">
+            <enumeration value="normal"/>
+            <enumeration value="bold"/>
+            <enumeration value="bolder"/>
+            <enumeration value="lighter"/>
+            <enumeration value="100"/>
+            <enumeration value="200"/>
+            <enumeration value="300"/>
+            <enumeration value="400"/>
+            <enumeration value="500"/>
+            <enumeration value="600"/>
+            <enumeration value="700"/>
+            <enumeration value="800"/>
+            <enumeration value="900"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="font-variantType">
+        <restriction base="string">
+            <enumeration value="normal"/>
+            <enumeration value="small-caps"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="color-renderingType">
+        <restriction base="string">
+            <enumeration value="auto"/>
+            <enumeration value="optimizeSpeed"/>
+            <enumeration value="optimizeQuality"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="image-renderingType">
+        <restriction base="string">
+            <enumeration value="auto"/>
+            <enumeration value="optimizeSpeed"/>
+            <enumeration value="optimizeQuality"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="shape-renderingType">
+        <restriction base="string">
+            <enumeration value="auto"/>
+            <enumeration value="optimizeSpeed"/>
+            <enumeration value="crispEdges"/>
+            <enumeration value="geometricPrecision"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="text-renderingType">
+        <restriction base="string">
+            <enumeration value="auto"/>
+            <enumeration value="optimizeSpeed"/>
+            <enumeration value="optimizeLegibility"/>
+            <enumeration value="geometricPrecision"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="featureType">
+        <restriction base="string">
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#SVG"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#SVGDOM"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#SVG-static"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#SVGDOM-static"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#SVG-animation"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#SVGDOM-animation"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#SVG-dynamic"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#SVGDOM-dynamic"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#CoreAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Structure"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#BasicStructure"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#ContainerAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#ConditionalProcessing"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Image"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Style"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#ViewportAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Shape"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Text"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#BasicText"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#PaintAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#BasicPaintAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#OpacityAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#GraphicsAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#BasicGraphicsAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Marker"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#ColorProfile"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Gradient"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Pattern"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Clip"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#BasicClip"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Mask"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Filter"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#BasicFilter"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#DocumentEventsAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#GraphicalEventsAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#AnimationEventsAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Cursor"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Hyperlinking"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#XlinkAttribute"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#ExternalResourcesRequired"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#View"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Script"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Animation"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Font"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#BasicFont"/>
+            <enumeration value="http://www.w3.org/TR/SVG11/feature#Extensibility"/>
+            <enumeration value="org.w3c.svg"/>
+            <enumeration value="org.w3c.dom.svg"/>
+            <enumeration value="org.w3c.svg.static"/>
+            <enumeration value="org.w3c.dom.svg.static"/>
+            <enumeration value="org.w3c.svg.animation"/>
+            <enumeration value="org.w3c.dom.svg.animation"/>
+            <enumeration value="org.w3c.svg.dynamic"/>
+            <enumeration value="org.w3c.dom.svg.dynamic"/>
+            <enumeration value="org.w3c.svg.all"/>
+            <enumeration value="org.w3c.dom.svg.all"/>
+            <enumeration value="http://www.w3.org/TR/SVGMobile/Tiny/feature#base"/>
+            <enumeration value="http://www.w3.org/TR/SVGMobile/Tiny/feature#interactivity"/>
+            <enumeration value="http://www.w3.org/TR/SVGMobile/Tiny/feature#all"/>
+            <enumeration value="http://www.w3.org/TR/SVGMobile/Basic/feature#base"/>
+            <enumeration value="http://www.w3.org/TR/SVGMobile/Basic/feature#interactivity"/>
+            <enumeration value="http://www.w3.org/TR/SVGMobile/Basic/feature#SVGBasicDomCore"/>
+            <enumeration value="http://www.w3.org/TR/SVGMobile/Basic/feature#SVGBasicDomExtended"/>
+            <enumeration value="http://www.w3.org/TR/SVGMobile/Basic/feature#css"/>
+            <enumeration value="http://www.w3.org/TR/SVGMobile/Basic/feature#all"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#SVG-static"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#SVG-static-DOM"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#SVG-animated"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#SVG-all"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#CoreAttribute"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#NavigationAttribute"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Structure"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#ConditionalProcessing"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#ConditionalProcessingAttribute"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Image"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Prefetch"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Discard"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Shape"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Text"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#PaintAttribute"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#OpacityAttribute"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#GraphicsAttribute"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Gradient"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#SolidColor"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Hyperlinking"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#XlinkAttribute"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#ExternalResourcesRequired"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Scripting"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Handler"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Listener"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#TimedAnimation"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Animation"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Audio"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Video"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Font"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#Extensibility"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#MediaAttribute"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#TextFlow"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#TransformedVideo"/>
+            <enumeration value="http://www.w3.org/Graphics/SVG/feature/1.2/#ComposedVideo"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="featureListType">
+        <list itemType="typ:featureType"/>
+    </simpleType>
+
+    <simpleType name="languageType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="levelType">
+        <restriction base="unsignedInt">
+            <maxInclusive value="15"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="pointsCodecType">
+        <restriction base="string">
+            <enumeration value="ExpGolombPointsCodec"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="profileType">
+        <restriction base="string">
+            <enumeration value="mini"/>
+            <enumeration value="full"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="syncBehaviorType">
+        <restriction base="string">
+            <enumeration value="canSlip"/>
+            <enumeration value="locked"/>
+            <enumeration value="independent"/>
+            <enumeration value="default"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="syncBehaviorDefaultType">
+        <restriction base="string">
+            <enumeration value="canSlip"/>
+            <enumeration value="locked"/>
+            <enumeration value="independent"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="gradientUnits">
+        <restriction base="string">
+            <enumeration value="userSpaceOnUse"/>
+            <enumeration value="objectBoundingBox"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="vectorType">
+        <restriction base="string">
+            <enumeration value="none"/>
+            <enumeration value="non-scaling-stroke"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="AnimatedValueType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="AnimatedValuesType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="preserveAspectRatioType">
+        <restriction base="string">
+            <enumeration value="none"/>
+            <enumeration value="xMinYMin"/>
+            <enumeration value="xMidYMin"/>
+            <enumeration value="xMaxYMin"/>
+            <enumeration value="xMinYMid"/>
+            <enumeration value="xMidYMid"/>
+            <enumeration value="xMaxYMid"/>
+            <enumeration value="xMinYMax"/>
+            <enumeration value="xMidYMax"/>
+            <enumeration value="xMaxYMax"/>
+            <enumeration value="xMinYMin meet"/>
+            <enumeration value="xMidYMin meet"/>
+            <enumeration value="xMaxYMin meet"/>
+            <enumeration value="xMinYMid meet"/>
+            <enumeration value="xMidYMid meet"/>
+            <enumeration value="xMaxYMid meet"/>
+            <enumeration value="xMinYMax meet"/>
+            <enumeration value="xMidYMax meet"/>
+            <enumeration value="xMaxYMax meet"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="valueWithUnitsType">
+        <restriction base="typ:typeCodecType"/>
+    </simpleType>
+
+    <simpleType name="overlayType">
+        <union memberTypes="typ:overlayExType">
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="top"/>
+                    <enumeration value="none"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="overlayExType">
+        <restriction base="typ:attrExtensionType"/>
+    </simpleType>
+
+    <simpleType name="transformBehaviorType">
+        <restriction base="string">
+            <enumeration value="geometric"/>
+            <enumeration value="pinned"/>
+            <enumeration value="pinned_90"/>
+            <enumeration value="pinned_180"/>
+            <enumeration value="pinned_270"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="scriptType">
+        <union memberTypes="string">
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="application/ecmascript"/>
+                    <enumeration value="application/jar-archive"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="scriptExType">
+        <restriction base="typ:attrExtensionType"/>
+    </simpleType>
+
+    <simpleType name="displayAlignType">
+        <restriction base="string">
+            <enumeration value="before"/>
+            <enumeration value="center"/>
+            <enumeration value="after"/>
+            <enumeration value="auto"/>
+            <enumeration value="inherit"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="ReplaceValues">
+        <union memberTypes="typ:pointListType typ:coordinateListType typ:pathType typ:viewBoxType">
+            <simpleType>
+                <list itemType="byte"/>
+            </simpleType>
+            <simpleType>
+                <list itemType="typ:fixed16_8Type"/>
+            </simpleType>
+            <simpleType>
+                <list itemType="typ:timeType"/>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="floatListType">
+        <list itemType="typ:fixed16_8Type"/>
+    </simpleType>
+
+    <simpleType name="keySplinesType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="timeListType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <!-- new type codec -->
+    <simpleType name="fixed16_8Type">
+        <restriction base="float"/>
+    </simpleType>
+
+    <simpleType name="fixed16_8iType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <!-- new type codec -->
+    <simpleType name="byteAlignedString">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="ISO_15938_1_DecoderInitType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <!-- new type codec -->
+    <simpleType name="updateValueType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="line-incrementType">
+        <union memberTypes="typ:fixed16_8Type">
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="auto"/>
+                    <enumeration value="inherit"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="focusType">
+        <union memberTypes="anyURI">
+            <simpleType>
+                <restriction base="string">
+                    <enumeration value="auto"/>
+                    <enumeration value="self"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+
+    <simpleType name="focusableType">
+        <restriction base="string">
+            <enumeration value="true"/>
+            <enumeration value="false"/>
+            <enumeration value="auto"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="focusHighlightType"> <!-- AMD1 -->
+        <restriction base="string">
+            <enumeration value="none"/>
+            <enumeration value="auto"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="editableType">
+        <restriction base="string">
+            <enumeration value="none"/>
+            <enumeration value="simple"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="initialVisibilityType"> <!-- AMD1 -->
+        <restriction base="string">
+            <enumeration value="whenStarted"/>
+            <enumeration value="always"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="playbackOrderType">
+        <restriction base="string">
+            <enumeration value="all"/>
+            <enumeration value="forwardOnly"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="timeLineBeginType">
+        <restriction base="string">
+            <enumeration value="onLoad"/>
+            <enumeration value="onStart"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="accumulateType">
+        <restriction base="string">
+            <enumeration value="sum"/>
+            <enumeration value="none"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="additiveType">
+        <restriction base="string">
+            <enumeration value="sum"/>
+            <enumeration value="replace"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="zoomAndPanType">
+        <restriction base="string">
+            <enumeration value="disable"/>
+            <enumeration value="magnify"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="timeResolutionType">
+        <restriction base="int">
+            <maxExclusive value="65536"/>
+            <minInclusive value="0"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="coordinateType">
+        <restriction base="float"/>
+    </simpleType>
+
+    <simpleType name="ElementAttributeListType">
+        <restriction base="string"/>
+    </simpleType>
+
+    <simpleType name="phaseType">
+        <restriction base="string">
+            <enumeration value="default"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="IDlist">
+        <list itemType="ID"/>
+    </simpleType>
+
+    <simpleType name="sourcesType"> <!-- AMD1 -->
+        <list itemType="anyURI"/>
+    </simpleType>
+
+    <simpleType name="streamSourceModeType"> <!-- AMD1 -->
+        <restriction base="string">
+            <enumeration value="replace"/>
+            <enumeration value="useOld"/>
+            <enumeration value="keepOld"/>
+            <enumeration value="playList"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="directionType"> <!-- AMD1 -->
+        <restriction base="string">
+            <enumeration value="up"/>
+            <enumeration value="down"/>
+            <enumeration value="left"/>
+            <enumeration value="right"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="scrollStopType"> <!-- AMD1 -->
+        <union memberTypes="IDREF">
+            <simpleType>
+                <restriction>
+                    <simpleType>
+                        <list itemType="typ:ZeroToOneFloat"/>
+                    </simpleType>
+                    <length value="2"/>
+                </restriction>
+            </simpleType>
+        </union>
+    </simpleType>
+    
+    <simpleType name="securityType"> <!-- AMD1 -->
+        <restriction base="string">
+            <enumeration value="new"/>
+            <enumeration value="parent"/>
+            <enumeration value="zz1"/>
+            <enumeration value="zz2"/>
+        </restriction>
+    </simpleType>
+    
+    <simpleType name="flowType"> <!-- AMD1 -->
+        <restriction base="string">
+            <enumeration value="any"/>
+            <enumeration value="complete"/>
+            <enumeration value="segment"/>
+        </restriction>
+    </simpleType>
+</schema>

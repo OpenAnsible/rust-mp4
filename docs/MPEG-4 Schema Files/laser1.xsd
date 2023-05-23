@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:lsr="urn:mpeg:mpeg4:LASeR:2005"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:typ="urn:mpeg:mpeg4:LASeR:types:2005"
+    targetNamespace="urn:mpeg:mpeg4:LASeR:2005"
+    elementFormDefault="qualified">
+
+    <import namespace="urn:mpeg:mpeg4:LASeR:types:2005" schemaLocation="laser-datatypes1.xsd"/>
+    <import namespace="http://www.w3.org/2000/svg" schemaLocation="svg1.xsd"/>
+
+    <group name="update">
+        <choice>
+            <element ref="lsr:NewScene"/>
+            <element ref="lsr:RefreshScene"/>
+            <element ref="lsr:Insert"/>
+            <element ref="lsr:Replace"/>
+            <element ref="lsr:Add"/>
+            <element ref="lsr:Delete"/>
+            <element ref="lsr:Save"/>
+            <element ref="lsr:Restore"/>
+            <element ref="lsr:Clean"/>
+            <element ref="lsr:SendEvent"/>
+        </choice>
+    </group>
+
+    <simpleType name="colorInitType">
+        <restriction base="string"/>
+    </simpleType>
+    <element name="colorInitialisation" type="lsr:colorInitType"/>
+
+    <simpleType name="fontInitType">
+        <restriction base="string"/>
+    </simpleType>
+    <element name="fontInitialisation" type="lsr:fontInitType"/>
+
+    <simpleType name="privateDataIdInitType">
+        <restriction base="string"/>
+    </simpleType>
+    <element name="privateDataIdInitialisation" type="lsr:privateDataIdInitType"/>
+
+    <simpleType name="tagInitType">
+        <restriction base="string"/>
+    </simpleType>
+    <element name="tagInitialisation" type="lsr:tagInitType"/>
+
+    <simpleType name="extendedInitType">
+        <restriction base="string"/>
+    </simpleType>
+    <element name="extendedInitialisation" type="lsr:extendedInitType"/>
+
+    <complexType name="SaveType">
+        <attribute name="groupID" type="string" use="required"/>
+        <attribute name="elements" type="string" use="required"/>
+        <attribute name="attributes" type="string" use="required"/>
+        <anyAttribute/>
+    </complexType>
+    <element name="Save" type="lsr:SaveType"/>
+
+    <complexType name="CleanType">
+        <attribute name="groupID" type="string" use="required"/>
+        <anyAttribute/>
+    </complexType>
+    <element name="Clean" type="lsr:CleanType"/>
+
+    <complexType name="RestoreType">
+        <attribute name="groupID" type="string" use="required"/>
+        <anyAttribute/>
+    </complexType>
+    <element name="Restore" type="lsr:RestoreType"/>
+
+    <attributeGroup name="updateBase">
+        <attribute name="ref" type="IDREF" use="required"/>
+        <attribute name="attributeName" type="string" use="optional"/>
+        <attribute name="value" type="typ:updateValueType" use="optional"/>
+        <anyAttribute/>
+    </attributeGroup>
+
+    <complexType name="InsertType">
+        <choice minOccurs="0" maxOccurs="1">
+            <any/>
+        </choice>
+        <attributeGroup ref="lsr:updateBase"/>
+        <attribute name="index" type="typ:indexType" use="optional"/>
+    </complexType>
+    <element name="Insert" type="lsr:InsertType"/>
+
+    <complexType name="NewSceneType">
+        <sequence>
+            <element ref="svg:svg"/>
+        </sequence>
+        <anyAttribute/>
+    </complexType>
+    <element name="NewScene" type="lsr:NewSceneType"/>
+
+    <complexType name="RefreshSceneType">
+        <sequence>
+            <element ref="svg:svg"/>
+        </sequence>
+        <attribute name="time" type="unsignedInt" use="required"/>
+        <anyAttribute/>
+    </complexType>
+    <element name="RefreshScene" type="lsr:RefreshSceneType"/>
+
+    <complexType name="ReplaceType" mixed="true">
+        <choice minOccurs="0" maxOccurs="unbounded">
+            <any/>
+        </choice>
+        <attributeGroup ref="lsr:updateBase"/>
+        <attribute name="index" type="typ:indexType" use="optional"/>
+        <attribute name="operandElementId" type="IDREF" use="optional"/>
+        <attribute name="operandAttribute" type="typ:AttributeNameType" use="optional"/>
+    </complexType>
+    <element name="Replace" type="lsr:ReplaceType"/>
+
+    <complexType name="AddType">
+        <attributeGroup ref="lsr:updateBase"/>
+        <attribute name="operandElementId" type="IDREF" use="optional"/>
+        <attribute name="operandAttribute" type="typ:AttributeNameType" use="optional"/>
+    </complexType>
+    <element name="Add" type="lsr:AddType"/>
+
+    <complexType name="DeleteType">
+        <attribute name="ref" type="IDREF" use="required"/>
+        <attribute name="index" type="typ:indexType" use="optional"/>
+        <attribute name="attributeName" type="typ:AttributeNameType" use="optional"/>
+        <anyAttribute/>
+    </complexType>
+    <element name="Delete" type="lsr:DeleteType"/>
+
+    <complexType name="SendEventType">
+        <attribute name="ref" type="IDREF" use="required"/>
+        <attribute name="event" type="typ:eventType" use="required"/>
+        <attribute name="pointvalue" type="typ:pointType" use="optional"/>
+        <attribute name="intvalue" type="int" use="optional"/>
+        <attribute name="stringvalue" type="string" use="optional"/>
+        <anyAttribute/>
+    </complexType>
+    <element name="SendEvent" type="lsr:SendEventType"/>
+
+    <complexType name="extensionContent" abstract="true"/>
+
+    <element name="extend" type="lsr:extensionContent"/>
+
+    <complexType name="privateAttributeType">
+        <anyAttribute/>
+    </complexType>
+    <element name="privateAttributes" type="lsr:privateAttributeType"/>
+
+    <complexType name="LASeRHeaderType">
+        <attribute name="profile" type="typ:profileType" use="optional"/>
+        <attribute name="level" type="typ:levelType" use="optional"/>
+        <attribute name="ISO_15938_1_DecoderInit_Configuration" type="byte" use="optional"/>
+        <attribute name="ISO_15938_1_DecoderInit" type="typ:ISO_15938_1_DecoderInitType"/>
+        <attribute name="useFullRequestHost" type="boolean" use="optional"/>
+        <attribute name="pathComponents" type="byte" use="optional"/>
+        <attribute name="newSceneIndicator" type="boolean" use="optional"/>
+        <attribute name="pointsCodec" type="typ:pointsCodecType" use="optional"/>
+        <attribute name="resolution" type="typ:resolutionType" use="optional"/>
+        <attribute name="scaleBits_minus_coordBits" type="typ:u5b"/>
+        <attribute name="coordBits" type="typ:u5b"/>
+        <attribute name="colorComponentBits" type="typ:u5b" use="optional"/>
+        <attribute name="hasStringIDs" type="boolean" use="optional"/>
+        <attribute name="timeResolution" type="typ:timeResolutionType" use="optional"/>
+    </complexType>
+    <element name="LASeRHeader" type="lsr:LASeRHeaderType"/>
+
+    <complexType name="LASeRUnitHeaderType">
+        <attribute name="resetEncodingContext" type="boolean" use="optional"/>
+    </complexType>
+    <element name="LASeRUnitHeader" type="lsr:LASeRUnitHeaderType"/>
+
+    <complexType name="LASeRUnitType">
+        <sequence>
+            <element ref="lsr:LASeRUnitHeader" minOccurs="0"/>
+            <element ref="lsr:colorInitialisation" minOccurs="0"/>
+            <element ref="lsr:fontInitialisation" minOccurs="0"/>
+            <element ref="lsr:privateDataIdInitialisation" minOccurs="0"/>
+            <element ref="lsr:tagInitialisation" minOccurs="0"/>
+            <element ref="lsr:extendedInitialisation" minOccurs="0"/>
+            <element ref="lsr:StringIDTable" minOccurs="0"/>
+            <group ref="lsr:update" minOccurs="1" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
+    <attribute name="rotation" type="typ:fixed16_8Type"/>
+    <attribute name="scale" type="typ:pointType"/>
+    <attribute name="translation" type="typ:pointType"/>
+    <attribute name="syncReference" type="anyURI"/>
+    <attribute name="choice" type="typ:choiceType" default="all"/>
+    <attribute name="size" type="typ:pointType"/>
+    <attribute name="transformBehavior" type="typ:transformBehaviorType"/>
+    <attribute name="enabled" type="boolean"/>
+    <attribute name="fullscreen" type="boolean"/>
+
+    <complexType name="conditionalType">
+        <complexContent>
+            <extension base="svg:object">
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attribute name="begin" type="typ:smilTimesType"/>
+                <attribute ref="lsr:enabled"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="conditional" type="lsr:conditionalType"/>
+
+    <complexType name="rectClipType">
+            <complexContent>
+                <extension base="svg:groupType">
+                    <attribute name="size" type="typ:pointType"/>
+                </extension>
+            </complexContent>
+    </complexType>
+    <element name="rectClip" type="lsr:rectClipType"/>
+
+    <complexType name="selectorType">
+            <complexContent>
+                <extension base="svg:groupType">
+                    <attribute ref="lsr:choice"/>
+                </extension>
+            </complexContent>
+    </complexType>
+    <element name="selector" type="lsr:selectorType"/>
+
+    <complexType name="simpleLayoutType">
+            <complexContent>
+                <extension base="svg:groupType">
+                    <attribute name="delta" type="typ:pointType"/>
+                </extension>
+            </complexContent>
+    </complexType>
+    <element name="simpleLayout" type="lsr:simpleLayoutType"/>
+
+    <complexType name="cursorType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:href"/>
+                <attribute name="x" type="typ:coordinateType"/>
+                <attribute name="y" type="typ:coordinateType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="cursorManager" type="lsr:cursorType"/>
+
+    <complexType name="stringIDTableType">
+        <attribute name="strings" type="string" use="required"/>
+    </complexType>
+    <element name="StringIDTable" type="lsr:stringIDTableType"/>
+
+</schema>

@@ -1,67 +1,42 @@
+//! Contains the `Skip` and `Free` atoms, which are used to skip over data that is not needed.
+//!
+//! You can find the spec for these atoms in ISO/IEC 14496-12:2015 § 8.1.2.
+//! These atoms are not recognized by this library, so they are just parsed and discarded.
+//!
+//! From the specification:
+//!
+//! _The contents of a free-space box are irrelevant and may be ignored, or the object deleted, without affecting the presentation.
+//! (Care should be exercised when deleting the object, as this may invalidate the offsets used in the sample table,
+//! unless this object is after all the media data)._
+//!
+//! -- ISO/IEC 14496-12:2015 § 8.1.2
 
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
+use crate::{generic_parse, retref};
 
-use super::{Mp4File, Kind, Header, Atom};
-
-/**
-
-skip
-    udta
-        cprt
-        tsel
-        strk
-            stri
-            strd
-
-BoxTypes : ‘free’,‘skip’
-Container: File or other box
-Mandatory: No
-Quantity : Zero or more
-
-The contents of a free-space box are irrelevant and may be ignored, 
-or the object deleted, without affecting the presentation. (Care should be exercised 
-when deleting the object, as this may invalidate the offsets used in the sample table, 
-unless this object is after all the media data).
-
-8.1.2.2 Syntax
-
-aligned(8) class FreeSpaceBox extends Box(free_type) {
-    unsigned int(8) data[];
-}
-
-8.1.2.3 Semantics
-
-`free_type` may be ‘free’ or ‘skip’.
-
-**/
-
+/// `Skip` is a free space atom that is used to skip over data that is not needed.
+/// It is identical to the `Free` atom for all intents and purposes.
 #[derive(Debug, Clone)]
 pub struct Skip {
-    header: Header
+    /// The header of the atom.
+    pub header: Header,
 }
 
 impl Skip {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str>{
-        let curr_offset = f.offset();
-        f.seek(curr_offset+header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Skip{
-            header: header,
-        })
-    }
+    generic_parse!(Skip);
+    retref!(header, Header);
 }
 
+/// `Free` is a free space atom that is used to skip over data that is not needed.
+/// It is identical to the `Skip` atom for all intents and purposes.
 #[derive(Debug, Clone)]
 pub struct Free {
-    header: Header
+    /// The header of the atom.
+    pub header: Header,
 }
 
 impl Free {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str>{
-        let curr_offset = f.offset();
-        f.seek(curr_offset+header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Free{
-            header: header,
-        })
-    }
+    generic_parse!(Free);
+    retref!(header, Header);
 }

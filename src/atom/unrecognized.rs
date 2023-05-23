@@ -1,18 +1,15 @@
+use crate::atom::header::Header;
+use crate::mp4file::Mp4File;
+use crate::{generic_parse, retref};
 
-use super::{Mp4File, Kind, Header, Atom};
-
+/// Represents an atom that is not recognized by this library.
 #[derive(Debug, Clone)]
 pub struct Unrecognized {
-    header: Header
+    /// The header of the atom.
+    header: Header,
 }
 
 impl Unrecognized {
-    pub fn parse(f: &mut Mp4File, header: Header) -> Result<Self, &'static str>{
-        let curr_offset = f.offset();
-        f.seek(curr_offset+header.data_size);
-        f.offset_inc(header.data_size);
-        Ok(Unrecognized{
-            header: header,
-        })
-    }
+    generic_parse!(Unrecognized);
+    retref!(header, Header);
 }
