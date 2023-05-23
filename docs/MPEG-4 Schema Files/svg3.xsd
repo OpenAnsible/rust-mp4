@@ -1,0 +1,809 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:typ="urn:mpeg:mpeg4:LASeR:types:2005"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:lsr="urn:mpeg:mpeg4:LASeR:2005"
+    xmlns:xml="http://www.w3.org/XML/1998/namespace"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:smil="http://www.w3.org/2005/SMIL21"
+    xmlns:dims="http://www.3gpp.org/richmedia"
+    targetNamespace="http://www.w3.org/2000/svg"
+    elementFormDefault="qualified">
+
+    <annotation>
+        <documentation>
+            This is the schema for SVGT1.2 when used with 14496-20/AMD2
+        </documentation>
+    </annotation>
+
+    <import namespace="http://www.w3.org/2001/xml-events" schemaLocation="ev.xsd"/>
+    <import namespace="urn:mpeg:mpeg4:LASeR:types:2005" schemaLocation="laser-datatypes3.xsd"/>
+    <import namespace="urn:mpeg:mpeg4:LASeR:2005" schemaLocation="laser3.xsd"/>
+    <import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
+    <import namespace="http://www.w3.org/1999/xlink" schemaLocation="xlink.xsd"/>
+    <import namespace="http://www.w3.org/2005/SMIL21" schemaLocation="smil21.xsd"/>
+    <import namespace="http://www.3gpp.org/richmedia" schemaLocation="dims.xsd"/>
+
+    <complexType name="object">
+        <sequence minOccurs="0" maxOccurs="unbounded">
+            <group ref="svg:content"/>
+        </sequence>
+        <attribute name="id" type="ID"/>
+        <!--<attribute ref="xml:id"/>-->
+        <attribute ref="xml:base"/>
+        <attribute ref="xml:space"/>
+        <attribute ref="xml:lang"/>
+        <attribute name="class" type="string"/>
+        <attribute name="style" type="string"/>
+        <attribute ref="dims:active"/>
+        <anyAttribute/>
+    </complexType>
+
+    <complexType name="objectText" mixed="true">
+        <sequence minOccurs="0" maxOccurs="unbounded">
+            <group ref="svg:content"/>
+        </sequence>
+        <attribute name="id" type="ID"/>
+        <!--<attribute ref="xml:id"/>-->
+        <attribute ref="xml:base"/>
+        <attribute ref="xml:space"/>
+        <attribute ref="xml:lang"/>
+        <attribute name="class" type="string"/>
+        <attribute name="style" type="string"/>
+        <attribute ref="dims:active"/>
+        <anyAttribute/>
+    </complexType>
+
+    <attributeGroup name="properties">
+        <attribute name="audio-level" type="typ:audioLevelType"/>
+        <attribute name="color" type="typ:colorType"/>
+        <attribute name="color-rendering" type="typ:color-renderingType"/>
+        <attribute name="display" type="typ:displayType"/>
+        <attribute name="display-align" type="typ:displayAlignType"/>
+        <attribute name="fill" type="typ:paintType"/>
+        <attribute name="fill-opacity" type="typ:opacityType"/>
+        <attribute name="fill-rule" type="typ:fill-ruleType"/>
+        <attribute name="font-family" type="typ:fontFamilyType"/>
+        <attribute name="font-size" type="typ:fixed16_8iType"/>
+        <attribute name="font-style" type="typ:fontStyleType"/>
+        <attribute name="text-decoration" type="typ:textDecorationType"/>
+        <attribute name="font-weight" type="typ:font-weightType"/>
+        <attribute name="font-variant" type="typ:font-variantType"/>
+        <attribute name="image-rendering" type="typ:image-renderingType"/>
+        <attribute name="line-increment" type="typ:line-incrementType"/>
+        <attribute name="pointer-events" type="typ:pointer-eventsType"/>
+        <attribute name="shape-rendering" type="typ:shape-renderingType"/>
+        <attribute name="solid-color" type="typ:colorType"/>
+        <attribute name="solid-opacity" type="typ:opacityType"/>
+        <attribute name="stop-color" type="typ:colorType"/>
+        <attribute name="stop-opacity" type="typ:opacityType"/>
+        <attribute name="stroke" type="typ:paintType"/>
+        <attribute name="stroke-dasharray" type="typ:stroke-dasharrayType"/>
+        <attribute name="stroke-dashoffset" type="typ:fixed16_8iType"/>
+        <attribute name="stroke-linecap" type="typ:stroke-linecapType"/>
+        <attribute name="stroke-linejoin" type="typ:stroke-linejoinType"/>
+        <attribute name="stroke-miterlimit" type="typ:fixed16_8iType"/>
+        <attribute name="stroke-opacity" type="typ:opacityType"/>
+        <attribute name="stroke-width" type="typ:fixed16_8iType"/>
+        <attribute name="text-anchor" type="typ:textAnchorType"/>
+        <attribute name="text-rendering" type="typ:text-renderingType"/>
+        <attribute name="viewport-fill" type="typ:paintType"/>
+        <attribute name="viewport-fill-opacity" type="typ:opacityType"/>
+        <attribute name="vector-effect" type="typ:vectorType"/>
+        <attribute name="visibility" type="typ:visibilityType"/>
+    </attributeGroup>
+
+    <attributeGroup name="mediaProperties">
+        <attribute name="audio-level" type="typ:audioLevelType"/>
+        <attribute name="display" type="typ:displayType"/>
+        <attribute name="image-rendering" type="typ:image-renderingType"/>
+        <attribute name="pointer-events" type="typ:pointer-eventsType"/>
+        <attribute name="shape-rendering" type="typ:shape-renderingType"/>
+        <attribute name="text-rendering" type="typ:text-renderingType"/>
+        <attribute name="viewport-fill" type="typ:paintType"/>
+        <attribute name="viewport-fill-opacity" type="typ:opacityType"/>
+        <attribute name="visibility" type="typ:visibilityType"/>
+    </attributeGroup>
+
+    <attributeGroup name="basic">
+        <attribute name="requiredFeatures" type="typ:featureListType"/>
+        <attribute name="requiredExtensions" type="string"/>
+        <attribute name="systemLanguage" type="typ:languageType"/>
+        <attribute name="requiredFormats" type="string"/>
+        <attribute name="requiredFonts" type="string"/> <!-- AMD1 -->
+    </attributeGroup>
+
+    <attributeGroup name="locatable">
+        <attribute ref="lsr:rotation"/>
+        <attribute ref="lsr:scale"/>
+        <attribute ref="lsr:translation"/>
+        <attribute name="transform" type="typ:transformType"/>
+    </attributeGroup>
+
+    <attributeGroup name="href">
+        <attribute ref="xlink:href"/>
+        <attribute ref="xlink:title"/>
+        <attribute ref="xlink:type"/>
+        <attribute ref="xlink:role"/>
+        <attribute ref="xlink:arcrole"/>
+        <attribute ref="xlink:actuate"/>
+        <attribute ref="xlink:show"/>
+    </attributeGroup>
+
+    <attributeGroup name="focus">
+        <attribute name="nav-right" type="typ:focusType"/>
+        <attribute name="nav-next" type="typ:focusType"/>
+        <attribute name="nav-up" type="typ:focusType"/>
+        <attribute name="nav-up-right" type="typ:focusType"/>
+        <attribute name="nav-up-left" type="typ:focusType"/>
+        <attribute name="nav-prev" type="typ:focusType"/>
+        <attribute name="nav-down" type="typ:focusType"/>
+        <attribute name="nav-down-right" type="typ:focusType"/>
+        <attribute name="nav-down-left" type="typ:focusType"/>
+        <attribute name="nav-left" type="typ:focusType"/>
+        <attribute name="focusable" type="typ:focusableType"/>
+    </attributeGroup>
+
+    <attributeGroup name="animateAttr">
+        <attribute name="from" type="typ:AnimatedValueType"/>
+        <attribute name="by" type="typ:AnimatedValueType"/>
+        <attribute name="values" type="typ:AnimatedValuesType"/>
+        <attribute name="calcMode" type="typ:calcModeType"/>
+        <attribute name="keyTimes" type="typ:timeListType"/>
+        <attribute name="keySplines" type="typ:keySplinesType"/>
+        <attribute name="additive" type="typ:additiveType" use="optional"/>
+        <attribute name="accumulate" type="typ:accumulateType" use="optional"/>
+    </attributeGroup>
+
+    <attributeGroup name="setAttr">
+        <attribute ref="lsr:enabled"/>
+        <attribute name="begin" type="typ:smilTimesType"/>
+        <attribute name="end" type="typ:smilTimesType"/>
+        <attribute name="dur" type="typ:timeType"/>
+        <attribute name="min" type="typ:timeType"/>
+        <attribute name="max" type="typ:timeType"/>
+        <attribute name="attributeType" type="string"/>
+        <attribute name="repeatCount" type="typ:repeatCountType"/>
+        <attribute name="repeatDur" type="typ:repeatDurType"/>
+        <attribute name="restart" type="typ:restartType"/>
+        <attribute name="fill" type="typ:animFillType"/>
+        <attribute name="to" type="typ:AnimatedValueType"/>
+    </attributeGroup>
+
+    <group name="content">
+        <choice>
+            <any/>
+        </choice>
+    </group>
+
+    <!-- elements, alphabetically -->
+
+    <complexType name="aType">
+        <complexContent>
+            <extension base="svg:groupType">
+                <attributeGroup ref="svg:href"/>
+                <attribute name="target" type="string" use="optional"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="a" type="svg:aType"/>
+
+    <complexType name="animateType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:setAttr"/>
+                <attribute name="attributeName" type="typ:animatable"/>
+                <attributeGroup ref="svg:href"/>
+                <attributeGroup ref="svg:animateAttr"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="animate" type="svg:animateType"/>
+    <element name="animateColor" type="svg:animateType"/>
+
+    <complexType name="animateTransformType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:setAttr"/>
+                <attribute name="attributeName" type="typ:animatable"/>
+                <attributeGroup ref="svg:href"/>
+                <attributeGroup ref="svg:animateAttr"/>
+                <attribute name="type" type="typ:rotscatra" use="required"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="animateTransform" type="svg:animateTransformType"/>
+
+    <complexType name="animateMotionType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:setAttr"/>
+                <attributeGroup ref="svg:href"/>
+                <attributeGroup ref="svg:animateAttr"/>
+                <attribute name="path" type="typ:pathType"/>
+                <attribute name="keyPoints" type="typ:floatListType"/>
+                <attribute name="rotate" type="typ:rotateType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="animateMotion" type="svg:animateMotionType"/>
+
+    <complexType name="audioType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:mediaProperties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attribute name="begin" type="typ:smilTimesType"/>
+                <attribute name="end" type="typ:smilTimesType"/>
+                <attribute name="dur" type="typ:timeType"/>
+                <attribute name="min" type="typ:timeType"/>
+                <attribute name="max" type="typ:timeType"/>
+                <attributeGroup ref="svg:href"/>
+                <attribute name="repeatCount" type="typ:repeatCountType"/>
+                <attribute name="repeatDur" type="typ:repeatDurType"/>
+                <attribute name="syncBehavior" type="typ:syncBehaviorType"/>
+                <attribute name="syncTolerance" type="typ:syncToleranceType"/>
+                <attribute name="syncMaster" type="boolean"/> <!-- AMD1 -->
+                <attribute ref="lsr:syncReference"/>
+                <attribute name="type" type="string"/>
+                <attribute ref="smil:clipBegin"/>
+                <attribute ref="smil:clipEnd"/>
+                <attribute name="restart" type="typ:restartType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="audio" type="svg:audioType"/>
+
+    <complexType name="circleType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attribute name="cx" type="typ:coordinateType"/>
+                <attribute name="cy" type="typ:coordinateType"/>
+                <attribute name="r" type="typ:coordinateType" use="required"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="circle" type="svg:circleType"/>
+
+    <complexType name="defsType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="defs" type="svg:defsType"/>
+
+    <element name="desc" type="svg:objectText"/>
+
+    <complexType name="ellipseType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attribute name="rx" type="typ:coordinateType" use="required"/>
+                <attribute name="ry" type="typ:coordinateType" use="required"/>
+                <attribute name="cx" type="typ:coordinateType"/>
+                <attribute name="cy" type="typ:coordinateType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="ellipse" type="svg:ellipseType"/>
+
+    <complexType name="foreignObjectType">
+        <!-- beging copy of svg:object -->
+        <sequence minOccurs="0" maxOccurs="unbounded">
+            <any/>
+        </sequence>
+        <attribute name="id" type="ID"/>
+        <!--<attribute ref="xml:id"/>-->
+        <attribute ref="xml:base"/>
+        <attribute ref="xml:space"/>
+        <attribute ref="xml:lang"/>
+        <attribute name="class" type="string"/>
+        <!-- end copy of object -->
+        <attributeGroup ref="svg:properties"/>
+        <attributeGroup ref="svg:basic"/>
+        <attributeGroup ref="svg:focus"/>
+        <attributeGroup ref="svg:href"/>
+        <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+        <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+        <attribute name="width" type="typ:fixed16_8Type" use="required"/>
+        <attribute name="height" type="typ:fixed16_8Type" use="required"/>
+        <attribute name="x" type="typ:fixed16_8Type"/>
+        <attribute name="y" type="typ:fixed16_8Type"/>
+        <anyAttribute/> <!--for extend attributes-->
+    </complexType>
+    <element name="foreignObject" type="svg:foreignObjectType"/>
+
+    <complexType name="groupType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attributeGroup ref="lsr:adaptationAttr"/>  <!-- AMD2 -->
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="g" type="svg:groupType"/>
+
+    <complexType name="imageType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:focus"/>
+                <attributeGroup ref="svg:mediaProperties"/>
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attributeGroup ref="svg:href"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attribute name="width" type="typ:coordinateType"/>
+                <attribute name="height" type="typ:coordinateType"/>
+                <attribute name="x" type="typ:coordinateType"/>
+                <attribute name="y" type="typ:coordinateType"/>
+                <attribute ref="lsr:transformBehavior"/>
+                <attribute name="opacity" type="typ:opacityType"/>
+                <attribute name="type" type="string"/>
+                <attribute name="preserveAspectRatio" type="typ:preserveAspectRatioType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="image" type="svg:imageType"/>
+
+    <complexType name="lineType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attribute name="x1" type="typ:coordinateType"/>
+                <attribute name="y1" type="typ:coordinateType"/>
+                <attribute name="x2" type="typ:coordinateType" use="required"/>
+                <attribute name="y2" type="typ:coordinateType" use="required"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="line" type="svg:lineType"/>
+
+    <complexType name="linearGradientType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attribute name="gradientUnits" type="typ:gradientUnits"/>
+                <attribute name="x1" type="typ:coordinateType"/>
+                <attribute name="x2" type="typ:coordinateType"/>
+                <attribute name="y1" type="typ:coordinateType"/>
+                <attribute name="y2" type="typ:coordinateType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="linearGradient" type="svg:linearGradientType"/>
+
+    <element name="metadata" type="svg:objectText"/>
+
+    <complexType name="mpathType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:href"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="mpath" type="svg:mpathType"/>
+
+    <complexType name="pathType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attribute name="d" type="string" use="required"/>
+                <attribute name="pathLength" type="typ:fixed16_8Type" use="optional"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="path" type="svg:pathType"/>
+
+    <complexType name="polygonType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attribute name="points" type="typ:pointListType" use="required"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="polygon" type="svg:polygonType"/>
+    <element name="polyline" type="svg:polygonType"/>
+
+    <complexType name="radialGradientType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attribute name="gradientUnits" type="typ:gradientUnits"/>
+                <attribute name="cx" type="typ:coordinateType"/>
+                <attribute name="cy" type="typ:coordinateType"/>
+                <attribute name="r" type="typ:coordinateType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="radialGradient" type="svg:radialGradientType"/>
+
+    <complexType name="rectType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attribute name="width" type="typ:coordinateType" use="required"/>
+                <attribute name="height" type="typ:coordinateType" use="required"/>
+                <attribute name="x" type="typ:coordinateType"/>
+                <attribute name="y" type="typ:coordinateType"/>
+                <attribute name="rx" type="typ:coordinateType"/>
+                <attribute name="ry" type="typ:coordinateType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="rect" type="svg:rectType"/>
+
+    <complexType name="scriptType" mixed="true">
+        <complexContent>
+            <extension base="svg:objectText">
+                <attributeGroup ref="svg:href"/>
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attribute name="type" type="typ:scriptType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="script" type="svg:scriptType"/>
+
+    <complexType name="setType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:setAttr"/>
+                <attribute name="attributeName" type="typ:animatable"/>
+                <attributeGroup ref="svg:href"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="set" type="svg:setType"/>
+
+    <complexType name="stopType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attribute name="offset" type="typ:offsetType" use="required"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="stop" type="svg:stopType"/>
+
+    <complexType name="svgType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attribute name="width" type="typ:valueWithUnitsType" use="required"/>
+                <attribute name="height" type="typ:valueWithUnitsType" use="required"/>
+                <attribute name="viewBox" type="typ:viewBoxType"/>
+                <attribute name="preserveAspectRatio" type="typ:preserveAspectRatioType"/>
+                <attribute name="zoomAndPan" type="typ:zoomAndPanType" use="optional"/>
+                <attribute name="syncBehaviorDefault" type="typ:syncBehaviorDefaultType"/>
+                <attribute name="syncToleranceDefault" type="typ:syncToleranceDefaultType"/>
+                <attribute name="baseProfile" type="string"/>
+                <attribute name="contentScriptType" type="string"/>
+                <attribute name="playbackOrder" type="typ:playbackOrderType"/>
+                <attribute name="snapshotTime" type="typ:timeType"/>
+                <attribute name="timelineBegin" type="typ:timeLineBeginType"/>
+                <attribute name="version" type="string"/>
+                <attribute ref="lsr:fullscreen"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attributeGroup ref="lsr:adaptationAttr"/>  <!-- AMD2 -->
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="svg" type="svg:svgType"/>
+
+    <complexType name="switchType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attributeGroup ref="lsr:adaptationAttr"/>  <!-- AMD2 -->
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="switch" type="svg:switchType"/>
+
+    <element name="title" type="svg:objectText"/>
+
+    <complexType name="textType" mixed="true">
+        <complexContent>
+            <extension base="svg:objectText">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attributeGroup ref="svg:locatable"/>
+                <attribute name="editable" type="typ:editableType" use="optional"/>
+                <attribute name="x" type="typ:coordinateListType"/>
+                <attribute name="y" type="typ:coordinateListType"/>
+                <attribute name="rotate" type="typ:floatListType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="text" type="svg:textType"/>
+
+    <complexType name="tspanType" mixed="true">
+        <complexContent>
+            <extension base="svg:objectText">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attribute name="x" type="typ:coordinateType"/>
+                <attribute name="y" type="typ:coordinateType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="tspan" type="svg:tspanType"/>
+
+    <complexType name="useType">
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:href"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attribute name="overflow" type="typ:overflowType"/>
+                <attribute name="x" type="typ:coordinateType"/>
+                <attribute name="y" type="typ:coordinateType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="use" type="svg:useType"/>
+
+    <complexType name="videoType">
+        <complexContent>
+            <extension base="svg:audioType">
+                <attributeGroup ref="svg:locatable"/>
+                <attributeGroup ref="svg:focus"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/> <!-- AMD1 -->
+                <attribute name="width" type="typ:coordinateType"/>
+                <attribute name="height" type="typ:coordinateType"/>
+                <attribute name="x" type="typ:coordinateType"/>
+                <attribute name="y" type="typ:coordinateType"/>
+                <attribute name="overlay" type="typ:overlayType"/>
+                <attribute name="transformBehavior" type="typ:transformBehaviorType"/>
+                <attribute name="initialVisibility" type="typ:initialVisibilityType"/> <!-- AMD1 -->
+                <attribute name="preserveAspectRatio" type="typ:preserveAspectRatioType"/>
+                <attribute ref="lsr:fullscreen"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="video" type="svg:videoType"/>
+
+    <complexType name="animationType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:audioType">
+                <attributeGroup ref="svg:focus"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/>
+                <attribute name="width" type="typ:coordinateType"/>
+                <attribute name="height" type="typ:coordinateType"/>
+                <attribute name="x" type="typ:coordinateType"/>
+                <attribute name="y" type="typ:coordinateType"/>
+                <attribute name="preserveAspectRatio" type="typ:preserveAspectRatioType"/>
+                <attribute name="initialVisibility" type="typ:initialVisibilityType"/>
+                <attribute name="fill" type="typ:animFillType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="animation" type="svg:animationType"/> <!-- AMD1 -->
+
+    <complexType name="discardType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+                <attribute name="begin" type="typ:smilTimesType"/>
+                <attributeGroup ref="svg:href"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="discard" type="svg:discardType"/> <!-- AMD1 -->
+
+    <complexType name="fontType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attribute name="horiz-adv-x" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="horiz-origin-x" type="typ:fixed16_8Type" use="optional"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="font" type="svg:fontType"/> <!-- AMD1 -->
+
+    <complexType name="fontFaceType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+                <attribute name="accent-height" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="alphabetic" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="ascent" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="bbox" type="string" use="optional"/>
+                <attribute name="cap-height" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="descent" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attribute name="font-family" type="string" use="optional"/>
+                <attribute name="font-stretch" type="string" use="optional"/>
+                <attribute name="font-style" type="string" use="optional"/>
+                <attribute name="font-variant" type="string" use="optional"/>
+                <attribute name="font-weight" type="string" use="optional"/>
+                <attribute name="hanging" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="ideographic" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="mathematical" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="overline-position" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="overline-thickness" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="panose-1" type="string" use="optional"/>
+                <attribute name="slope" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="stemh" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="stemv" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="strikethrough-position" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="strikethrough-thickness" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="underline-position" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="underline-thickness" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="unicode-range" type="string" use="optional"/>
+                <attribute name="units-per-em" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="widths" type="string" use="optional"/>
+                <attribute name="x-height" type="typ:fixed16_8Type" use="optional"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="font-face" type="svg:fontFaceType"/> <!-- AMD1 -->
+
+    <complexType name="fontFaceSrcType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="font-face-src" type="svg:fontFaceSrcType"/> <!-- AMD1 -->
+
+    <complexType name="fontFaceUriType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attributeGroup ref="svg:href"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="font-face-uri" type="svg:fontFaceUriType"/> <!-- AMD1 -->
+
+    <complexType name="glyphType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+                <attribute name="arabic-form" type="string" use="optional"/>
+                <attribute name="d" type="string" use="optional"/>
+                <attribute name="glyph-name" type="string" use="optional"/>
+                <attribute name="horiz-adv-x" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="lang" type="string" use="optional"/>
+                <attribute name="unicode" type="string" use="optional"/>
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="glyph" type="svg:glyphType"/> <!-- AMD1 -->
+
+    <complexType name="handlerType" mixed="true"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:objectText">
+                <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+                <attribute name="type" type="string" use="optional"/>
+                <attribute ref="ev:event"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="handler" type="svg:handlerType"/> <!-- AMD1 -->
+
+    <complexType name="hkernType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+                <attribute name="g1" type="string" use="optional"/>
+                <attribute name="g2" type="string" use="optional"/>
+                <attribute name="k" type="typ:fixed16_8Type" use="optional"/>
+                <attribute name="u1" type="string" use="optional"/>
+                <attribute name="u2" type="string" use="optional"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="hkern" type="svg:hkernType"/> <!-- AMD1 -->
+
+    <complexType name="missingGlyphType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+                <attribute name="d" type="string" use="optional"/>
+                <attribute name="horiz-adv-x" type="typ:fixed16_8Type" use="optional"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="missing-glyph" type="svg:missingGlyphType"/> <!-- AMD1 -->
+
+    <complexType name="prefetchType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:href"/>
+                <attribute name="bandwidth" type="unsignedInt" use="optional"/>
+                <attribute name="mediaCharacterEncoding" type="string" use="optional"/>
+                <attribute name="mediaContentEncodings" type="string" use="optional"/>
+                <attribute name="mediaSize" type="unsignedInt" use="optional"/>
+                <attribute name="mediaTime" type="unsignedInt" use="optional"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="prefetch" type="svg:prefetchType"/> <!-- AMD1 -->
+
+    <complexType name="tBreakType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="tBreak" type="svg:tBreakType"/> <!-- AMD1 -->
+
+    <complexType name="textAreaType" mixed="true"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:objectText">
+                <attributeGroup ref="svg:properties"/>
+                <attributeGroup ref="svg:focus"/>
+                <attributeGroup ref="svg:basic"/>
+                <attributeGroup ref="svg:locatable"/>
+                <attribute name="focusHighlight" type="typ:focusHighlightType"/>
+                <attribute name="editable" type="typ:editableType" use="optional"/>
+                <attribute name="x" type="typ:coordinateType"/>
+                <attribute name="y" type="typ:coordinateType"/>
+                <attribute name="width" type="typ:coordinateType"/>
+                <attribute name="height" type="typ:coordinateType"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="textArea" type="svg:textAreaType"/> <!-- AMD1 -->
+
+    <complexType name="solidColorType"> <!-- AMD1 -->
+        <complexContent>
+            <extension base="svg:object">
+                <attributeGroup ref="svg:properties"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="solidColor" type="svg:solidColorType"/> <!-- AMD1 -->
+
+</schema>

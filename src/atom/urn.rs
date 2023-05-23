@@ -25,20 +25,22 @@ impl Urn {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let curr_offset = f.offset();
+        let (name, location) = if header.data_size() > 0 {
+            let_ok!(
+                name,
+                f.read_null_terminated_string(),
+                "Unable to read name."
+            );
+            let_ok!(
+                location,
+                f.read_null_terminated_string(),
+                "Unable to read location."
+            );
+            (name, location)
+        } else {
+            (String::new(), String::new())
+        };
 
-        let_ok!(
-            name,
-            f.read_null_terminated_string(),
-            "Unable to read name."
-        );
-        let_ok!(
-            location,
-            f.read_null_terminated_string(),
-            "Unable to read location."
-        );
-
-        let _seek_res = f.seek(curr_offset + header.data_size);
         let _offset = f.offset_inc(header.data_size);
 
         Ok(Self {

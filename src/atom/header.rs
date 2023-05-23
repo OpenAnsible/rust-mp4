@@ -131,6 +131,7 @@ impl Header {
     pub fn parse(f: &mut Mp4File) -> Result<Self, &'static str> {
         let curr_offset = f.offset();
         let_ok!(size, f.read_u32(), "Unable to read size.");
+        log::trace!("Header::parse() -- size = {size} bytes.");
 
         let_ok!(b1, f.read_u8(), "Unable to read box type (kind) byte 1.");
         let_ok!(b2, f.read_u8(), "Unable to read box type (kind) byte 2.");
@@ -138,6 +139,7 @@ impl Header {
         let_ok!(b4, f.read_u8(), "Unable to read box type (kind) byte 4.");
 
         let kind_bytes: [u8; 4] = [b1, b2, b3, b4];
+        log::trace!("Header::parse() -- kind_bytes = {kind_bytes:?}");
 
         let_ok!(
             kind,
@@ -145,9 +147,13 @@ impl Header {
             "Unable to read file kind."
         );
 
+        log::trace!("Header::parse() -- kind = {kind:?}");
+
         let header_size = 8u64;
         let atom_size = u64::from(size);
         let data_size = 0u64;
+
+        log::trace!("Header::parse() -- header_size = {header_size}, atom_size = {atom_size}, data_size = {data_size}.");
 
         f.offset_inc(header_size);
 

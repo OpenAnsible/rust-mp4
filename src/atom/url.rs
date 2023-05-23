@@ -24,15 +24,20 @@ impl Url {
         header.parse_version(f);
         header.parse_flags(f);
 
-        let curr_offset = f.offset();
+        // let curr_offset = f.offset();
 
-        let_ok!(
-            location,
-            f.read_null_terminated_string(),
-            "Unable to read location."
-        );
+        let location = if header.data_size() != 0 {
+            let_ok!(
+                loc,
+                f.read_null_terminated_string(),
+                "Unable to read location."
+            );
+            loc
+        } else {
+            String::new()
+        };
 
-        let _seek_res = f.seek(curr_offset + header.data_size);
+        // Advance the file offset by the size of the data.
         let _offset = f.offset_inc(header.data_size);
 
         Ok(Self { header, location })

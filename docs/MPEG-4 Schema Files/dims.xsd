@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:typ="urn:mpeg:mpeg4:LASeR:types:2005"
+    targetNamespace="http://www.3gpp.org/richmedia"
+    elementFormDefault="qualified">
+
+    <attribute name="active" type="boolean"/>
+
+</schema>

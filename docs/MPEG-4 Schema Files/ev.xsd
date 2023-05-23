@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:typ="urn:mpeg:mpeg4:LASeR:types:2005"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:lsr="urn:mpeg:mpeg4:LASeR:2005"
+    xmlns:xml="http://www.w3.org/XML/1998/namespace"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    targetNamespace="http://www.w3.org/2001/xml-events"
+    elementFormDefault="qualified">
+
+    <import namespace="urn:mpeg:mpeg4:LASeR:types:2005" schemaLocation="laser-datatypes1.xsd"/>
+    <import namespace="http://www.w3.org/2000/svg" schemaLocation="svg1.xsd"/>
+    <import namespace="urn:mpeg:mpeg4:LASeR:2005" schemaLocation="laser1.xsd"/>
+
+    <simpleType name="propagateType">
+        <restriction base="string">
+            <enumeration value="continue"/>
+            <enumeration value="stop"/>
+        </restriction>
+    </simpleType>
+    
+    <simpleType name="defaultActionType">
+        <restriction base="string">
+            <enumeration value="perform"/>
+            <enumeration value="cancel"/>
+        </restriction>
+    </simpleType>
+
+    <complexType name="listenerType">
+        <complexContent>
+            <extension base="svg:object">
+                <attribute ref="lsr:enabled"/>
+                <attribute name="event" type="typ:eventType"/>
+                <attribute name="handler" type="anyURI"/>
+                <attribute name="observer" type="anyURI"/>
+                <attribute name="phase" type="typ:phaseType" default="default"/> 
+                <attribute name="target" type="anyURI" use="optional"/>
+                <attribute name="propagate" type="ev:propagateType" default="continue"/>
+                <attribute name="defaultAction" type="ev:defaultActionType" default="perform"/>
+                <!--<attribute ref="lsr:delay"/>
+                <attribute ref="lsr:timeAttribute"/>-->
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="listener" type="ev:listenerType"/>
+
+    <attribute name="event" type="typ:eventType"/> 
+</schema>

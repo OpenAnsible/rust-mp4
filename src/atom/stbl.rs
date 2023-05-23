@@ -37,21 +37,21 @@ pub struct Stbl {
 
     /// A list of atoms contained in this atom. The following atoms may be found within the `Stbl` atom:
     ///
-    /// - [Stsd](crate::atom::stsd::Stsd)
-    /// - [Stts](crate::atom::stts::Stts)
-    /// - [Stsc](crate::atom::stsc::Stsc)
-    /// - [Stsz](crate::atom::stsz::Stsz)
-    /// - [Stz2](crate::atom::stz2::Stz2)
-    /// - [Stss](crate::atom::stss::Stss)
-    /// - [Stco](crate::atom::stco::Stco)
     /// - [Co64](crate::atom::co64::Co64)
     /// - [Ctts](crate::atom::ctts::Ctts)
-    /// - [Stsh](crate::atom::stsh::Stsh)
     /// - [Padb](crate::atom::padb::Padb)
-    /// - [Stdp](crate::atom::stdp::Stdp)
-    /// - [Sdtp](crate::atom::sdtp::Sdtp)
     /// - [Sbgp](crate::atom::sbgp::Sbgp)
+    /// - [Sdtp](crate::atom::sdtp::Sdtp)
     /// - [Sgpd](crate::atom::sgpd::Sgpd)
+    /// - [Stco](crate::atom::stco::Stco)
+    /// - [Stdp](crate::atom::stdp::Stdp)
+    /// - [Stsc](crate::atom::stsc::Stsc)
+    /// - [Stsd](crate::atom::stsd::Stsd)
+    /// - [Stsh](crate::atom::stsh::Stsh)
+    /// - [Stss](crate::atom::stss::Stss)
+    /// - [Stsz](crate::atom::stsz::Stsz)
+    /// - [Stts](crate::atom::stts::Stts)
+    /// - [Stz2](crate::atom::stz2::Stz2)
     /// - [Subs](crate::atom::subs::Subs)
     pub children: Vec<Atom>,
 }

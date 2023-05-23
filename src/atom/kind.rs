@@ -11,6 +11,7 @@ use crate::let_ok;
 #[allow(clippy::doc_markdown)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Kind {
+    Btrt,
     Bxml,
     Co64,
     Cprt,
@@ -113,6 +114,7 @@ impl FromStr for Kind {
     ///
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "btrt" => Ok(Self::Btrt),
             "bxml" => Ok(Self::Bxml),
             "co64" => Ok(Self::Co64),
             "cprt" => Ok(Self::Cprt),
@@ -207,6 +209,7 @@ impl std::fmt::Display for Kind {
     /// Converts the `Kind` enum to a string for display.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
+            Self::Btrt => "Btrt",
             Self::Bxml => "Bxml",
             Self::Co64 => "Co64",
             Self::Cprt => "Cprt",

@@ -1,0 +1,108 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:saf="urn:mpeg:mpeg4:SAF:2005"
+    xmlns:lsr="urn:mpeg:mpeg4:LASeR:2005" xmlns:svg="http://www.w3.org/2000/svg"
+    targetNamespace="urn:mpeg:mpeg4:SAF:2005" elementFormDefault="qualified">
+    <import schemaLocation="laser1.xsd" namespace="urn:mpeg:mpeg4:LASeR:2005"/>
+    <import schemaLocation="svg1.xsd" namespace="http://www.w3.org/2000/svg"/>
+
+    <attributeGroup name="SAFUnit">
+        <attribute name="time" type="unsignedInt" use="optional"/>
+        <attribute name="ref" type="IDREF" use="optional"/>
+        <attribute name="source" type="string" use="optional"/>
+        <attribute name="startOffset" type="unsignedInt" use="optional"/>
+        <attribute name="length" type="unsignedInt" use="optional"/>
+        <attribute name="rap" type="boolean" use="optional"/>
+    </attributeGroup>
+
+    <complexType name="SAFUnitType">
+        <attributeGroup ref="saf:SAFUnit"/>
+    </complexType>
+
+    <element name="mediaUnit" type="saf:SAFUnitType"/>
+    <element name="imageUnit" type="saf:SAFUnitType"/>
+    <element name="sceneUnit">
+        <complexType>
+            <complexContent>
+                <extension base="lsr:LASeRUnitType">
+                    <attributeGroup ref="saf:SAFUnit"/>
+                </extension>
+            </complexContent>
+        </complexType>
+    </element>
+
+    <complexType name="ESHeader">
+        <sequence minOccurs="0">
+            <any/>
+        </sequence>
+        <attribute name="streamID" type="ID" use="optional"/>
+        <attribute name="decSpecificInfo" type="anyURI" use="optional"/>
+        <attribute name="startOffset" type="unsignedInt" use="optional"/>
+        <attribute name="length" type="unsignedInt" use="optional"/>
+        <attribute name="transient" type="boolean" use="optional"/>
+        <attribute name="bufferSize" type="unsignedInt" use="optional"/>
+        <attribute name="objectTypeIndication" type="unsignedInt" use="optional"/>
+        <attribute name="streamType" type="unsignedInt" use="optional"/>
+        <attribute name="timeStampResolution" type="unsignedInt" use="optional"/>
+        <attribute name="contentType" type="string" use="optional"/>
+    </complexType>
+    <element name="mediaHeader" type="saf:ESHeader"/>
+    <element name="imageHeader" type="saf:ESHeader"/>
+    <element name="sceneHeader">
+        <complexType>
+            <complexContent>
+                <restriction base="saf:ESHeader">
+                    <sequence minOccurs="1" maxOccurs="1">
+                        <element ref="lsr:LASeRHeader"/>
+                    </sequence>
+                    <attribute name="objectTypeIndication" type="unsignedInt" fixed="9"/>
+                    <attribute name="streamType" type="unsignedInt" fixed="3"/>
+                </restriction>
+            </complexContent>
+        </complexType>
+    </element>
+
+    <element name="RemoteStreamHeader" type="saf:ESHeader"/>
+
+    <element name="cacheUnit">
+        <complexType>
+            <attribute name="endTime" type="unsignedInt" use="optional"/>
+            <attribute name="url" type="string" use="required"/>
+            <attribute name="source" type="anyURI" use="required"/>
+            <attribute name="startOffset" type="unsignedInt" use="optional"/>
+            <attribute name="length" type="unsignedInt" use="optional"/>
+            <attribute name="permanent" type="boolean" use="optional"/>
+            <attribute name="replace" type="boolean" use="optional"/>
+        </complexType>
+    </element>
+
+    <element name="SAFSession">
+        <complexType>
+            <sequence>
+                <element ref="saf:sceneHeader" minOccurs="1" maxOccurs="1"/>
+                <choice maxOccurs="unbounded">
+                    <element ref="saf:sceneUnit"/>
+                    <element ref="saf:mediaHeader"/>
+                    <element ref="saf:RemoteStreamHeader"/>
+                    <element ref="saf:imageHeader"/>
+                    <element ref="saf:mediaUnit"/>
+                    <element ref="saf:endOfStream"/>
+                    <element ref="saf:cacheUnit"/>
+                    <element ref="saf:imageUnit"/>
+                    <element ref="saf:sceneHeader"/>
+                </choice>
+                <element ref="saf:endOfSAFSession" minOccurs="0" maxOccurs="1"/>
+            </sequence>
+            <attribute name="bufferingTime" type="unsignedInt" use="optional"/>
+        </complexType>
+    </element>
+
+    <element name="endOfStream">
+        <complexType>
+            <attribute name="ref" type="IDREF" use="required"/>
+        </complexType>
+    </element>
+
+    <element name="endOfSAFSession">
+        <complexType/>
+    </element>
+</schema>

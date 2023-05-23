@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 - Added various box types
+- Make everything return a Result
 
 ### Refactor
 

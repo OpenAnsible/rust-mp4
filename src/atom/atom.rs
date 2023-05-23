@@ -5,6 +5,7 @@ use crate::mp4file::Mp4File;
 use std::str;
 
 // These are all used in the Atom enum below.
+use super::btrt::Btrt;
 use super::bxml::Bxml;
 use super::co64::Co64;
 use super::cprt::Cprt;
@@ -91,6 +92,7 @@ use super::xml::Xml;
 #[derive(Debug, Clone)]
 pub enum Atom {
     // Container
+    Btrt(Btrt), // Stbl
     Bxml(Bxml), // Meta
     Co64(Co64), // Stbl
     Cprt(Cprt), // Udta
@@ -217,6 +219,7 @@ impl Atom {
         let pe = p_err.as_str();
 
         match header.kind {
+            Kind::Btrt => Ok(Self::Btrt(Btrt::parse(f, header).expect(pe))),
             Kind::Bxml => Ok(Self::Bxml(Bxml::parse(f, header).expect(pe))),
             Kind::Co64 => Ok(Self::Co64(Co64::parse(f, header).expect(pe))),
             Kind::Cslg => Ok(Self::Cslg(Cslg::parse(f, header).expect(pe))),
@@ -263,7 +266,7 @@ impl Atom {
             Kind::Pdin => Ok(Self::Pdin(Pdin::parse(f, header).expect(pe))),
             Kind::Pitm => Ok(Self::Pitm(Pitm::parse(f, header).expect(pe))),
             Kind::Sbgp => Ok(Self::Sbgp(Sbgp::parse(f, header).expect(pe))),
-            Kind::Schi => Ok(Self::Schi(Schi::parse(f, header).expect(pe))),
+            // Kind::Schi => Ok(Self::Schi(Schi::parse(f, header).expect(pe))),
             Kind::Schm => Ok(Self::Schm(Schm::parse(f, header).expect(pe))),
             Kind::Sdtp => Ok(Self::Sdtp(Sdtp::parse(f, header).expect(pe))),
             // Kind::Sgpd => ,
@@ -332,8 +335,17 @@ impl Atom {
                 break;
             }
 
-            let_ok!(atom, Self::parse(f), "Unable to parse atom.");
-            atoms.push(atom);
+            match Self::parse(f) {
+                Ok(atom) => {
+                    atoms.push(atom);
+                }
+                Err(e) => {
+                    log::debug!("Atom::parse_children - parse error: ({e:?}), file: {f:?}");
+                    break;
+                }
+            }
+            // let_ok!(atom, Self::parse(f), "Unable to parse atom.");
+            // atoms.push(atom);
         }
         Ok(atoms)
     }

@@ -2,7 +2,7 @@
 
 use crate::atom::header::Header;
 use crate::mp4file::Mp4File;
-use crate::{let_ok, read_version, retref, retval};
+use crate::{let_ok, retref, retval};
 
 /// Declares overall media‐independent information relevant to the characteristics of the media in a track.
 #[derive(Debug, Clone)]
@@ -32,6 +32,9 @@ pub struct Mdhd {
     /// character codes. Each character is packed as the difference between its ASCII value and 0x60.
     /// Since the code is confined to being three lower‐case letters, these values are strictly positive.
     pub language: String,
+
+    /// A reserved value that is currently not used. Should always be set to 0.
+    pub pre_defined: u16,
 }
 
 impl Mdhd {
@@ -58,14 +61,46 @@ impl Mdhd {
         header.parse_version(f);
         header.parse_flags(f);
 
-        if header.version.is_none() {
+        if header.version().is_none() {
             return Err("Unable to determine header version.");
         }
 
-        read_version!(creation_time, u64, f.read_u32(), f.read_u64(), header);
-        read_version!(modification_time, u64, f.read_u32(), f.read_u64(), header);
-        read_version!(timescale, u32, f.read_u32(), f.read_u32(), header);
-        read_version!(duration, u64, f.read_u32(), f.read_u64(), header);
+        let creation_time;
+        let modification_time;
+        let timescale;
+        let duration;
+
+        if header.version().unwrap_or(0) == 0 {
+            let_ok!(ct, f.read_u32(), "Unable to read creation time from file.");
+            let_ok!(
+                mt,
+                f.read_u32(),
+                "Unable to read modification time from file."
+            );
+            let_ok!(ts, f.read_u32(), "Unable to read timescale from file.");
+            let_ok!(dur, f.read_u32(), "Unable to read duration from file.");
+
+            creation_time = ct as u64;
+            modification_time = mt as u64;
+            timescale = ts;
+            duration = dur as u64;
+        } else {
+            // version >= 1
+            let_ok!(ct, f.read_u64(), "Unable to read creation time from file.");
+            let_ok!(
+                mt,
+                f.read_u64(),
+                "Unable to read modification time from file."
+            );
+
+            let_ok!(ts, f.read_u32(), "Unable to read timescale from file.");
+            let_ok!(dur, f.read_u64(), "Unable to read duration from file.");
+
+            creation_time = ct;
+            modification_time = mt;
+            timescale = ts;
+            duration = dur;
+        }
 
         // 2 Bytes
         // pad: 1 Bit
@@ -74,6 +109,12 @@ impl Mdhd {
             language,
             f.read_iso639_code(),
             "Unable to read language from ISO639 code."
+        );
+
+        let_ok!(
+            pre_defined,
+            f.read_u16(),
+            "Unable to read pre_defined from file."
         );
 
         f.offset_inc(header.data_size);
@@ -85,6 +126,7 @@ impl Mdhd {
             timescale,
             duration,
             language,
+            pre_defined,
         })
     }
 
@@ -94,4 +136,5 @@ impl Mdhd {
     retval!(timescale, u32);
     retval!(duration, u64);
     retref!(language, String);
+    retval!(pre_defined, u16);
 }

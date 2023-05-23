@@ -2,6 +2,7 @@
 
 #[macro_use]
 pub mod atom;
+pub mod btrt;
 pub mod bxml;
 pub mod co64;
 pub mod cprt;

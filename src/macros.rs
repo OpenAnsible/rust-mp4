@@ -66,7 +66,7 @@ macro_rules! let_ok {
 /// ```
 #[macro_export]
 macro_rules! let_some {
-    ($var:ident, $fun:expr, $msg:literal) => {
+    ($var:ident, $fun:expr, $msg:expr) => {
         let Some($var) = $fun else {
                                                                                     return Err($msg)
                                                                                 };

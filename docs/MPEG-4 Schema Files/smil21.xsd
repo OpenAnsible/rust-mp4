@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:typ="urn:mpeg:mpeg4:LASeR:types:2005"
+    targetNamespace="http://www.w3.org/2005/SMIL21"
+    elementFormDefault="qualified">
+
+    <import namespace="urn:mpeg:mpeg4:LASeR:types:2005" schemaLocation="laser-datatypes1.xsd"/>
+
+    <attribute name="clipBegin" type="typ:timeType"/>
+    <attribute name="clipEnd" type="typ:timeType"/>
+
+</schema>
