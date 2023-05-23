@@ -4,6 +4,8 @@ A Rust implementation of the MPEG-4 (MP4) container format. My fork cleans up so
 
 Much work remains in documenting this and making it more robust.
 
+> NOTE: The `Stsd` atom isn't being read properly, so anything following it is garbled and rendered unusable.
+
 ## Example
 
 ```bash
